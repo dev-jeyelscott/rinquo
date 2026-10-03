@@ -1,0 +1,1788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rinquo Design System</title>
+    <link rel="stylesheet" href="../../resources/css/app.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+            background-color: var(--background);
+            color: var(--foreground);
+            line-height: 1.5;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 1rem;
+        }
+
+        /* Header */
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--foreground);
+        }
+
+        .header-subtitle {
+            font-size: 1.125rem;
+            color: var(--muted-foreground);
+            margin-bottom: 3rem;
+        }
+
+        /* Navigation */
+        nav {
+            position: sticky;
+            top: 0;
+            background-color: var(--background);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 0;
+            margin-bottom: 3rem;
+            z-index: 10;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            flex-wrap: wrap;
+        }
+
+        nav a {
+            color: var(--foreground);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            padding: 0.5rem 0;
+            border-bottom: 2px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        nav a:hover {
+            border-bottom-color: var(--primary);
+        }
+
+        nav a:focus-visible {
+            outline: 2px solid var(--ring);
+            outline-offset: 2px;
+        }
+
+        /* Sections */
+        section {
+            margin-bottom: 4rem;
+            scroll-margin-top: 100px;
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--foreground);
+        }
+
+        h3 {
+            font-size: 1.375rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            margin-top: 2rem;
+            color: var(--foreground);
+        }
+
+        h3:first-child {
+            margin-top: 0;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--foreground);
+        }
+
+        /* Token Display */
+        .tokens-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .token-card {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .token-swatch {
+            width: 100%;
+            height: 80px;
+            border-radius: calc(var(--radius) - 2px);
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: box-shadow 0.2s;
+        }
+
+        .token-swatch:focus-visible {
+            outline: 2px solid var(--ring);
+            outline-offset: 2px;
+        }
+
+        .token-name {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--foreground);
+            word-break: break-word;
+        }
+
+        .token-value {
+            font-size: 0.75rem;
+            color: var(--muted-foreground);
+            font-family: monospace;
+            word-break: break-all;
+        }
+
+        /* Typography Scale */
+        .type-scale {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .type-specimen {
+            display: flex;
+            align-items: baseline;
+            gap: 2rem;
+            border-left: 3px solid var(--ring);
+            padding-left: 1.5rem;
+        }
+
+        .type-label {
+            min-width: 100px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--muted-foreground);
+            font-family: monospace;
+        }
+
+        .type-sample {
+            flex: 1;
+        }
+
+        /* Registry Cards */
+        .registry-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .registry-card {
+            border: 1px solid var(--border);
+            border-radius: calc(var(--radius) - 2px);
+            padding: 1.5rem;
+            background-color: var(--card);
+            transition: box-shadow 0.2s;
+        }
+
+        .registry-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .registry-card:focus-within {
+            outline: 2px solid var(--ring);
+            outline-offset: 2px;
+        }
+
+        .registry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .registry-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--foreground);
+        }
+
+        .registry-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-stable {
+            background-color: var(--success);
+            color: var(--success-foreground);
+        }
+
+        .status-experimental {
+            background-color: var(--warning);
+            color: var(--warning-foreground);
+        }
+
+        .status-deprecated {
+            background-color: var(--destructive);
+            color: var(--destructive-foreground);
+        }
+
+        .registry-id {
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: var(--muted-foreground);
+            margin-bottom: 0.75rem;
+            word-break: break-all;
+        }
+
+        .registry-description {
+            font-size: 0.95rem;
+            color: var(--foreground);
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .registry-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .registry-meta-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .registry-meta-label {
+            font-weight: 600;
+            color: var(--muted-foreground);
+            min-width: 70px;
+        }
+
+        .registry-meta-value {
+            color: var(--foreground);
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background-color: var(--muted);
+            color: var(--muted-foreground);
+            border-radius: 3px;
+            font-size: 0.75rem;
+        }
+
+        /* Category Grouping */
+        .category-section {
+            margin-bottom: 3rem;
+        }
+
+        .category-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--ring);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        th {
+            background-color: var(--muted);
+            color: var(--foreground);
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            border: 1px solid var(--border);
+        }
+
+        td {
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            color: var(--foreground);
+        }
+
+        tr:nth-child(even) {
+            background-color: var(--muted);
+        }
+
+        tr:hover {
+            background-color: var(--input);
+        }
+
+        code {
+            background-color: var(--muted);
+            color: var(--foreground);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+
+        /* Spacing Scale */
+        .spacing-scale {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .spacing-example {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .spacing-box {
+            flex-shrink: 0;
+            background-color: var(--ring);
+            border-radius: 3px;
+        }
+
+        .spacing-label {
+            min-width: 100px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--muted-foreground);
+            font-family: monospace;
+        }
+
+        /* Focus Styles */
+        *:focus-visible {
+            outline: 2px solid var(--ring);
+            outline-offset: 2px;
+        }
+
+        /* Accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background-color: var(--primary);
+            color: var(--primary-foreground);
+            padding: 8px;
+            text-decoration: none;
+            z-index: 100;
+        }
+
+        .skip-link:focus-visible {
+            top: 0;
+        }
+
+        /* Dark Mode Toggle */
+        .theme-toggle {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 0.75rem 1.5rem;
+            background-color: var(--primary);
+            color: var(--primary-foreground);
+            border: none;
+            border-radius: calc(var(--radius) - 2px);
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+            z-index: 50;
+        }
+
+        .theme-toggle:hover {
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .theme-toggle:focus-visible {
+            outline: 2px solid var(--ring);
+            outline-offset: 2px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            main {
+                padding: 1.5rem 0.75rem;
+            }
+
+            h1 {
+                font-size: 1.875rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            h3 {
+                font-size: 1.125rem;
+            }
+
+            nav ul {
+                gap: 1rem;
+                font-size: 0.875rem;
+            }
+
+            .tokens-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+
+            .registry-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .type-specimen {
+                flex-direction: column;
+                gap: 0.75rem;
+                align-items: flex-start;
+            }
+
+            .theme-toggle {
+                bottom: 1rem;
+                right: 1rem;
+                padding: 0.5rem 1rem;
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <nav role="navigation" aria-label="Design System Sections">
+        <ul>
+            <li><a href="#tokens">Design Tokens</a></li>
+            <li><a href="#typography">Typography</a></li>
+            <li><a href="#spacing">Spacing</a></li>
+            <li><a href="#primitives">Primitives</a></li>
+            <li><a href="#components">Components</a></li>
+            <li><a href="#compositions">Compositions</a></li>
+            <li><a href="#patterns">Patterns</a></li>
+        </ul>
+    </nav>
+
+    <main id="main-content">
+        <h1>Rinquo Design System</h1>
+        <p class="header-subtitle">Canonical UI foundations for the Rinquo booking platform. All tokens, primitives, components, and patterns defined here.</p>
+
+        <!-- ======================================
+             DESIGN TOKENS
+             ====================================== -->
+        <section id="tokens">
+            <h2>Design Tokens</h2>
+            <p>Foundation colors and semantic tokens used throughout the design system. All colors meet WCAG AA contrast requirements.</p>
+
+            <h3>Light Theme Colors</h3>
+
+            <h4 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 1rem; color: var(--foreground);">Neutrals</h4>
+            <div class="tokens-grid">
+                <div class="token-card">
+                    <div class="token-swatch" style="background-color: #ffffff; border: 2px solid #e5e7eb;"></div>
+                    <div class="token-name">Background</div>
+                    <div class="token-value">#ffffff</div>
+                </div>
+                <div class="token-card">
+                    <div class="token-swatch" style="background-color: #1f2937;"></div>
+                    <div class="token-name">Foreground</div>
+                    <div class="token-value">#1f2937</div>
+                </div>
+                <div class="token-card">
+                    <div class="token-swatch" style="background-color: #e5e7eb;"></div>
+                    <div class="token-name">Border</div>
+                    <div class="token-value">#e5e7eb</div>
+                </div>
+                <div class="token-card">
+                    <div class="token-swatch" style="background-color: #f9fafb; border: 1px solid #e5e7eb;"></div>
+                    <div class="token-name">Input</div>
+                    <div class="token-value">#f9fafb</div>
+                </div>
+                <div class="token-card">
+                    <div class="token-swatch" style="background-color: #6b7280;"></div>
+                    <div class="token-name">Muted Foreground</div>
+                    <div class="token-value">#6b7280</div>
+                </div>
+            </div>
+
+            <h4 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 1rem; color: var(--foreground);">Semantic Colors</h4>
+            <div class="tokens-grid">
+                <div class="token-card">
+                    <div class="token-swatch" style="background-color: #1e40af;"></div>
+                    <div class="token-name">Primary</div>
+                    <div class="token-value">#1e40af</div>
+                </div>
+                <div class="token-card">
+                    <div class="token-swatch" style="background-color: #dc2626;"></div>
+                    <div class="token-name">Destructive</div>
+                    <div class="token-value">#dc2626</div>
+                </div>
+                <div class="token-card">
+                    <div class="token-swatch" style="background-color: #047857;"></div>
+                    <div class="token-name">Success</div>
+                    <div class="token-value">#047857</div>
+                </div>
+                <div class="token-card">
+                    <div class="token-swatch" style="background-color: #b45309;"></div>
+                    <div class="token-name">Warning</div>
+                    <div class="token-value">#b45309</div>
+                </div>
+                <div class="token-card">
+                    <div class="token-swatch" style="background-color: #2563eb;"></div>
+                    <div class="token-name">Info</div>
+                    <div class="token-value">#2563eb</div>
+                </div>
+                <div class="token-card">
+                    <div class="token-swatch" style="background-color: #f3f4f6;"></div>
+                    <div class="token-name">Secondary</div>
+                    <div class="token-value">#f3f4f6</div>
+                </div>
+                <div class="token-card">
+                    <div class="token-swatch" style="background-color: #e5e7eb;"></div>
+                    <div class="token-name">Muted</div>
+                    <div class="token-value">#e5e7eb</div>
+                </div>
+                <div class="token-card">
+                    <div class="token-swatch" style="background-color: #3b82f6;"></div>
+                    <div class="token-name">Ring (Focus)</div>
+                    <div class="token-value">#3b82f6</div>
+                </div>
+            </div>
+
+            <h4 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 1rem; color: var(--foreground);">Sidebar (Brand)</h4>
+            <div class="tokens-grid">
+                <div class="token-card">
+                    <div class="token-swatch" style="background-color: #001f3f;"></div>
+                    <div class="token-name">Sidebar</div>
+                    <div class="token-value">#001f3f</div>
+                </div>
+                <div class="token-card">
+                    <div class="token-swatch" style="background-color: #003d6b;"></div>
+                    <div class="token-name">Sidebar Border</div>
+                    <div class="token-value">#003d6b</div>
+                </div>
+            </div>
+
+            <h3>Radius Tokens</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Token</th>
+                        <th>Value</th>
+                        <th>Usage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>--radius</code></td>
+                        <td>0.625rem (10px)</td>
+                        <td>Large cards, modals</td>
+                    </tr>
+                    <tr>
+                        <td><code>--radius-md</code></td>
+                        <td>0.375rem (6px)</td>
+                        <td>Cards, badges</td>
+                    </tr>
+                    <tr>
+                        <td><code>--radius-sm</code></td>
+                        <td>0.25rem (4px)</td>
+                        <td>Small buttons, subtle elements</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- ======================================
+             TYPOGRAPHY
+             ====================================== -->
+        <section id="typography">
+            <h2>Typography</h2>
+            <p>Instrument Sans font family with three weights. Hierarchy managed via Tailwind size utilities.</p>
+
+            <h3>Type Scale</h3>
+            <div class="type-scale">
+                <div class="type-specimen">
+                    <div class="type-label">h1 / 2xl</div>
+                    <div class="type-sample" style="font-size: 2rem; font-weight: 600; line-height: 2;">Heading One</div>
+                </div>
+                <div class="type-specimen">
+                    <div class="type-label">h2 / xl</div>
+                    <div class="type-sample" style="font-size: 1.5rem; font-weight: 600; line-height: 1.75;">Heading Two</div>
+                </div>
+                <div class="type-specimen">
+                    <div class="type-label">h3 / lg</div>
+                    <div class="type-sample" style="font-size: 1.125rem; font-weight: 600; line-height: 1.75;">Heading Three</div>
+                </div>
+                <div class="type-specimen">
+                    <div class="type-label">body / base</div>
+                    <div class="type-sample" style="font-size: 1rem; font-weight: 400; line-height: 1.5;">Body text with regular weight. Used for paragraphs and primary content.</div>
+                </div>
+                <div class="type-specimen">
+                    <div class="type-label">small / sm</div>
+                    <div class="type-sample" style="font-size: 0.875rem; font-weight: 400; line-height: 1.5;">Small text for captions and labels.</div>
+                </div>
+                <div class="type-specimen">
+                    <div class="type-label">xs</div>
+                    <div class="type-sample" style="font-size: 0.75rem; font-weight: 400; line-height: 1.5;">Extra small for badges and micro text.</div>
+                </div>
+            </div>
+
+            <h3>Font Weights</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Weight</th>
+                        <th>Value</th>
+                        <th>Usage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>font-normal</code></td>
+                        <td>400</td>
+                        <td>Body text, regular content</td>
+                    </tr>
+                    <tr>
+                        <td><code>font-medium</code></td>
+                        <td>500</td>
+                        <td>Form labels, secondary buttons</td>
+                    </tr>
+                    <tr>
+                        <td><code>font-semibold</code></td>
+                        <td>600</td>
+                        <td>Headings, strong emphasis</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- ======================================
+             SPACING
+             ====================================== -->
+        <section id="spacing">
+            <h2>Spacing Scale</h2>
+            <p>Tailwind's 4px base scale used for padding, margins, and gaps. All values follow the scale for visual consistency.</p>
+
+            <div class="spacing-scale">
+                <div class="spacing-example">
+                    <div class="spacing-label">4px</div>
+                    <div class="spacing-box" style="width: 4px; height: 20px;"></div>
+                    <span style="font-size: 0.875rem; color: var(--muted-foreground);">space-1, gap-1, p-1, m-1</span>
+                </div>
+                <div class="spacing-example">
+                    <div class="spacing-label">8px</div>
+                    <div class="spacing-box" style="width: 8px; height: 20px;"></div>
+                    <span style="font-size: 0.875rem; color: var(--muted-foreground);">space-2, gap-2, p-2, m-2</span>
+                </div>
+                <div class="spacing-example">
+                    <div class="spacing-label">12px</div>
+                    <div class="spacing-box" style="width: 12px; height: 20px;"></div>
+                    <span style="font-size: 0.875rem; color: var(--muted-foreground);">space-3, gap-3, p-3, m-3</span>
+                </div>
+                <div class="spacing-example">
+                    <div class="spacing-label">16px</div>
+                    <div class="spacing-box" style="width: 16px; height: 20px;"></div>
+                    <span style="font-size: 0.875rem; color: var(--muted-foreground);">space-4, gap-4, p-4, m-4</span>
+                </div>
+                <div class="spacing-example">
+                    <div class="spacing-label">24px</div>
+                    <div class="spacing-box" style="width: 24px; height: 20px;"></div>
+                    <span style="font-size: 0.875rem; color: var(--muted-foreground);">space-6, gap-6, p-6, m-6</span>
+                </div>
+                <div class="spacing-example">
+                    <div class="spacing-label">32px</div>
+                    <div class="spacing-box" style="width: 32px; height: 20px;"></div>
+                    <span style="font-size: 0.875rem; color: var(--muted-foreground);">space-8, gap-8, p-8, m-8</span>
+                </div>
+                <div class="spacing-example">
+                    <div class="spacing-label">48px</div>
+                    <div class="spacing-box" style="width: 48px; height: 20px;"></div>
+                    <span style="font-size: 0.875rem; color: var(--muted-foreground);">space-12, gap-12, p-12, m-12</span>
+                </div>
+            </div>
+
+            <h3>Responsive Breakpoints</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Breakpoint</th>
+                        <th>Width</th>
+                        <th>Prefix</th>
+                        <th>Usage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Mobile</td>
+                        <td>0px</td>
+                        <td>(no prefix)</td>
+                        <td>Default mobile styles</td>
+                    </tr>
+                    <tr>
+                        <td><code>sm</code></td>
+                        <td>640px</td>
+                        <td><code>sm:</code></td>
+                        <td>Larger phones, small tablets</td>
+                    </tr>
+                    <tr>
+                        <td><code>md</code></td>
+                        <td>768px</td>
+                        <td><code>md:</code></td>
+                        <td>Tablets</td>
+                    </tr>
+                    <tr>
+                        <td><code>lg</code></td>
+                        <td>1024px</td>
+                        <td><code>lg:</code></td>
+                        <td>Laptops</td>
+                    </tr>
+                    <tr>
+                        <td><code>xl</code></td>
+                        <td>1280px</td>
+                        <td><code>xl:</code></td>
+                        <td>Desktops</td>
+                    </tr>
+                    <tr>
+                        <td><code>2xl</code></td>
+                        <td>1536px</td>
+                        <td><code>2xl:</code></td>
+                        <td>Large desktops</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- ======================================
+             PRIMITIVES
+             ====================================== -->
+        <section id="primitives">
+            <h2>Primitives</h2>
+            <p>Foundational reusable controls built from Radix UI with Tailwind CSS styling.</p>
+
+            <div class="category-section">
+                <div class="category-title">Form Elements</div>
+
+                <article id="button" data-registry-id="button" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Button</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">button</div>
+                    <p class="registry-description">Accessible button component with variants for primary, secondary, destructive, and outline states. Supports loading, disabled, and icon-only configurations.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/button.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Variants:</span>
+                            <div class="tag-list">
+                                <span class="tag">default</span>
+                                <span class="tag">destructive</span>
+                                <span class="tag">outline</span>
+                                <span class="tag">secondary</span>
+                                <span class="tag">ghost</span>
+                                <span class="tag">link</span>
+                            </div>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Primitive</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="input" data-registry-id="input" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Input</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">input</div>
+                    <p class="registry-description">Accessible text input with support for type variants, error states, and placeholder text.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/input.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Accessibility:</span>
+                            <span class="registry-meta-value">Pair with Label component</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Primitive</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="label" data-registry-id="label" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Label</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">label</div>
+                    <p class="registry-description">Accessible form label for associating with inputs via htmlFor attribute.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/label.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Required:</span>
+                            <span class="registry-meta-value">For all form inputs</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Primitive</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="checkbox" data-registry-id="checkbox" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Checkbox</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">checkbox</div>
+                    <p class="registry-description">Accessible checkbox with keyboard support and focus management.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/checkbox.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Primitive</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="select" data-registry-id="select" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Select</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">select</div>
+                    <p class="registry-description">Accessible dropdown select component with keyboard navigation and screen reader support.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/select.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Primitive</span>
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <div class="category-section">
+                <div class="category-title">Layout & Structure</div>
+
+                <article id="card" data-registry-id="card" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Card</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">card</div>
+                    <p class="registry-description">Container component for grouping related content with Header, Title, Description, and Footer subcomponents.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/card.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Subcomponents:</span>
+                            <div class="tag-list">
+                                <span class="tag">Card</span>
+                                <span class="tag">CardHeader</span>
+                                <span class="tag">CardTitle</span>
+                                <span class="tag">CardContent</span>
+                                <span class="tag">CardFooter</span>
+                            </div>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Primitive</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="separator" data-registry-id="separator" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Separator</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">separator</div>
+                    <p class="registry-description">Visual divider between sections. Horizontal or vertical orientation.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/separator.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Primitive</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="sidebar" data-registry-id="sidebar" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Sidebar</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">sidebar</div>
+                    <p class="registry-description">Responsive sidebar navigation with dark navy branding and active state indicators. Collapses on mobile.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/sidebar.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Background:</span>
+                            <span class="registry-meta-value">#001f3f (Navy)</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Primitive</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="sheet" data-registry-id="sheet" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Sheet</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">sheet</div>
+                    <p class="registry-description">Accessible slide-out panel from screen edge with backdrop and focus management. Useful for mobile navigation.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/sheet.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Primitive</span>
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <div class="category-section">
+                <div class="category-title">Interaction</div>
+
+                <article id="toggle" data-registry-id="toggle" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Toggle</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">toggle</div>
+                    <p class="registry-description">Accessible toggle button for binary states with ARIA support and keyboard navigation.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/toggle.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">Date pickers, time slot selection</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Primitive</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="toggle-group" data-registry-id="toggle-group" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">ToggleGroup</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">toggle-group</div>
+                    <p class="registry-description">Accessible toggle group for selecting from multiple options with exclusive or multiple selection modes.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/toggle-group.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Modes:</span>
+                            <div class="tag-list">
+                                <span class="tag">single</span>
+                                <span class="tag">multiple</span>
+                            </div>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Primitive</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="collapsible" data-registry-id="collapsible" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Collapsible</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">collapsible</div>
+                    <p class="registry-description">Accessible collapsible section with keyboard support and animated open/close states.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/collapsible.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Primitive</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="dialog" data-registry-id="dialog" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Dialog</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">dialog</div>
+                    <p class="registry-description">Accessible modal dialog with backdrop, focus trap, and escape key handling. Perfect for confirmations and forms.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/dialog.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Primitive</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="dropdown-menu" data-registry-id="dropdown-menu" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">DropdownMenu</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">dropdown-menu</div>
+                    <p class="registry-description">Accessible dropdown menu for actions triggered from buttons with keyboard and focus management.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/dropdown-menu.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Primitive</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="navigation-menu" data-registry-id="navigation-menu" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">NavigationMenu</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">navigation-menu</div>
+                    <p class="registry-description">Accessible navigation menu with keyboard support and submenu capability for primary navigation.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/navigation-menu.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Primitive</span>
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <div class="category-section">
+                <div class="category-title">Display</div>
+
+                <article id="avatar" data-registry-id="avatar" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Avatar</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">avatar</div>
+                    <p class="registry-description">User avatar with fallback to initials. Supports images, initials, and placeholder states. Used for customer/staff identities.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/avatar.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Primitive</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="skeleton" data-registry-id="skeleton" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Skeleton</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">skeleton</div>
+                    <p class="registry-description">Placeholder component for loading states with animated pulse to indicate content is loading.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/skeleton.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Primitive</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="spinner" data-registry-id="spinner" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Spinner</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">spinner</div>
+                    <p class="registry-description">Animated loading indicator for inline operations and button loading states.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/spinner.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Primitive</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="icon" data-registry-id="icon" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Icon</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">icon</div>
+                    <p class="registry-description">Simple icon wrapper for lucide-react icons with consistent sizing and accessibility.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/icon.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Library:</span>
+                            <span class="registry-meta-value">lucide-react</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Primitive</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="tooltip" data-registry-id="tooltip" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Tooltip</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">tooltip</div>
+                    <p class="registry-description">Accessible tooltip for supplementary information with keyboard access and screen reader support.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/tooltip.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Primitive</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="placeholder-pattern" data-registry-id="placeholder-pattern" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">PlaceholderPattern</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">placeholder-pattern</div>
+                    <p class="registry-description">Placeholder or no-data state component for empty states with appropriate messaging.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/placeholder-pattern.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Primitive</span>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- ======================================
+             COMPONENTS
+             ====================================== -->
+        <section id="components">
+            <h2>Components</h2>
+            <p>Reusable product UI built from primitives. These components combine primitives into meaningful patterns.</p>
+
+            <div class="registry-grid">
+                <article id="alert" data-registry-id="alert" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Alert</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">alert</div>
+                    <p class="registry-description">Semantic alert box for errors, warnings, info, and success messages. Visible in conflict resolution and status updates.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/alert.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Variants:</span>
+                            <div class="tag-list">
+                                <span class="tag">default</span>
+                                <span class="tag">destructive</span>
+                            </div>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="badge" data-registry-id="badge" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Badge</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">badge</div>
+                    <p class="registry-description">Small label for status indicators: booking status, resource availability, payment status.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/badge.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Variants:</span>
+                            <div class="tag-list">
+                                <span class="tag">default</span>
+                                <span class="tag">secondary</span>
+                                <span class="tag">destructive</span>
+                                <span class="tag">outline</span>
+                            </div>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="breadcrumb" data-registry-id="breadcrumb" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Breadcrumb</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">breadcrumb</div>
+                    <p class="registry-description">Navigation hierarchy for multi-step flows with semantic markup and accessibility.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/ui/breadcrumb.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Note:</span>
+                            <span class="registry-meta-value">Included for future navigation patterns</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- ======================================
+             COMPOSITIONS
+             ====================================== -->
+        <section id="compositions">
+            <h2>Compositions</h2>
+            <p>Reusable multi-component patterns that combine primitives and components into domain-specific patterns.</p>
+
+            <div class="registry-grid">
+                <article id="exact-start-time-selector" data-registry-id="exact-start-time-selector" data-status="experimental" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">ExactStartTimeSelector</h3>
+                        <span class="registry-status status-experimental">Experimental</span>
+                    </div>
+                    <div class="registry-id">exact-start-time-selector</div>
+                    <p class="registry-description">Composition for selecting exact-start booking time with date picker, time grid, and availability feedback.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Status:</span>
+                            <span class="registry-meta-value">Not yet implemented; required for customer booking flow</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">02-booking-schedule.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <div class="tag-list">
+                                <span class="tag">Select</span>
+                                <span class="tag">Toggle</span>
+                                <span class="tag">Alert</span>
+                            </div>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Composition</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="service-card" data-registry-id="service-card" data-status="experimental" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">ServiceCard</h3>
+                        <span class="registry-status status-experimental">Experimental</span>
+                    </div>
+                    <div class="registry-id">service-card</div>
+                    <p class="registry-description">Card displaying a service with description, duration, vehicle variants, and pricing. Includes select action button.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Status:</span>
+                            <span class="registry-meta-value">Not yet implemented; required for customer shop home</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">01-customer-shop-home.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <div class="tag-list">
+                                <span class="tag">Card</span>
+                                <span class="tag">Button</span>
+                            </div>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Composition</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="operations-stat-card" data-registry-id="operations-stat-card" data-status="experimental" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">OperationsStatCard</h3>
+                        <span class="registry-status status-experimental">Experimental</span>
+                    </div>
+                    <div class="registry-id">operations-stat-card</div>
+                    <p class="registry-description">Card displaying a key metric for operations dashboard (Appointments, Checked in, In service, Conflicts) with large number and label.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Status:</span>
+                            <span class="registry-meta-value">Not yet implemented; required for dashboard feature</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">03-staff-operations-dashboard.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <div class="tag-list">
+                                <span class="tag">Card</span>
+                            </div>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Composition</span>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- ======================================
+             PATTERNS
+             ====================================== -->
+        <section id="patterns">
+            <h2>Patterns</h2>
+            <p>Interaction and layout conventions documented for consistent UI behavior across the application.</p>
+
+            <div class="registry-grid">
+                <article id="step-indicator" data-registry-id="step-indicator" data-status="experimental" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Step Indicator</h3>
+                        <span class="registry-status status-experimental">Experimental</span>
+                    </div>
+                    <div class="registry-id">step-indicator</div>
+                    <p class="registry-description">Visual progress indicator for multi-step booking flow with completed (filled circle), current (highlighted), and upcoming (empty) steps.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">02-booking-schedule.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Use Cases:</span>
+                            <span class="registry-meta-value">Booking flow progress</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Pattern</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="exact-start-time-selection" data-registry-id="exact-start-time-selection" data-status="experimental" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Exact-start Time Selection</h3>
+                        <span class="registry-status status-experimental">Experimental</span>
+                    </div>
+                    <div class="registry-id">exact-start-time-selection</div>
+                    <p class="registry-description">Booking pattern where customer selects a specific start time rather than range. Shows available slots in 15-minute increments with capacity indication.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">02-booking-schedule.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Use Cases:</span>
+                            <span class="registry-meta-value">Customer booking flow (step 3)</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Pattern</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="responsive-sidebar-nav" data-registry-id="responsive-sidebar-nav" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Responsive Sidebar Navigation</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">responsive-sidebar-nav</div>
+                    <p class="registry-description">Left sidebar navigation for staff and owner dashboards with dark navy background (#001f3f) and blue highlights. Collapses to hamburger on mobile.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">References:</span>
+                            <span class="registry-meta-value">03-staff-operations-dashboard.png, 05-owner-scheduling-configuration.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Responsive:</span>
+                            <span class="registry-meta-value">Full sidebar on md+, collapsible on mobile</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Pattern</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="capacity-aware-booking" data-registry-id="capacity-aware-booking" data-status="experimental" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Capacity-Aware Booking</h3>
+                        <span class="registry-status status-experimental">Experimental</span>
+                    </div>
+                    <div class="registry-id">capacity-aware-booking</div>
+                    <p class="registry-description">Booking system prevents overbooking by showing resource capacity, consumption per service, and available slots. Disables unavailable times with conflict warnings.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">References:</span>
+                            <span class="registry-meta-value">02-booking-schedule.png, 03-staff-operations-dashboard.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Constraint:</span>
+                            <span class="registry-meta-value">Never intentionally overbooking</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Pattern</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="status-driven-color" data-registry-id="status-driven-color" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Status-Driven Color System</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">status-driven-color</div>
+                    <p class="registry-description">Consistent use of semantic colors to indicate status. Color + text used together (never color alone) for accessibility.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Colors:</span>
+                            <div class="tag-list">
+                                <span class="tag">Blue: Active/Selected</span>
+                                <span class="tag">Green: Success</span>
+                                <span class="tag">Amber: Warning</span>
+                                <span class="tag">Red: Error</span>
+                            </div>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Use Cases:</span>
+                            <span class="registry-meta-value">Status badges, alerts, capacity bars</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Pattern</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="operational-failure-feedback" data-registry-id="operational-failure-feedback" data-status="experimental" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Operational Failure Feedback</h3>
+                        <span class="registry-status status-experimental">Experimental</span>
+                    </div>
+                    <div class="registry-id">operational-failure-feedback</div>
+                    <p class="registry-description">When operations fail (email delivery, resource assignment), display in "Attention" panel with clear error message and retry option.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">03-staff-operations-dashboard.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Components:</span>
+                            <div class="tag-list">
+                                <span class="tag">Alert</span>
+                                <span class="tag">Button</span>
+                            </div>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Pattern</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="conflict-resolution" data-registry-id="conflict-resolution" data-status="experimental" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Conflict Resolution</h3>
+                        <span class="registry-status status-experimental">Experimental</span>
+                    </div>
+                    <div class="registry-id">conflict-resolution</div>
+                    <p class="registry-description">Multi-step conflict resolution for scheduling conflicts showing affected booking, conflict details, and resolution options.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">04-scheduling-conflict-resolution.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Components:</span>
+                            <div class="tag-list">
+                                <span class="tag">Alert</span>
+                                <span class="tag">Card</span>
+                                <span class="tag">ToggleGroup</span>
+                                <span class="tag">Button</span>
+                            </div>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Pattern</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="owner-configuration-tabs" data-registry-id="owner-configuration-tabs" data-status="experimental" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Owner Configuration Tabs</h3>
+                        <span class="registry-status status-experimental">Experimental</span>
+                    </div>
+                    <div class="registry-id">owner-configuration-tabs</div>
+                    <p class="registry-description">Tab interface for owner configuration pages with blue underline for active tab and "OWNER ONLY" indicator.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">05-owner-scheduling-configuration.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Tabs:</span>
+                            <div class="tag-list">
+                                <span class="tag">Resources</span>
+                                <span class="tag">Services</span>
+                                <span class="tag">Business Hours</span>
+                                <span class="tag">Booking Policy</span>
+                            </div>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Pattern</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="multi-option-selection" data-registry-id="multi-option-selection" data-status="experimental" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Multi-Option Selection</h3>
+                        <span class="registry-status status-experimental">Experimental</span>
+                    </div>
+                    <div class="registry-id">multi-option-selection</div>
+                    <p class="registry-description">For selecting from multiple options (date, time, resource), use toggles in grid layout. Selected option highlighted in blue, unavailable grayed out.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">References:</span>
+                            <span class="registry-meta-value">02-booking-schedule.png, 04-scheduling-conflict-resolution.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Components:</span>
+                            <div class="tag-list">
+                                <span class="tag">Toggle</span>
+                                <span class="tag">ToggleGroup</span>
+                                <span class="tag">Dialog</span>
+                            </div>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Pattern</span>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- ======================================
+             GUIDELINES
+             ====================================== -->
+        <section>
+            <h2>Usage Guidelines</h2>
+
+            <h3>When to Register New UI</h3>
+            <ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
+                <li>Register new reusable UI when you create or materially change it</li>
+                <li>Ensure the component solves a repeated problem (appears in 2+ places or 2+ reference designs)</li>
+                <li>Build using primitives from the UI library</li>
+                <li>Include TypeScript types and at least one test case</li>
+                <li>Do not register arbitrary page-local fragments or one-off utility classes</li>
+            </ul>
+
+            <h3>Accessibility Requirements</h3>
+            <ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
+                <li>All components use native HTML semantics where possible</li>
+                <li>Keyboard navigation support (Tab, Arrow keys, Escape)</li>
+                <li>Visible focus states (blue outline ring)</li>
+                <li>Color never used alone; always paired with text or icon</li>
+                <li>Minimum WCAG AA contrast (4.5:1 for text)</li>
+                <li>Touch targets minimum 44px x 44px on mobile</li>
+                <li>Respects prefers-reduced-motion for animations</li>
+            </ul>
+
+            <h3>Responsive Design</h3>
+            <ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
+                <li>Mobile-first: design for small screens, then enhance with breakpoints</li>
+                <li>Use Tailwind's <code>md:</code> (768px) and <code>lg:</code> (1024px) prefixes</li>
+                <li>Touch-friendly targets on mobile (44px minimum)</li>
+                <li>Simplified forms and single-column layouts on mobile</li>
+                <li>Test at: mobile (375px), tablet (768px), desktop (1024px+)</li>
+            </ul>
+
+            <h3>Deprecation Rules</h3>
+            <ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
+                <li>Mark components as deprecated in the registry with a successor field</li>
+                <li>Update existing consumers within one sprint</li>
+                <li>Keep the registry entry for historical reference</li>
+                <li>Never delete deprecated entries without approval</li>
+            </ul>
+        </section>
+
+        <!-- ======================================
+             FOOTER
+             ====================================== -->
+        <section style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border);">
+            <p style="font-size: 0.875rem; color: var(--muted-foreground);">
+                <strong>Design System Source of Truth</strong><br>
+                <br>
+                Design Tokens: <code>resources/css/app.css</code> (CSS custom properties in :root and .dark)<br>
+                UI Primitives: <code>resources/js/components/ui/</code> (Radix UI + Tailwind CSS)<br>
+                UI Registry: <code>docs/design-system/ui-registry.yaml</code><br>
+                Reference Designs: <code>docs/reference-ui/</code><br>
+                <br>
+                For questions or updates, refer to the design system documentation at <code>docs/design-system/README.md</code>.
+            </p>
+        </section>
+    </main>
+
+    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark theme">
+        <span id="theme-toggle-text">Dark Mode</span>
+    </button>
+
+    <script>
+        // Theme toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeToggleText = document.getElementById('theme-toggle-text');
+        const html = document.documentElement;
+
+        // Load theme from localStorage
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') {
+            html.classList.add('dark');
+            themeToggleText.textContent = 'Light Mode';
+        }
+
+        // Handle theme toggle
+        themeToggle.addEventListener('click', () => {
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                themeToggleText.textContent = 'Dark Mode';
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                themeToggleText.textContent = 'Light Mode';
+            }
+        });
+
+        // Validate registry sync invariants
+        const registryIds = new Set();
+        const registryStatuses = {};
+
+        document.querySelectorAll('[data-registry-id]').forEach(element => {
+            const id = element.getAttribute('data-registry-id');
+            const status = element.getAttribute('data-status');
+
+            if (registryIds.has(id)) {
+                console.warn(`Duplicate registry ID: ${id}`);
+            }
+
+            registryIds.add(id);
+            registryStatuses[id] = status;
+        });
+
+        console.log(`Registry validation: ${registryIds.size} entries found`);
+        console.log(`Statuses: ${Object.values(registryStatuses).filter((s, i, a) => a.indexOf(s) === i).join(', ')}`);
+    </script>
+</body>
+</html>
