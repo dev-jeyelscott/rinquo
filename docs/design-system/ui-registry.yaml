@@ -1,0 +1,937 @@
+---
+metadata:
+  schema_version: '1.0'
+  created_date: '2026-10-04'
+  project: rinquo
+  description: Canonical UI registry for Rinquo booking platform
+  source_of_truth: 'resources/js/components/'
+
+# ==============================================================================
+# PRIMITIVES: Foundational reusable controls from Radix UI
+# ==============================================================================
+
+primitives:
+  - id: button
+    name: Button
+    category: primitive
+    path: resources/js/components/ui/button.tsx
+    description: >
+      Accessible button component with variants for primary, secondary,
+      destructive, and outline states. Supports loading, disabled, and
+      icon-only configurations.
+    variants:
+      - default
+      - destructive
+      - outline
+      - secondary
+      - ghost
+      - link
+    props:
+      - name: variant
+        type: enum
+        required: false
+        description: Button style variant
+      - name: size
+        type: enum
+        required: false
+        description: Button size (sm, md, lg)
+      - name: disabled
+        type: boolean
+        required: false
+      - name: children
+        type: ReactNode
+        required: true
+    accessibility:
+      - Native button element
+      - Focus visible with ring
+      - Disabled state prevents interaction
+      - Loading state provides feedback
+    responsive: mobile-first with touch targets 44px minimum
+    status: active
+    dependencies:
+      - class-variance-authority
+      - clsx
+    notes: >
+      Core component. Used throughout for all interactions.
+      Always provide clear label text or aria-label.
+
+  - id: input
+    name: Input
+    category: primitive
+    path: resources/js/components/ui/input.tsx
+    description: >
+      Accessible text input with support for type variants,
+      error states, and placeholder text.
+    props:
+      - name: type
+        type: string
+        required: false
+        default: text
+      - name: placeholder
+        type: string
+        required: false
+      - name: disabled
+        type: boolean
+        required: false
+      - name: value
+        type: string
+        required: false
+    accessibility:
+      - Should be wrapped with Label component
+      - Visible error states
+      - Placeholder is not a substitute for label
+    responsive: Full width by default, constrained by parent
+    status: active
+    dependencies: []
+    notes: Always pair with Label for proper form semantics.
+
+  - id: label
+    name: Label
+    category: primitive
+    path: resources/js/components/ui/label.tsx
+    description: Accessible form label for associating with inputs.
+    props:
+      - name: htmlFor
+        type: string
+        required: true
+        description: ID of associated input
+      - name: children
+        type: ReactNode
+        required: true
+    accessibility:
+      - Associated via htmlFor attribute
+      - Essential for screen readers
+    status: active
+    dependencies: []
+    notes: Required for all form inputs.
+
+  - id: card
+    name: Card
+    category: primitive
+    path: resources/js/components/ui/card.tsx
+    description: >
+      Container component for grouping related content.
+      Includes Header, Title, Description, and Footer subcomponents.
+    subcomponents:
+      - Card
+      - CardHeader
+      - CardFooter
+      - CardTitle
+      - CardDescription
+      - CardContent
+    props:
+      - name: children
+        type: ReactNode
+        required: true
+    accessibility: Semantic section element
+    status: active
+    dependencies: []
+    responsive: >
+      Full width with padding. Constrained via parent grid or container.
+    notes: >
+      Used for services, queue items, booking cards.
+      Use CardHeader + CardTitle for consistency.
+
+  - id: checkbox
+    name: Checkbox
+    category: primitive
+    path: resources/js/components/ui/checkbox.tsx
+    description: Accessible checkbox with keyboard support.
+    props:
+      - name: id
+        type: string
+        required: true
+      - name: checked
+        type: boolean
+        required: false
+      - name: disabled
+        type: boolean
+        required: false
+    accessibility:
+      - Keyboard navigation
+      - Visible focus state
+      - Proper label association
+    status: active
+    dependencies:
+      - '@radix-ui/react-checkbox'
+    notes: Always wrap with Label for accessibility.
+
+  - id: select
+    name: Select
+    category: primitive
+    path: resources/js/components/ui/select.tsx
+    description: >
+      Accessible dropdown select component with search support
+      (when configured).
+    subcomponents:
+      - Select
+      - SelectTrigger
+      - SelectValue
+      - SelectContent
+      - SelectItem
+      - SelectGroup
+      - SelectLabel
+    props:
+      - name: value
+        type: string
+        required: false
+      - name: onValueChange
+        type: callback
+        required: false
+    accessibility:
+      - Keyboard navigation (arrow keys)
+      - Screen reader support
+      - Focus management
+    status: active
+    dependencies:
+      - '@radix-ui/react-select'
+    notes: >
+      Use for single-select dropdowns. Prefer custom components
+      for multi-select scenarios.
+
+  - id: dialog
+    name: Dialog
+    category: primitive
+    path: resources/js/components/ui/dialog.tsx
+    description: >
+      Accessible modal dialog with backdrop, focus trap,
+      and escape key handling.
+    subcomponents:
+      - Dialog
+      - DialogTrigger
+      - DialogContent
+      - DialogHeader
+      - DialogFooter
+      - DialogTitle
+      - DialogDescription
+    accessibility:
+      - Focus trap (focus stays within dialog)
+      - Escape key closes dialog
+      - Backdrop prevents interaction with page
+      - Proper heading structure
+    status: active
+    dependencies:
+      - '@radix-ui/react-dialog'
+    notes: >
+      Use for confirmations, forms, and detailed information.
+      Always include DialogTitle for accessibility.
+
+  - id: navigation-menu
+    name: NavigationMenu
+    category: primitive
+    path: resources/js/components/ui/navigation-menu.tsx
+    description: >
+      Accessible navigation menu with keyboard support and
+      submenu capability.
+    subcomponents:
+      - NavigationMenu
+      - NavigationMenuList
+      - NavigationMenuItem
+      - NavigationMenuTrigger
+      - NavigationMenuContent
+      - NavigationMenuLink
+    accessibility:
+      - Keyboard navigation
+      - ARIA roles
+      - Focus management
+    status: active
+    dependencies:
+      - '@radix-ui/react-navigation-menu'
+
+  - id: dropdown-menu
+    name: DropdownMenu
+    category: primitive
+    path: resources/js/components/ui/dropdown-menu.tsx
+    description: >
+      Accessible dropdown menu for actions triggered from buttons
+      (e.g., tenant selector, settings).
+    subcomponents:
+      - DropdownMenu
+      - DropdownMenuTrigger
+      - DropdownMenuContent
+      - DropdownMenuItem
+      - DropdownMenuCheckboxItem
+      - DropdownMenuRadioItem
+      - DropdownMenuLabel
+      - DropdownMenuSeparator
+    accessibility:
+      - Keyboard navigation
+      - Focus trap
+      - Escape key
+    status: active
+    dependencies:
+      - '@radix-ui/react-dropdown-menu'
+    notes: >
+      Use for action menus. For page-level navigation,
+      use NavigationMenu.
+
+  - id: separator
+    name: Separator
+    category: primitive
+    path: resources/js/components/ui/separator.tsx
+    description: Visual divider between sections.
+    props:
+      - name: orientation
+        type: enum
+        default: horizontal
+    accessibility: Decorative (role=none)
+    status: active
+    dependencies:
+      - '@radix-ui/react-separator'
+
+  - id: avatar
+    name: Avatar
+    category: primitive
+    path: resources/js/components/ui/avatar.tsx
+    description: >
+      User avatar with fallback to initials. Supports images,
+      initials, and placeholder states.
+    subcomponents:
+      - Avatar
+      - AvatarImage
+      - AvatarFallback
+    props:
+      - name: src
+        type: string
+        required: false
+      - name: fallback
+        type: string
+        required: true
+    accessibility:
+      - Semantic image or initials
+      - Alt text for images
+    status: active
+    dependencies:
+      - '@radix-ui/react-avatar'
+    notes: >
+      Used for customer/staff identities in queue and
+      booking displays.
+
+  - id: toggle
+    name: Toggle
+    category: primitive
+    path: resources/js/components/ui/toggle.tsx
+    description: >
+      Accessible toggle button for binary states
+      (e.g., date selection).
+    props:
+      - name: pressed
+        type: boolean
+        required: false
+      - name: onPressedChange
+        type: callback
+        required: false
+      - name: disabled
+        type: boolean
+        required: false
+    accessibility:
+      - ARIA pressed state
+      - Keyboard support
+      - Focus visible
+    status: active
+    dependencies:
+      - '@radix-ui/react-toggle'
+    notes: Use for date pickers and time slot selection.
+
+  - id: toggle-group
+    name: ToggleGroup
+    category: primitive
+    path: resources/js/components/ui/toggle-group.tsx
+    description: >
+      Accessible toggle group for selecting from multiple options
+      with exclusive or multiple selection modes.
+    props:
+      - name: type
+        type: enum
+        description: 'single or multiple'
+        required: true
+      - name: value
+        type: string | array
+        required: false
+      - name: onValueChange
+        type: callback
+        required: false
+    accessibility:
+      - ARIA role group
+      - Keyboard navigation
+      - Focus visible
+    status: active
+    dependencies:
+      - '@radix-ui/react-toggle-group'
+    notes: Use for exclusive or multi-select button groups.
+
+  - id: collapsible
+    name: Collapsible
+    category: primitive
+    path: resources/js/components/ui/collapsible.tsx
+    description: >
+      Accessible collapsible section with keyboard support
+      and animated open/close.
+    subcomponents:
+      - Collapsible
+      - CollapsibleTrigger
+      - CollapsibleContent
+    accessibility:
+      - ARIA expanded state
+      - Keyboard navigation
+      - Semantic button trigger
+    status: active
+    dependencies:
+      - '@radix-ui/react-collapsible'
+
+  - id: sidebar
+    name: Sidebar
+    category: primitive
+    path: resources/js/components/ui/sidebar.tsx
+    description: >
+      Responsive sidebar navigation component with collapsible menu,
+      dark navy branding, and active state indicators.
+    subcomponents:
+      - Sidebar
+      - SidebarContent
+      - SidebarFooter
+      - SidebarMenu
+      - SidebarMenuItem
+      - SidebarMenuButton
+    accessibility:
+      - Semantic nav element
+      - Keyboard navigation
+      - ARIA labels
+    responsive: Full-width on mobile, fixed on desktop
+    status: active
+    dependencies:
+      - '@radix-ui/react-collapsible'
+    notes: >
+      Uses dark navy background (#001f3f) from reference designs.
+      Active items highlighted in blue.
+
+  - id: sheet
+    name: Sheet
+    category: primitive
+    path: resources/js/components/ui/sheet.tsx
+    description: >
+      Accessible slide-out panel from screen edge with backdrop
+      and focus management.
+    subcomponents:
+      - Sheet
+      - SheetTrigger
+      - SheetContent
+      - SheetHeader
+      - SheetTitle
+      - SheetDescription
+    accessibility:
+      - Focus trap
+      - Escape key closes
+      - Backdrop click closes
+    status: active
+    dependencies: []
+    notes: >
+      Useful for mobile navigation drawers and side panels.
+
+# ==============================================================================
+# COMPONENTS: Reusable product UI built from primitives
+# ==============================================================================
+
+components:
+  - id: alert
+    name: Alert
+    category: component
+    path: resources/js/components/ui/alert.tsx
+    description: >
+      Semantic alert box for errors, warnings, info, and success messages.
+      Visible in conflict resolution, operational failures, and status updates.
+    variants:
+      - default
+      - destructive
+    props:
+      - name: variant
+        type: enum
+        required: true
+      - name: title
+        type: string
+        required: false
+      - name: children
+        type: ReactNode
+        required: true
+    accessibility:
+      - role=alert for real-time alerts
+      - Semantic color + text (not color alone)
+      - Clear call-to-action when needed
+    responsive: Full width, constrained by parent
+    status: active
+    dependencies:
+      - Button (for actions)
+    use_cases:
+      - 'Scheduling conflict warning (red): "Booking cannot be fulfilled"'
+      - 'Email failure: displayed with supporting text'
+      - 'Info messages: status updates and confirmations'
+    notes: >
+      Only default and destructive variants exist in implementation.
+      For success, warning, or info colors, use inline styling or
+      create variants as needed. Reference designs show destructive
+      (red) alerts for conflicts and informational (blue) alerts.
+
+  - id: badge
+    name: Badge
+    category: component
+    path: resources/js/components/ui/badge.tsx
+    description: >
+      Small label for status indicators: booking status,
+      resource availability, payment status.
+    variants:
+      - default
+      - secondary
+      - destructive
+      - outline
+    props:
+      - name: variant
+        type: enum
+        required: false
+      - name: children
+        type: string
+        required: true
+    accessibility: >
+      Semantic text. Avoid relying on color alone;
+      include status text.
+    status: active
+    use_cases:
+      - 'Booking status: "Checked in" (blue default), "Waiting" (via className), "Confirmed"'
+      - 'Availability: "Available", "Blocked"'
+      - 'Resource usage: "1 / 2" (capacity)'
+    notes: >
+      Implementation provides 4 variants: default (blue), secondary (gray),
+      destructive (red), outline. For warning/success colors, use className
+      overrides or additional variants as patterns emerge.
+      Reference designs use custom styling for amber/orange "Awaiting reply"
+      and green "Available" status indicators.
+
+  - id: breadcrumb
+    name: Breadcrumb
+    category: component
+    path: resources/js/components/ui/breadcrumb.tsx
+    description: Navigation hierarchy for multi-step flows.
+    subcomponents:
+      - Breadcrumb
+      - BreadcrumbList
+      - BreadcrumbItem
+      - BreadcrumbLink
+      - BreadcrumbSeparator
+      - BreadcrumbPage
+    props:
+      - name: items
+        type: array
+        required: true
+    accessibility:
+      - aria-label on nav
+      - Semantic links and current page
+    responsive: Collapses on mobile
+    status: active
+    notes: >
+      Not used in current reference designs; included for future
+      navigation patterns.
+
+  - id: skeleton
+    name: Skeleton
+    category: component
+    path: resources/js/components/ui/skeleton.tsx
+    description: >
+      Placeholder component for loading states.
+      Shows animated pulse to indicate content is loading.
+    props:
+      - name: className
+        type: string
+        required: false
+    accessibility: Marked as decorative (aria-hidden)
+    status: active
+    notes: >
+      Use for skeleton screens while data is fetching.
+      Pair with proper loading indicators for accessibility.
+
+  - id: spinner
+    name: Spinner
+    category: component
+    path: resources/js/components/ui/spinner.tsx
+    description: >
+      Animated loading indicator for inline operations.
+    props:
+      - name: className
+        type: string
+        required: false
+    accessibility: >
+      Include aria-busy or role=status with live region
+      for context.
+    status: active
+    notes: >
+      Use for button loading states and async operations.
+      Pair with text ("Loading...") for accessibility.
+
+  - id: icon
+    name: Icon
+    category: component
+    path: resources/js/components/ui/icon.tsx
+    description: >
+      Simple icon wrapper for lucide-react icons.
+    props:
+      - name: icon
+        type: ReactNode
+        required: true
+      - name: className
+        type: string
+        required: false
+    accessibility: >
+      Icons should have aria-label or be children of labeled elements.
+      Never use icons alone for meaning.
+    status: active
+    notes: >
+      Re-exports lucide-react for consistent icon sizing.
+
+  - id: placeholder-pattern
+    name: PlaceholderPattern
+    category: component
+    path: resources/js/components/ui/placeholder-pattern.tsx
+    description: >
+      Placeholder or no-data state component.
+    status: active
+    notes: >
+      Minimal implementation. Use for empty states with
+      appropriate messaging.
+
+  - id: tooltip
+    name: Tooltip
+    category: component
+    path: resources/js/components/ui/tooltip.tsx
+    description: >
+      Accessible tooltip for supplementary information.
+    subcomponents:
+      - TooltipProvider
+      - Tooltip
+      - TooltipTrigger
+      - TooltipContent
+    accessibility:
+      - Keyboard accessible
+      - Screen reader announcements
+    status: active
+    dependencies:
+      - '@radix-ui/react-tooltip'
+    notes: >
+      Wrap root component in TooltipProvider.
+
+# ==============================================================================
+# COMPOSITIONS: Reusable multi-component patterns
+# ==============================================================================
+
+compositions:
+  - id: exact-start-time-selector
+    name: ExactStartTimeSelector
+    category: composition
+    description: >
+      Composition for selecting exact-start booking time.
+      Includes date picker, time grid, and availability feedback.
+      Proposed: not yet implemented in component library.
+    reference_design: '02-booking-schedule.png'
+    uses:
+      - Select (month picker)
+      - Toggle (date selection)
+      - Toggle (time slot selection)
+      - Alert (availability info)
+    props:
+      - name: date
+        type: Date
+        required: true
+      - name: onDateChange
+        type: callback
+        required: true
+      - name: availableTimes
+        type: array
+        required: true
+      - name: selectedTime
+        type: string
+        required: false
+      - name: onTimeSelect
+        type: callback
+        required: true
+    accessibility:
+      - ARIA-live for availability updates
+      - Keyboard navigation through times
+      - Clear selected state
+    responsive: Single-column on mobile, grid on larger screens
+    status: proposed
+    notes: >
+      Shows disabled times grayed out. Selected time highlighted in blue.
+      "Next available" button shows suggested slot. Capacity shown as
+      "40 min capacity" with progress bar indicator.
+      Required for customer booking flow; implement to move to active.
+
+  - id: service-card
+    name: ServiceCard
+    category: composition
+    description: >
+      Card displaying a service with description, duration,
+      vehicle variants, and pricing. Includes select action button.
+      Proposed: not yet implemented in component library.
+    reference_design: '01-customer-shop-home.png'
+    uses:
+      - Card
+      - Button (Select action)
+    props:
+      - name: service
+        type: object
+        required: true
+      - name: icon
+        type: ReactNode
+        required: false
+      - name: onSelect
+        type: callback
+        required: true
+    accessibility:
+      - Semantic card structure
+      - Clear action button
+    responsive: Full width cards in grid layout
+    status: proposed
+    notes: >
+      Shows service title, variants (Sedan, SUV), duration,
+      price (From P300), and select button. Light gray background
+      for service icon area.
+      Required for customer shop home page; implement to move to active.
+
+  - id: operations-stat-card
+    name: OperationsStatCard
+    category: composition
+    description: >
+      Card displaying a key metric for operations dashboard
+      (Appointments, Checked in, In service, Conflicts).
+      Simple card with large number and label.
+    reference_design: '03-staff-operations-dashboard.png'
+    uses:
+      - Card
+    props:
+      - name: label
+        type: string
+        required: true
+      - name: value
+        type: number
+        required: true
+      - name: color
+        type: enum
+        description: 'blue | orange | green | red'
+        required: false
+    accessibility: Semantic card with clear labels
+    responsive: Four-column grid on desktop, two on tablet, one on mobile
+    status: proposed
+    notes: >
+      Large number display with colored label.
+      Used in operations dashboard header.
+      Implement as part of dashboard feature.
+
+# ==============================================================================
+# PATTERNS: Interaction and layout conventions
+# ==============================================================================
+
+patterns:
+  - id: step-indicator
+    name: Step Indicator
+    category: pattern
+    description: >
+      Visual progress indicator for multi-step booking flow.
+      Shows completed (filled circle), current (highlighted circle),
+      and upcoming (empty circle) steps with connecting lines.
+    reference_design: '02-booking-schedule.png'
+    implementation_notes: >
+      Reference design shows: numbered circles 1-5, with step 3 (Schedule)
+      highlighted in blue and completed steps 1-2 also blue.
+      Connected by blue lines between steps.
+    use_cases:
+      - Booking flow: Vehicle → Service → Schedule → Details → Confirm
+    responsive: Adapts to screen width, stacks vertically on mobile
+    status: proposed
+    notes: >
+      Foundational pattern from reference designs.
+      Implement as reusable component to support multi-step flows.
+
+  - id: exact-start-time-selection
+    name: Exact-start Time Selection
+    category: pattern
+    description: >
+      Booking pattern where customer selects a specific start time
+      rather than a time range. Shows available slots in 15-minute
+      increments with capacity indication.
+    components:
+      - ExactStartTimeSelector
+    use_cases:
+      - Customer booking flow
+    reference_design: '02-booking-schedule.png'
+    notes: >
+      Step 3 of booking. Shows calendar with selected date in blue.
+      Time slots below as buttons. Unavailable times grayed out.
+      Selected time has blue background. "Next available" suggestion shown.
+
+  - id: responsive-sidebar-nav
+    name: Responsive Sidebar Navigation
+    category: pattern
+    description: >
+      Left sidebar navigation for staff and owner dashboards.
+      Dark navy background (#001f3f) with white text. Active item
+      highlighted in blue. Collapses to hamburger on mobile.
+    components:
+      - Sidebar
+      - Button (collapsible trigger on mobile)
+    use_cases:
+      - Staff operations dashboard
+      - Owner configuration pages
+    reference_design: '03-staff-operations-dashboard.png, 05-owner-scheduling-configuration.png'
+    responsive: >
+      Full-width sidebar on desktop (md+), collapsible drawer on mobile
+    status: active
+    notes: >
+      Menu items: Dashboard, Queue, Bookings, Walk-in, Conflicts,
+      Operational failures, Settings. Active item has blue background.
+
+  - id: capacity-aware-booking
+    name: Capacity-Aware Booking
+    category: pattern
+    description: >
+      Booking system prevents overbooking by showing resource capacity,
+      consumption per service, and available slots. Disables unavailable
+      times. Shows conflict warnings.
+    reference_design: '02-booking-schedule.png, 03-staff-operations-dashboard.png'
+    components:
+      - ExactStartTimeSelector (with capacity info)
+      - Capacity indicator (proposed CapacityBar)
+    constraints:
+      - Capacity is never intentionally overbooked
+      - A booking must fit in one compatible resource
+      - Capacity checks and holds are atomic
+    notes: >
+      Reference designs show capacity as "1/2", "2/2" in queue and
+      config pages. Shows visual bar indicator for utilization.
+
+  - id: status-driven-color
+    name: Status-Driven Color System
+    category: pattern
+    description: >
+      Consistent use of semantic colors to indicate status across
+      the application. Color + text used together (never color alone).
+    colors:
+      - 'Blue (#1e40af primary): Active, selected, action, next steps'
+      - 'Green (#047857 success): Checked in, available, completed'
+      - 'Amber (#b45309 warning): Waiting, pending, awaiting approval'
+      - 'Red (#dc2626 destructive): Conflict, error, failure, full capacity'
+      - 'Gray (#e5e7eb border): Disabled, unavailable, historical'
+    use_cases:
+      - Booking status badges
+      - Resource availability
+      - Alert backgrounds
+      - Capacity bars
+    implementation: >
+      Use CSS custom properties: --color-primary, --color-success,
+      --color-warning, --color-destructive. Tailwind utilities:
+      bg-primary, bg-success, bg-warning, bg-destructive, etc.
+    status: active
+    notes: >
+      Reference designs demonstrate consistent color use across
+      all screens. Always pair with descriptive text.
+      See tokens.md for exact color values and contrast ratios.
+
+  - id: operational-failure-feedback
+    name: Operational Failure Feedback
+    category: pattern
+    description: >
+      When operations fail (e.g., email delivery), display in
+      "Attention" panel with clear error message and retry option.
+    reference_design: '03-staff-operations-dashboard.png'
+    components:
+      - Alert (with icon and error description)
+      - Button (Retry)
+    use_cases:
+      - Email delivery failures
+      - Resource assignment failures
+      - Payment processing failures
+    notes: >
+      "Attention" section shown in right panel. Orange text for
+      warning, red for error. "Retry available" link provided.
+
+  - id: conflict-resolution
+    name: Conflict Resolution
+    category: pattern
+    description: >
+      Multi-step conflict resolution for scheduling conflicts.
+      Shows affected booking, conflict details, and resolution options
+      (same-time reassignment, propose new time, hold until customer response).
+    reference_design: '04-scheduling-conflict-resolution.png'
+    components:
+      - Alert (destructive, conflict summary)
+      - Card (affected booking details)
+      - ToggleGroup (resolution options)
+      - Button (send proposal)
+    use_cases:
+      - Conflict resolution page for staff
+    notes: >
+      Shows "Booking cannot be fulfilled" alert at top.
+      Affected booking in left card, resolution options in right panel.
+      Selected option highlighted in blue with blue dot indicator.
+
+  - id: owner-configuration-tabs
+    name: Owner Configuration Tabs
+    category: pattern
+    description: >
+      Tab interface for owner configuration pages with blue underline
+      for active tab. Tabs: Resources, Services, Business hours, Booking policy.
+    reference_design: '05-owner-scheduling-configuration.png'
+    components:
+      - NavigationMenu (horizontal tabs with underline)
+    use_cases:
+      - Owner settings and configuration pages
+    notes: >
+      Active tab has blue text and blue underline.
+      "OWNER ONLY" label shown in top right of page.
+
+  - id: multi-option-selection
+    name: Multi-Option Selection (Dialog or Inline)
+    category: pattern
+    description: >
+      For selecting from multiple options (date, time, resource),
+      use toggles in grid layout. Selected option highlighted in blue,
+      unavailable options grayed out.
+    components:
+      - Toggle
+      - ToggleGroup
+      - Dialog (if in modal context)
+    use_cases:
+      - Time slot selection
+      - Date selection
+      - Resource assignment
+    reference_design: '02-booking-schedule.png, 04-scheduling-conflict-resolution.png'
+    notes: >
+      See reference design 02 for time selection and
+      reference design 04 for reschedule option selection.
+
+# ==============================================================================
+# STATUS & METADATA
+# ==============================================================================
+
+status_definitions:
+  active: >
+    Component or pattern is implemented and canonical.
+    Should be used for all new UI implementing that feature.
+  proposed: >
+    Pattern identified in reference designs but not yet implemented.
+    Add to roadmap and implement when the feature is built.
+  deprecated: >
+    Component is no longer recommended. A successor exists or the pattern
+    is no longer used. Update consuming pages within one sprint.
+
+deprecation_rules: >
+  When a component becomes deprecated:
+  1. Mark it as deprecated in the registry with a successor field
+  2. Update existing consumers within one sprint
+  3. Keep the registry entry for historical reference
+
+quality_checklist:
+  - Registered in this file
+  - TypeScript props fully typed (if implemented)
+  - At least one test case (if implemented)
+  - Accessibility validated (keyboard, focus, screen reader)
+  - Responsive behavior documented
+  - Placed in correct layer (primitive, component, composition, pattern)
+  - Follows semantic color and naming conventions
+  - JSDoc comments on complex behavior
