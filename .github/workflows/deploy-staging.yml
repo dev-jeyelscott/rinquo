@@ -1,0 +1,93 @@
+name: Deploy staging
+run-name: Deploy staging ${{ github.event.workflow_run.head_sha }}
+
+# Runs only after CI succeeded for a push to main. Builds the production
+# image once, deploys it by digest, and records that digest so production
+# can promote exactly the same image.
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-24.04
+    environment: staging
+    env:
+      SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - name: Checkout the CI-validated commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+
+      - name: Resolve image name
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push the production image
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          target: production
+          push: true
+          tags: ${{ env.IMAGE }}:${{ env.SHA }}
+          labels: |
+            org.opencontainers.image.revision=${{ env.SHA }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Pin the image by digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          [[ "$DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "unexpected digest: $DIGEST"; exit 1; }
+          echo "IMAGE_REF=${IMAGE}@${DIGEST}" >> "$GITHUB_ENV"
+
+      - name: Deploy to staging
+        uses: ./.github/actions/deploy-over-ssh
+        with:
+          image-ref: ${{ env.IMAGE_REF }}
+          ready-url: ${{ vars.APP_URL }}/ready
+          deploy-path: ${{ vars.DEPLOY_PATH || '/opt/rinquo' }}
+          ssh-host: ${{ secrets.SSH_HOST }}
+          ssh-user: ${{ secrets.SSH_USER }}
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh-known-hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
+          registry-user: ${{ vars.GHCR_PULL_USER }}
+          registry-token: ${{ secrets.GHCR_PULL_TOKEN }}
+
+      - name: Record the staging-validated release
+        run: printf '%s\n' "$IMAGE_REF" > release.txt
+
+      - name: Upload release record
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-${{ env.SHA }}
+          path: release.txt
+          retention-days: 90

@@ -1,0 +1,81 @@
+name: Deploy over SSH
+description: Copy the deploy files to the host and run deploy.sh with an immutable image reference.
+
+inputs:
+  image-ref:
+    description: Image reference pinned by digest (registry/name@sha256:...)
+    required: true
+  ready-url:
+    description: Public readiness URL checked after the switch
+    required: true
+  deploy-path:
+    description: Deploy directory on the host (contains app.env)
+    required: true
+  ssh-host:
+    required: true
+  ssh-user:
+    required: true
+  ssh-private-key:
+    required: true
+  ssh-known-hosts:
+    required: true
+  registry-user:
+    description: User for the host to pull from GHCR (only for private packages)
+    required: false
+    default: ''
+  registry-token:
+    description: Read-only GHCR token for the host (only for private packages)
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Configure SSH
+      shell: bash
+      env:
+        SSH_PRIVATE_KEY: ${{ inputs.ssh-private-key }}
+        SSH_KNOWN_HOSTS: ${{ inputs.ssh-known-hosts }}
+      run: |
+        install -m 700 -d ~/.ssh
+        printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+        chmod 644 ~/.ssh/known_hosts
+
+    - name: Copy deploy files
+      shell: bash
+      env:
+        SSH_TARGET: ${{ inputs.ssh-user }}@${{ inputs.ssh-host }}
+        DEPLOY_PATH: ${{ inputs.deploy-path }}
+      run: |
+        ssh -i ~/.ssh/deploy_key -o BatchMode=yes "$SSH_TARGET" "mkdir -p $(printf %q "$DEPLOY_PATH")"
+        scp -i ~/.ssh/deploy_key -o BatchMode=yes \
+          deploy/compose.production.yaml deploy/deploy.sh "$SSH_TARGET:$DEPLOY_PATH/"
+
+    - name: Log the host in to GHCR
+      if: inputs.registry-token != ''
+      shell: bash
+      env:
+        SSH_TARGET: ${{ inputs.ssh-user }}@${{ inputs.ssh-host }}
+        REGISTRY_USER: ${{ inputs.registry-user }}
+        REGISTRY_TOKEN: ${{ inputs.registry-token }}
+      run: |
+        printf '%s' "$REGISTRY_TOKEN" | ssh -i ~/.ssh/deploy_key -o BatchMode=yes "$SSH_TARGET" \
+          "docker login ghcr.io --username $(printf %q "$REGISTRY_USER") --password-stdin"
+
+    - name: Run deploy.sh
+      shell: bash
+      env:
+        SSH_TARGET: ${{ inputs.ssh-user }}@${{ inputs.ssh-host }}
+        DEPLOY_PATH: ${{ inputs.deploy-path }}
+        READY_URL: ${{ inputs.ready-url }}
+        IMAGE_REF: ${{ inputs.image-ref }}
+      run: |
+        ssh -i ~/.ssh/deploy_key -o BatchMode=yes "$SSH_TARGET" \
+          "cd $(printf %q "$DEPLOY_PATH") && chmod +x deploy.sh && RINQUO_READY_URL=$(printf %q "$READY_URL") ./deploy.sh $(printf %q "$IMAGE_REF")"
+
+    - name: Remove SSH key
+      if: always()
+      shell: bash
+      run: rm -f ~/.ssh/deploy_key

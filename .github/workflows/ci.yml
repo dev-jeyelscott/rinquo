@@ -1,0 +1,191 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: backend
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:17.11-alpine
+        env:
+          POSTGRES_DB: rinquo_testing
+          POSTGRES_USER: rinquo
+          POSTGRES_PASSWORD: rinquo-ci-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rinquo -d rinquo_testing"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+      redis:
+        image: redis:8.10.2-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: '5432'
+      DB_USERNAME: rinquo
+      DB_PASSWORD: rinquo-ci-password
+      REDIS_HOST: 127.0.0.1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.5'
+          extensions: pdo_pgsql, redis, pcntl, intl, zip, bcmath
+          tools: composer:v2
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate --ansi
+
+      - name: Lint (Pint)
+        run: composer lint
+
+      - name: Static analysis (PHPStan)
+        run: composer analyse
+
+      - name: Tests (Pest, migrations from an empty database)
+        run: composer test
+
+  frontend:
+    name: frontend
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Type check
+        run: npm run types
+
+      - name: Tests (Vitest)
+        run: npm run test
+
+      - name: Production build
+        run: npm run build
+
+  e2e:
+    name: e2e
+    runs-on: ubuntu-24.04
+    env:
+      COMPOSE_FILE: compose.yaml:compose.ci.yaml
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install npm dependencies and build assets
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          echo "HOST_UID=$(id -u)" >> "$GITHUB_ENV"
+          echo "HOST_GID=$(id -g)" >> "$GITHUB_ENV"
+
+      - name: Build and install the application
+        run: |
+          docker compose build app
+          docker compose run --rm --no-deps app composer install --no-interaction --no-progress --prefer-dist
+          docker compose run --rm --no-deps app php artisan key:generate --ansi
+
+      - name: Start the stack
+        run: |
+          docker compose up -d --wait
+          docker compose exec -T app php artisan migrate --force
+
+      - name: Foundation smoke checks
+        run: docker compose exec -T app php artisan foundation:smoke
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Playwright smoke tests
+        run: npm run test:e2e
+
+      - name: Collect stack logs
+        if: failure()
+        run: docker compose logs --no-color > compose-logs.txt
+
+      - name: Upload Playwright report and logs
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: e2e-report
+          path: |
+            playwright-report/
+            test-results/
+            compose-logs.txt
+          retention-days: 14
+
+  image:
+    name: image
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build the production image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          target: production
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -1,0 +1,84 @@
+name: Promote to production
+run-name: Promote ${{ inputs.sha }} to production
+
+# Manual only. The "production" environment's required reviewers approve the
+# job before any step runs. Production never builds: it redeploys the exact
+# image digest that a successful staging deploy recorded for this commit.
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Full 40-character commit SHA that is already deployed to staging
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+  packages: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    runs-on: ubuntu-24.04
+    environment: production
+    env:
+      SHA: ${{ inputs.sha }}
+    steps:
+      - name: Validate input
+        run: '[[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "sha must be a full 40-character lowercase commit SHA"; exit 1; }'
+
+      - name: Find the successful staging deploy for this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run_id="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow deploy-staging.yml \
+            --status success --limit 200 --json databaseId,displayTitle \
+            --jq "map(select(.displayTitle == \"Deploy staging ${SHA}\")) | first | .databaseId // empty")"
+          if [[ -z "$run_id" ]]; then
+            echo "No successful staging deploy found for ${SHA}; deploy it to staging first."
+            exit 1
+          fi
+          echo "STAGING_RUN_ID=$run_id" >> "$GITHUB_ENV"
+
+      - name: Load the staging-validated image digest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download "$STAGING_RUN_ID" --repo "$GITHUB_REPOSITORY" --name "release-${SHA}" --dir release
+          image_ref="$(tr -d '[:space:]' < release/release.txt)"
+          expected="^ghcr\.io/${GITHUB_REPOSITORY,,}@sha256:[0-9a-f]{64}$"
+          [[ "$image_ref" =~ $expected ]] || { echo "unexpected release record: $image_ref"; exit 1; }
+          echo "IMAGE_REF=$image_ref" >> "$GITHUB_ENV"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Confirm the image exists in the registry
+        run: docker buildx imagetools inspect "$IMAGE_REF" > /dev/null
+
+      - name: Checkout the deploy files of this release
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.sha }}
+          persist-credentials: false
+
+      - name: Deploy to production
+        uses: ./.github/actions/deploy-over-ssh
+        with:
+          image-ref: ${{ env.IMAGE_REF }}
+          ready-url: ${{ vars.APP_URL }}/ready
+          deploy-path: ${{ vars.DEPLOY_PATH || '/opt/rinquo' }}
+          ssh-host: ${{ secrets.SSH_HOST }}
+          ssh-user: ${{ secrets.SSH_USER }}
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh-known-hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
+          registry-user: ${{ vars.GHCR_PULL_USER }}
+          registry-token: ${{ secrets.GHCR_PULL_TOKEN }}

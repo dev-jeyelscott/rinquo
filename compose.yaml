@@ -1,0 +1,147 @@
+# Local development stack. Start with `make setup` once, then `make up`.
+# Values come from .env (copied from .env.example).
+name: rinquo
+
+x-app: &app
+    build:
+        context: .
+        target: dev
+        args:
+            APP_UID: ${HOST_UID:-1000}
+            APP_GID: ${HOST_GID:-1000}
+    image: rinquo-dev:local
+    volumes:
+        - .:/app
+    depends_on:
+        pgsql:
+            condition: service_healthy
+        redis:
+            condition: service_healthy
+        s3-init:
+            condition: service_completed_successfully
+    restart: unless-stopped
+
+services:
+    app:
+        <<: *app
+        environment:
+            SERVER_NAME: ':80'
+        ports:
+            - '${APP_PORT:-80}:80'
+        healthcheck:
+            test: ['CMD', 'curl', '-fsS', 'http://localhost/up']
+            interval: 10s
+            timeout: 5s
+            retries: 12
+            start_period: 10s
+
+    horizon:
+        <<: *app
+        command: ['php', 'artisan', 'horizon']
+        stop_grace_period: 70s
+        healthcheck:
+            test: ['CMD', 'php', 'artisan', 'horizon:status']
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 20s
+
+    scheduler:
+        <<: *app
+        command: ['php', 'artisan', 'schedule:work']
+
+    reverb:
+        <<: *app
+        command:
+            ['php', 'artisan', 'reverb:start', '--host=0.0.0.0', '--port=8080']
+        healthcheck:
+            test: ['CMD', 'curl', '-fsS', 'http://localhost:8080/up']
+            interval: 10s
+            timeout: 5s
+            retries: 6
+            start_period: 10s
+
+    vite:
+        image: node:24.21.0-trixie-slim
+        user: '${HOST_UID:-1000}:${HOST_GID:-1000}'
+        working_dir: /app
+        command: ['npm', 'run', 'dev']
+        environment:
+            VITE_PORT: ${VITE_PORT:-5173}
+        ports:
+            - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
+        volumes:
+            - .:/app
+        restart: unless-stopped
+
+    pgsql:
+        image: postgres:17.11-alpine
+        environment:
+            POSTGRES_DB: ${DB_DATABASE:-rinquo}
+            POSTGRES_USER: ${DB_USERNAME:-rinquo}
+            POSTGRES_PASSWORD: ${DB_PASSWORD:-rinquo-local-password}
+        volumes:
+            - pgsql-data:/var/lib/postgresql/data
+            - ./docker/pgsql/create-testing-database.sql:/docker-entrypoint-initdb.d/10-create-testing-database.sql:ro
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"',
+                ]
+            interval: 5s
+            timeout: 5s
+            retries: 20
+        restart: unless-stopped
+
+    redis:
+        image: redis:8.10.2-alpine
+        volumes:
+            - redis-data:/data
+        healthcheck:
+            test: ['CMD', 'redis-cli', 'ping']
+            interval: 5s
+            timeout: 5s
+            retries: 20
+        restart: unless-stopped
+
+    # Local S3-compatible object storage (the emulator Laravel Sail ships).
+    s3:
+        image: rustfs/rustfs:1.0.1
+        environment:
+            RUSTFS_VOLUMES: /data
+            RUSTFS_ADDRESS: 0.0.0.0:9000
+            RUSTFS_CONSOLE_ENABLE: 'false'
+            RUSTFS_ACCESS_KEY: ${AWS_ACCESS_KEY_ID:-rinquo-local}
+            RUSTFS_SECRET_KEY: ${AWS_SECRET_ACCESS_KEY:-rinquo-local-secret}
+        volumes:
+            - s3-data:/data
+        healthcheck:
+            test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1:9000/health']
+            interval: 5s
+            timeout: 5s
+            retries: 20
+        restart: unless-stopped
+
+    # One-shot: create the private bucket if it does not exist yet.
+    s3-init:
+        image: amazon/aws-cli:2.37.9
+        depends_on:
+            s3:
+                condition: service_healthy
+        environment:
+            AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-rinquo-local}
+            AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-rinquo-local-secret}
+            AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-us-east-1}
+            AWS_BUCKET: ${AWS_BUCKET:-rinquo-local}
+        entrypoint: ['/bin/sh', '-c']
+        command:
+            - >-
+                aws --endpoint-url http://s3:9000 s3api head-bucket --bucket "$${AWS_BUCKET}" >/dev/null 2>&1
+                || aws --endpoint-url http://s3:9000 s3api create-bucket --bucket "$${AWS_BUCKET}"
+        restart: 'no'
+
+volumes:
+    pgsql-data:
+    redis-data:
+    s3-data:

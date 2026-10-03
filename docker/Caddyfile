@@ -1,0 +1,31 @@
+# FrankenPHP / Caddy configuration for every environment.
+#
+# SERVER_NAME controls TLS:
+#   :80                (dev, CI, default) plain HTTP, no automatic HTTPS
+#   app.example.com    (staging/production) automatic HTTPS + HTTP->HTTPS redirect
+{
+	skip_install_trust
+
+	{$CADDY_GLOBAL_OPTIONS}
+
+	frankenphp {
+		{$FRANKENPHP_CONFIG}
+	}
+}
+
+{$SERVER_NAME::80} {
+	encode zstd br gzip
+
+	# Laravel Reverb (Pusher protocol): websocket at /app/{key} and the HTTP
+	# API at /apps/{id}/... share the application's host and certificate.
+	# Application routes must not use the /app/ or /apps/ prefixes.
+	@reverb path /app/* /apps/*
+	handle @reverb {
+		reverse_proxy {$REVERB_UPSTREAM:reverb:8080}
+	}
+
+	handle {
+		root * /app/public
+		php_server
+	}
+}
