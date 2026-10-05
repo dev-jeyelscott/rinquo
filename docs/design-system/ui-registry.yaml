@@ -738,6 +738,10 @@ components:
         type: string
         required: false
         description: When set, shows an optional reason textarea (max 500) and posts it as `reason`
+      - name: dismissLabel
+        type: string
+        required: false
+        description: Dismiss button text, default "Cancel"; use a label distinct from confirmLabel (for example "Keep booking")
     accessibility:
       - Focus is trapped in the dialog and restored to the trigger
       - Trigger has an accessible name that says what is affected
@@ -803,6 +807,39 @@ components:
     status: stable
     dependencies:
       - Alert
+
+  - id: booking-live-status
+    name: BookingLiveStatus
+    category: component
+    path: resources/js/components/booking/booking-live-status.tsx
+    description: >
+      Live-status line of an open booking page, driven by useBookingLive. One
+      quiet line while connected, connecting or just updated; "Updating
+      booking" only after 300 ms of refreshing; a warning alert when the live
+      connection is lost (page may be out of date, Refresh now, with the refresh outcome shown); an error alert
+      when a reload fails (Try again). Realtime only nudges a refetch of the
+      server booking, it never supplies displayed data.
+    props:
+      - name: link
+        type: "'connecting' | 'connected' | 'disconnected'"
+        required: true
+      - name: refresh
+        type: "'idle' | 'refreshing' | 'updated' | 'failed'"
+        required: true
+      - name: onRefresh
+        type: () => void
+        required: true
+    accessibility:
+      - One persistent polite role=status region announces pause and refresh outcomes (silent while healthy); a persistent assertive region announces a failed reload; the visible alerts carry no live role
+      - Activating a recovery control moves focus to the status region
+      - Meaning carried by text and an icon, never colour alone
+      - Recovery buttons keep 44 px height on small screens
+    responsive: Inline text; alerts wrap the action below the message
+    status: stable
+    dependencies:
+      - Alert
+      - Button
+      - Spinner
 
 # ==============================================================================
 # COMPOSITIONS: Reusable multi-component patterns

@@ -1426,7 +1426,7 @@
                         <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">confirm-action</div>
-                    <p class="registry-description">Dialog that confirms an archive, unpublish or decline and then posts it to the server. An optional reason field is posted as reason.</p>
+                    <p class="registry-description">Dialog that confirms an archive, unpublish or decline and then posts it to the server. An optional reason field is posted as reason; dismissLabel renames the dismiss button.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Path:</span>
@@ -1481,6 +1481,29 @@
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Uses:</span>
                             <span class="registry-meta-value">Alert</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="booking-live-status" data-registry-id="booking-live-status" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">BookingLiveStatus</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">booking-live-status</div>
+                    <p class="registry-description">Live-status line for an open booking page: quiet when connected, "Updating booking" only after 300 ms, a warning alert with Refresh now when the connection is lost, an error alert with Try again when a reload fails. Announcements use persistent live regions and recovery moves focus to the status region.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/booking/booking-live-status.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">Alert, Button, Spinner</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Category:</span>
