@@ -3,6 +3,7 @@
 namespace App\Modules\Booking;
 
 use App\Modules\Booking\Models\Booking;
+use App\Modules\Booking\Models\Hold;
 use App\Modules\Identity\Models\User;
 use App\Modules\Scheduling\Models\AddOn;
 use App\Modules\Scheduling\Models\BranchWeeklyHour;
@@ -14,13 +15,16 @@ use App\Modules\Scheduling\Models\ServiceVehicleVariant;
 use App\Modules\Scheduling\Models\ServiceWindow;
 use App\Modules\Scheduling\Models\VehicleType;
 use App\Modules\Tenancy\Actions\CreateOrganization;
+use App\Modules\Tenancy\Models\Membership;
 use App\Modules\Tenancy\Models\Organization;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 
 /**
  * Browser-test support: seeds a ready, published shop that is open around the
@@ -53,6 +57,8 @@ final class TestingShopFixture
             'slug' => ['required', 'string', 'max:60'],
             'capacity' => ['nullable', 'integer', 'between:1,10'],
             'approval_mode' => ['nullable', 'in:auto_confirm,staff_approval'],
+            'staff' => ['nullable', 'boolean'],
+            'booking_in_minutes' => ['nullable', 'integer', 'between:30,2880'],
         ]);
 
         return DB::transaction(function () use ($data): JsonResponse {
@@ -90,12 +96,55 @@ final class TestingShopFixture
 
             $organization->forceFill(['published_at' => now()])->save();
 
+            // An optional active Staff member, for the day-of operations browser journey.
+            $staff = ! empty($data['staff']) ? User::query()->create(['email' => $slug.'-staff@example.test']) : null;
+            if ($staff !== null) {
+                $make(Membership::class, $scope + ['user_id' => $staff->id, 'role' => Membership::STAFF]);
+            }
+
+            // An optional confirmed online booking for a known customer, for the scheduling-conflict journey.
+            $booking = isset($data['booking_in_minutes'])
+                ? self::seedBooking($organization, $variant, $type, $vehicle, $service, $slug, (int) $data['booking_in_minutes'])
+                : null;
+
             return response()->json([
+                'customerEmail' => $booking?->contact_email,
+                'bookingId' => $booking?->public_id,
                 'slug' => $slug,
+                'organizationId' => $organization->id,
+                'staffEmail' => $staff?->email,
                 'vehicleId' => $vehicle->getKey(),
                 'serviceId' => $service->getKey(),
                 'addOnId' => $addOn->getKey(),
             ]);
         });
+    }
+
+    /** A confirmed online booking on the shop's only resource, starting on the next quarter hour after the offset. */
+    private static function seedBooking(Organization $organization, Model $variant, Model $type, Model $vehicle, Model $service, string $slug, int $minutes): Booking
+    {
+        $customer = User::query()->create(['email' => $slug.'-customer@example.test']);
+        $start = CarbonImmutable::createFromTimestampUTC((int) (ceil(now()->addMinutes($minutes)->getTimestamp() / 900) * 900));
+        $resource = PhysicalResource::query()->where('organization_id', $organization->id)->orderBy('id')->firstOrFail();
+        $hold = new Hold;
+        $hold->forceFill([
+            'organization_id' => $organization->id, 'public_id' => (string) Str::uuid(), 'session_token_hash' => hash('sha256', Str::random(16)), 'idempotency_key' => (string) Str::uuid(),
+            'service_vehicle_variant_id' => $variant->getKey(), 'resource_type_id' => $type->getKey(), 'physical_resource_id' => $resource->id, 'units' => 1,
+            'scheduled_start_at' => $start, 'service_end_at' => $start->addMinutes(60), 'occupied_end_at' => $start->addMinutes(70), 'add_on_ids' => [],
+            'status' => Hold::CONVERTED, 'expires_at' => now(),
+        ])->save();
+
+        $booking = new Booking;
+        $booking->forceFill([
+            'organization_id' => $organization->id, 'public_id' => (string) Str::uuid(), 'hold_id' => $hold->id, 'customer_user_id' => $customer->id, 'status' => Booking::CONFIRMED,
+            'service_id' => $service->getKey(), 'service_name' => 'Full wash', 'vehicle_type_id' => $vehicle->getKey(), 'vehicle_type_name' => 'Sedan', 'service_vehicle_variant_id' => $variant->getKey(),
+            'variant_price_centavos' => 35000, 'variant_duration_minutes' => 60, 'buffer_minutes' => 10, 'add_ons_price_centavos' => 0, 'add_ons_duration_minutes' => 0, 'total_price_centavos' => 35000,
+            'resource_type_id' => $type->getKey(), 'resource_type_name' => 'Wash bay', 'consumption_units' => 1,
+            'scheduled_start_at' => $start, 'service_end_at' => $start->addMinutes(60), 'occupied_end_at' => $start->addMinutes(70), 'branch_timezone' => 'Asia/Manila',
+            'approval_mode' => 'auto_confirm', 'policy_snapshot' => ['slot_interval_minutes' => 15, 'min_notice_minutes' => 60, 'horizon_days' => 30, 'approval_window_minutes' => 120],
+            'contact_name' => 'Casey Customer', 'contact_email' => $customer->email, 'physical_resource_id' => $resource->id, 'confirmed_at' => now(),
+        ])->save();
+
+        return $booking;
     }
 }

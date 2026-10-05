@@ -19,6 +19,9 @@ use Illuminate\Validation\ValidationException;
  */
 final class ConfigurationRecords
 {
+    /** Subjects whose update or archive can disrupt future bookings, so they settle impact first. */
+    private const SCHEDULING_SUBJECTS = ['resource_type', 'physical_resource'];
+
     public function __construct(private readonly ChangeOrganization $change) {}
 
     /**
@@ -61,7 +64,7 @@ final class ConfigurationRecords
             $audit->record("{$subject}.{$action}", $subject, $fresh->getKey(), $before, $attributes);
 
             return $fresh;
-        });
+        }, assessImpact: in_array($subject, self::SCHEDULING_SUBJECTS, true));
     }
 
     public function archive(Organization $organization, User $actor, Model $record, string $subject): void
@@ -75,7 +78,7 @@ final class ConfigurationRecords
 
             $fresh->forceFill(['is_active' => false, 'archived_at' => now()])->save();
             $audit->record("{$subject}.archived", $subject, $fresh->getKey(), ['archived' => false], ['archived' => true]);
-        });
+        }, assessImpact: in_array($subject, self::SCHEDULING_SUBJECTS, true));
     }
 
     private function lock(Organization $organization, Model $record): Model

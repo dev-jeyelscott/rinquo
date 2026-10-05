@@ -1,9 +1,17 @@
 <?php
 
 use App\Modules\Booking\Actions\ConfirmBooking;
+use App\Modules\Booking\Actions\ExpireConflictProposals;
 use App\Modules\Booking\Actions\PlaceHold;
+use App\Modules\Booking\Actions\ProposeReschedule;
+use App\Modules\Booking\Actions\RespondToProposal;
 use App\Modules\Booking\Models\Booking;
+use App\Modules\Booking\Models\ConflictEvent;
+use App\Modules\Booking\Models\ConflictProposal;
 use App\Modules\Booking\Models\Hold;
+use App\Modules\Booking\Models\SchedulingConflict;
+use App\Modules\Identity\Models\User;
+use App\Modules\Tenancy\Models\Membership;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -119,6 +127,9 @@ function peakLoads(): array
             UNION ALL
             SELECT physical_resource_id, scheduled_start_at, occupied_end_at, consumption_units
               FROM bookings WHERE status = 'confirmed' OR (status = 'pending_approval' AND pending_expires_at > ?)
+            UNION ALL
+            SELECT physical_resource_id, proposed_start_at, occupied_end_at, units
+              FROM scheduling_conflict_proposals WHERE status = 'active' AND expires_at > ?
         )
         SELECT p.r AS resource_id, MAX(p.load) AS peak FROM (
             SELECT points.r, points.s, SUM(c.u) AS load
@@ -126,7 +137,7 @@ function peakLoads(): array
               JOIN claims c ON c.r = points.r AND c.s <= points.s AND c.e > points.s
              GROUP BY points.r, points.s
         ) p GROUP BY p.r
-        SQL, [now(), now()]))->pluck('peak', 'resource_id')->map(fn ($peak) => (int) $peak)->all();
+        SQL, [now(), now(), now()]))->pluck('peak', 'resource_id')->map(fn ($peak) => (int) $peak)->all();
 }
 
 function summarize(array $results): array
@@ -246,5 +257,109 @@ test('two units of capacity admit exactly two of many parallel holds', function 
     expect(summarize($results))->toBe(['won' => 2, 'rejected' => 6, 'error' => 0]);
     foreach (peakLoads() as $peak) {
         expect($peak)->toBeLessThanOrEqual(2);
+    }
+});
+
+/** An open scheduling conflict for a booking, written directly (detection itself is covered elsewhere). */
+function openConflict(Shop $shop, Booking $booking): SchedulingConflict
+{
+    return SchedulingConflict::query()->create([
+        'organization_id' => $shop->organization->id, 'public_id' => (string) Str::uuid(), 'booking_id' => $booking->id, 'status' => 'open', 'cause' => 'resource_blocked', 'source' => 'test',
+        'context' => [], 'original_resource_id' => $shop->records->resource->id, 'detected_at' => now(), 'revision' => 1,
+    ]);
+}
+
+test('parallel proposals from different conflicts cannot both hold the last unit of a slot', function () {
+    $shop = Shop::make(capacity: 1);
+    $staff = $shop->member(Membership::STAFF);
+    $conflicts = [openConflict($shop, $shop->booking('2026-10-06 10:00')), openConflict($shop, $shop->booking('2026-10-06 11:30'))];
+    commitFixtures();
+
+    $jobs = [];
+    foreach ($conflicts as $conflict) {
+        foreach (range(1, 2) as $attempt) {
+            $jobs[] = fn () => app(ProposeReschedule::class)->send($shop->organization, $staff, $conflict->public_id, 1, (string) Str::uuid(), Shop::at('2026-10-06 14:00')->toIso8601String())->public_id;
+        }
+    }
+
+    $results = race($jobs);
+
+    expect(summarize($results))->toBe(['won' => 1, 'rejected' => 3, 'error' => 0])
+        ->and(ConflictProposal::query()->where('status', 'active')->count())->toBe(1)
+        ->and(Booking::query()->count())->toBe(2);
+    foreach (peakLoads() as $peak) {
+        expect($peak)->toBeLessThanOrEqual(1);
+    }
+});
+
+test('accept, decline and a duplicate accept race for one proposal with exactly one winner', function () {
+    $shop = Shop::make(capacity: 1);
+    $staff = $shop->member(Membership::STAFF);
+    $booking = $shop->booking('2026-10-06 10:00');
+    $conflict = openConflict($shop, $booking);
+    $proposal = app(ProposeReschedule::class)->send($shop->organization, $staff, $conflict->public_id, 1, (string) Str::uuid(), Shop::at('2026-10-06 14:00')->toIso8601String());
+    $customer = User::query()->findOrFail($booking->customer_user_id);
+    commitFixtures();
+
+    $answer = fn (string $how) => fn () => app(RespondToProposal::class)->{$how}($shop->organization, $customer, $booking->id, $proposal->public_id, $proposal->revision, (string) Str::uuid())['outcome'];
+    $results = race([$answer('accept'), $answer('decline'), $answer('accept'), $answer('decline')]);
+
+    expect(summarize($results))->toBe(['won' => 1, 'rejected' => 3, 'error' => 0]);
+    $final = $proposal->fresh();
+    if ($final->status === ConflictProposal::ACCEPTED) {
+        expect(Booking::query()->where('id', '!=', $booking->id)->count())->toBe(1)
+            ->and($booking->fresh()->status)->toBe(Booking::RESCHEDULED)
+            ->and($conflict->fresh()->status)->toBe('resolved');
+    } else {
+        expect($final->status)->toBe(ConflictProposal::DECLINED)
+            ->and(Booking::query()->count())->toBe(1)
+            ->and($booking->fresh()->status)->toBe(Booking::CONFIRMED)
+            ->and($conflict->fresh()->status)->toBe('open');
+    }
+    expect(ConflictProposal::query()->where('status', 'active')->count())->toBe(0);
+    foreach (peakLoads() as $peak) {
+        expect($peak)->toBeLessThanOrEqual(1);
+    }
+});
+
+test('an overdue proposal racing accept, decline and the sweeper expires once and leaves no hold', function () {
+    $shop = Shop::make(capacity: 1);
+    $staff = $shop->member(Membership::STAFF);
+    $booking = $shop->booking('2026-10-06 10:00');
+    $conflict = openConflict($shop, $booking);
+    $proposal = app(ProposeReschedule::class)->send($shop->organization, $staff, $conflict->public_id, 1, (string) Str::uuid(), Shop::at('2026-10-06 14:00')->toIso8601String());
+    $proposal->forceFill(['expires_at' => now()->subMinute()])->save();
+    $customer = User::query()->findOrFail($booking->customer_user_id);
+    commitFixtures();
+
+    $answer = fn (string $how) => fn () => app(RespondToProposal::class)->{$how}($shop->organization, $customer, $booking->id, $proposal->public_id, $proposal->revision, (string) Str::uuid())['outcome'];
+    $results = race([$answer('accept'), $answer('decline'), fn () => json_encode(app(ExpireConflictProposals::class)->handle()), fn () => json_encode(app(ExpireConflictProposals::class)->handle())]);
+
+    expect(summarize($results)['error'])->toBe(0)
+        ->and($proposal->fresh()->status)->toBe(ConflictProposal::EXPIRED)
+        ->and(ConflictProposal::query()->where('status', 'active')->count())->toBe(0)
+        ->and(Booking::query()->count())->toBe(1)
+        ->and($booking->fresh()->status)->toBe(Booking::CONFIRMED)
+        ->and($conflict->fresh()->status)->toBe('open')
+        ->and(ConflictEvent::query()->where('event', 'proposal_expired')->count())->toBe(1);
+});
+
+test('a staff proposal and a customer hold racing for the last unit leave exactly one claim', function () {
+    $shop = Shop::make(capacity: 1);
+    $staff = $shop->member(Membership::STAFF);
+    $conflict = openConflict($shop, $shop->booking('2026-10-06 10:00'));
+    commitFixtures();
+
+    $jobs = [fn () => app(ProposeReschedule::class)->send($shop->organization, $staff, $conflict->public_id, 1, (string) Str::uuid(), Shop::at('2026-10-06 14:00')->toIso8601String())->public_id];
+    foreach (range(1, 3) as $i) {
+        $jobs[] = fn () => app(PlaceHold::class)->handle($shop->organization, (string) Str::uuid(), $shop->records->vehicle->id, $shop->records->service->id, [], Shop::at('2026-10-06 14:00'), Str::random(40))->public_id;
+    }
+
+    $results = race($jobs);
+
+    expect(summarize($results))->toBe(['won' => 1, 'rejected' => 3, 'error' => 0])
+        ->and(ConflictProposal::query()->where('status', 'active')->count() + Hold::query()->where('status', 'active')->count())->toBe(1);
+    foreach (peakLoads() as $peak) {
+        expect($peak)->toBeLessThanOrEqual(1);
     }
 });

@@ -80,6 +80,28 @@ describe('Booking detail live updates', () => {
         expect(live.echo.leave).toHaveBeenCalledWith('booking.b1');
     });
 
+    it('waits for the customer’s own write to finish before refetching', () => {
+        const live = fakeEcho();
+        render(<BookingShow {...bookingProps} />);
+        const emitVisit = (event: string, method: string) =>
+            act(() => {
+                for (const listener of inertia.listeners[event] ?? []) {
+                    listener({ detail: { visit: { method } } });
+                }
+            });
+
+        emitVisit('start', 'post');
+        act(() => live.emit());
+        expect(
+            inertia.calls.filter((call) => call.method === 'get'),
+        ).toHaveLength(0);
+
+        emitVisit('finish', 'post');
+        expect(
+            inertia.calls.filter((call) => call.method === 'get'),
+        ).toHaveLength(1);
+    });
+
     it('refetches only the authoritative booking when an event arrives', () => {
         const live = fakeEcho();
         inertia.getReply = {

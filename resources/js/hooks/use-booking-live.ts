@@ -22,7 +22,10 @@ function linkOf(state: string): LiveLink {
  * Keeps an open booking page honest. A private-channel event (or reconnecting,
  * or the change deadline passing) only triggers a partial Inertia reload of
  * the server-authoritative booking; nothing in an event is ever rendered.
- * Events that arrive mid-refresh coalesce into a single follow-up reload.
+ * Events that arrive mid-refresh coalesce into a single follow-up reload. A
+ * reload never starts while the customer's own write (cancel, reschedule,
+ * accepting a proposal) is in flight: Inertia would cancel that visit and the
+ * customer would miss its redirect, so the reload waits for it to finish.
  */
 export function useBookingLive(publicId: string, deadlineAt: string | null) {
     const { url, props } = usePage();
@@ -31,10 +34,11 @@ export function useBookingLive(publicId: string, deadlineAt: string | null) {
     const [refresh, setRefresh] = useState<LiveRefresh>('idle');
     const inFlight = useRef(false);
     const queued = useRef(false);
+    const writes = useRef(0);
     const run = useRef<() => void>(() => undefined);
 
     run.current = () => {
-        if (inFlight.current) {
+        if (inFlight.current || writes.current > 0) {
             queued.current = true;
 
             return;
@@ -75,6 +79,30 @@ export function useBookingLive(publicId: string, deadlineAt: string | null) {
     };
 
     const reload = useCallback(() => run.current(), []);
+
+    // Track the page's own writes so a nudge never interrupts one.
+    useEffect(() => {
+        const offStart = router.on('start', (event) => {
+            if (event.detail.visit.method !== 'get') {
+                writes.current += 1;
+            }
+        });
+        const offFinish = router.on('finish', (event) => {
+            if (event.detail.visit.method === 'get') {
+                return;
+            }
+            writes.current = Math.max(0, writes.current - 1);
+            if (writes.current === 0 && queued.current && !inFlight.current) {
+                queued.current = false;
+                run.current();
+            }
+        });
+
+        return () => {
+            offStart();
+            offFinish();
+        };
+    }, []);
 
     useEffect(() => {
         const echo = window.Echo ?? (realtime ? connectEcho(realtime) : null);

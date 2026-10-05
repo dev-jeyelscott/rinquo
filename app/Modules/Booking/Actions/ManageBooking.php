@@ -3,10 +3,12 @@
 namespace App\Modules\Booking\Actions;
 
 use App\Modules\Booking\Availability\AvailabilitySearch;
+use App\Modules\Booking\Conflicts\ConflictLedger;
 use App\Modules\Booking\Events\BookingLifecycleChanged;
 use App\Modules\Booking\Models\Booking;
 use App\Modules\Booking\Models\BookingAddOn;
 use App\Modules\Booking\Models\BookingLifecycleEvent;
+use App\Modules\Booking\Models\ConflictProposal;
 use App\Modules\Booking\Models\Hold;
 use App\Modules\Booking\Support\BookingIntake;
 use App\Modules\Identity\Models\User;
@@ -80,6 +82,10 @@ final class ManageBooking
                 return $replay;
             }
             $this->assertEligible($source, $revision, false);
+            // A staff proposal is the only reschedule path while one is pending, so two replacements can never compete.
+            if (ConflictProposal::query()->where('organization_id', $locked->id)->where('booking_id', $source->id)->where('status', ConflictProposal::ACTIVE)->exists()) {
+                throw ValidationException::withMessages(['booking' => 'The shop proposed a new time for this booking. Accept or decline it first.']);
+            }
             $this->intake->assertAcceptingNewBookings($locked);
             $addOnIds = BookingAddOn::query()->where('booking_id', $source->id)->pluck('add_on_id')->map(fn ($id): int => (int) $id)->all();
             try {
@@ -100,12 +106,7 @@ final class ManageBooking
                 throw ValidationException::withMessages(['start_at' => 'That time is no longer available.']);
             }
             // A replacement must have its own hold lineage; it is immediately converted in this transaction.
-            $hold = Hold::query()->create([
-                'organization_id' => $locked->id, 'public_id' => (string) Str::uuid(), 'session_token_hash' => hash('sha256', 'lifecycle:'.$key), 'idempotency_key' => (string) Str::uuid(),
-                'service_vehicle_variant_id' => $variant->id, 'resource_type_id' => $assignment->rule->resource_type_id, 'physical_resource_id' => $assignment->resource->id, 'units' => $assignment->rule->units,
-                'scheduled_start_at' => $start, 'service_end_at' => $start->addMinutes(AvailabilitySearch::spanMinutes($variant, $addOns)), 'occupied_end_at' => AvailabilitySearch::occupiedEnd($variant, $addOns, $start), 'add_on_ids' => $addOnIds,
-                'contact_name' => $source->contact_name, 'contact_phone' => $source->contact_phone, 'vehicle_plate' => $source->vehicle_plate, 'customer_notes' => $source->customer_notes, 'status' => Hold::CONVERTED, 'expires_at' => $now,
-            ]);
+            $hold = $this->convertedHold($locked, $source, $variant, $addOns, $assignment->rule->resource_type_id, $assignment->rule->units, $assignment->resource->id, $start, 'lifecycle:'.$key, $now);
             $replacement = $this->makeReplacement($locked, $source, $hold, $assignment->rule->resource_type_id, $assignment->rule->units, $assignment->resource->id, $start, $now);
             $this->transition($locked, $source, $actor, Booking::RESCHEDULED, 'reschedule', null, $replacement->id);
             $this->storeRequest($locked, $source, $actor, 'reschedule', $hash, $key, $replacement);
@@ -115,12 +116,28 @@ final class ManageBooking
     }
 
     /**
+     * The converted hold that gives a replacement booking its own hold lineage
+     * (a hold is the claim record every booking points at).
+     *
+     * @param  Collection<int, AddOn>  $addOns
+     */
+    public function convertedHold(Organization $organization, Booking $source, ServiceVehicleVariant $variant, Collection $addOns, int $resourceTypeId, int $units, int $resourceId, CarbonImmutable $start, string $seed, CarbonImmutable $now): Hold
+    {
+        return Hold::query()->create([
+            'organization_id' => $organization->id, 'public_id' => (string) Str::uuid(), 'session_token_hash' => hash('sha256', $seed), 'idempotency_key' => (string) Str::uuid(),
+            'service_vehicle_variant_id' => $variant->id, 'resource_type_id' => $resourceTypeId, 'physical_resource_id' => $resourceId, 'units' => $units,
+            'scheduled_start_at' => $start, 'service_end_at' => $start->addMinutes(AvailabilitySearch::spanMinutes($variant, $addOns)), 'occupied_end_at' => AvailabilitySearch::occupiedEnd($variant, $addOns, $start), 'add_on_ids' => $addOns->pluck('id')->values()->all(),
+            'contact_name' => $source->contact_name, 'contact_phone' => $source->contact_phone, 'vehicle_plate' => $source->vehicle_plate, 'customer_notes' => $source->customer_notes, 'status' => Hold::CONVERTED, 'expires_at' => $now,
+        ]);
+    }
+
+    /**
      * In-memory copies of the offer carrying the source booking's snapshot durations.
      *
      * @param  Collection<int, AddOn>  $addOns
      * @return array{0: ServiceVehicleVariant, 1: Collection<int, AddOn>}
      */
-    private function snapshotTerms(Booking $source, ServiceVehicleVariant $variant, Collection $addOns): array
+    public function snapshotTerms(Booking $source, ServiceVehicleVariant $variant, Collection $addOns): array
     {
         $variant = clone $variant;
         $variant->duration_minutes = $source->variant_duration_minutes;
@@ -154,13 +171,13 @@ final class ManageBooking
         if (! $operator && ! self::eligibility($booking)['canCancel']) {
             throw ValidationException::withMessages(['booking' => self::eligibility($booking)['reason']]);
         }
-        if ($operator && ! $booking->isLive()) {
+        if ($operator && (! $booking->isLive() || ! in_array($booking->operational_state, [Booking::SCHEDULED, Booking::CHECKED_IN], true))) {
             throw ValidationException::withMessages(['booking' => 'This booking can no longer be cancelled.']);
         }
 
     }
 
-    private function makeReplacement(Organization $organization, Booking $source, Hold $hold, int $resourceTypeId, int $units, int $resourceId, CarbonImmutable $start, CarbonImmutable $now): Booking
+    public function makeReplacement(Organization $organization, Booking $source, Hold $hold, int $resourceTypeId, int $units, int $resourceId, CarbonImmutable $start, CarbonImmutable $now): Booking
     {
         $minutes = $source->variant_duration_minutes + $source->add_ons_duration_minutes;
         // A reschedule never downgrades a secured booking: a confirmed source gets a confirmed
@@ -202,11 +219,14 @@ final class ManageBooking
         DB::table('booking_lifecycle_requests')->insert(['organization_id' => $organization->id, 'booking_id' => $source->id, 'actor_user_id' => $actor->id, 'idempotency_key' => $key, 'operation' => $operation, 'request_hash' => $hash, 'result_booking_id' => $result->id, 'created_at' => now(), 'updated_at' => now()]);
     }
 
-    private function transition(Organization $organization, Booking $booking, User $actor, string $status, string $operation, ?string $reason, ?int $replacementId = null): void
+    public function transition(Organization $organization, Booking $booking, User $actor, string $status, string $operation, ?string $reason, ?int $replacementId = null): void
     {
         $before = $booking->status;
         $booking->forceFill(['status' => $status, 'revision' => $booking->revision + 1, 'cancelled_at' => $operation === 'cancel' ? now() : null, 'cancelled_by_user_id' => $operation === 'cancel' ? $actor->id : null, 'rescheduled_to_booking_id' => $replacementId])->save();
         BookingLifecycleEvent::query()->create(['organization_id' => $organization->id, 'booking_id' => $booking->id, 'actor_user_id' => $actor->id, 'operation' => $operation, 'from_status' => $before, 'to_status' => $status, 'reason' => $reason, 'revision' => $booking->revision]);
+        if ($operation === 'cancel') {
+            ConflictLedger::closeForBooking($organization, $booking, $actor, $actor->id === $booking->customer_user_id ? 'customer' : 'staff');
+        }
         BookingLifecycleChanged::for($booking);
         (new AuditTrail($organization, $actor))->record('booking.'.$operation, 'booking', $booking->id, ['status' => $before, 'revision' => $booking->revision - 1], ['status' => $status, 'revision' => $booking->revision, 'reason' => $reason, 'replacement_booking_id' => $replacementId]);
     }

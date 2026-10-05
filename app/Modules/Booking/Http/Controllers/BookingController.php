@@ -4,8 +4,12 @@ namespace App\Modules\Booking\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Booking\Actions\ManageBooking;
+use App\Modules\Booking\Actions\RespondToProposal;
 use App\Modules\Booking\Http\ResolvesShop;
+use App\Modules\Booking\Models\Booking;
+use App\Modules\Booking\Models\ConflictProposal;
 use App\Modules\Tenancy\Http\Storefront;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -24,6 +28,9 @@ class BookingController extends Controller
         $record = $this->ownBooking($request, $organization, $booking)->load('addOns');
         $actions = ManageBooking::eligibility($record);
         $restricted = $actions['canReschedule'] && $storefront->visibleOrganization($slug) === null;
+        // Only the active, unexpired proposal is shown; nothing about resources, capacity or the cause.
+        $proposal = ConflictProposal::query()->where('organization_id', $organization->id)->where('booking_id', $record->id)
+            ->where('status', ConflictProposal::ACTIVE)->where('expires_at', '>', now())->first();
 
         return Inertia::render('shops/bookings/show', [
             ...$storefront->shell($organization),
@@ -44,14 +51,24 @@ class BookingController extends Controller
                 'revision' => $record->revision,
                 'actions' => [
                     ...$actions,
-                    'canReschedule' => $actions['canReschedule'] && ! $restricted,
-                    'rescheduleReason' => $restricted ? 'Rescheduling is unavailable while this shop is not accepting new bookings. You can still cancel.' : null,
+                    'canReschedule' => $actions['canReschedule'] && ! $restricted && $proposal === null,
+                    'rescheduleReason' => $proposal !== null
+                        ? 'The shop proposed a new time. Accept or decline it first.'
+                        : ($restricted ? 'Rescheduling is unavailable while this shop is not accepting new bookings. You can still cancel.' : null),
+                ],
+                'proposal' => $proposal === null ? null : [
+                    'id' => $proposal->public_id,
+                    'revision' => $proposal->revision,
+                    'startAt' => $proposal->proposed_start_at->utc()->toIso8601String(),
+                    'expiresAt' => $proposal->expires_at->utc()->toIso8601String(),
                 ],
             ],
             'urls' => [
                 'shop' => route('shops.show', $slug, absolute: false),
                 'cancel' => route('bookings.cancel', [$slug, $record->public_id], absolute: false),
                 'reschedule' => route('bookings.reschedule', [$slug, $record->public_id], absolute: false),
+                'acceptProposal' => route('bookings.proposal.accept', [$slug, $record->public_id], absolute: false),
+                'declineProposal' => route('bookings.proposal.decline', [$slug, $record->public_id], absolute: false),
             ],
         ]);
     }
@@ -84,5 +101,47 @@ class BookingController extends Controller
         $replacement = $lifecycle->reschedule($organization, $record->id, $request->user(), (int) $data['revision'], $data['idempotency_key'], $data['start_at']);
 
         return to_route('bookings.show', [$slug, $replacement->public_id]);
+    }
+
+    public function acceptProposal(Request $request, string $slug, string $booking, RespondToProposal $respond): RedirectResponse
+    {
+        $organization = $this->bookingShop($slug);
+        $record = $this->ownBooking($request, $organization, $booking);
+        $data = $this->proposalData($request);
+
+        $result = $respond->accept($organization, $request->user(), $record->id, $data['proposal'], (int) $data['revision'], $data['idempotency_key']);
+
+        return $this->answered($slug, $record->public_id, $result, 'Your new time is confirmed. Your original time was released.');
+    }
+
+    public function declineProposal(Request $request, string $slug, string $booking, RespondToProposal $respond): RedirectResponse
+    {
+        $organization = $this->bookingShop($slug);
+        $record = $this->ownBooking($request, $organization, $booking);
+        $data = $this->proposalData($request);
+
+        $result = $respond->decline($organization, $request->user(), $record->id, $data['proposal'], (int) $data['revision'], $data['idempotency_key']);
+
+        return $this->answered($slug, $record->public_id, $result, 'You declined the new time. Your original booking is unchanged and the shop will follow up.');
+    }
+
+    /** @return array{proposal: string, revision: int, idempotency_key: string} */
+    private function proposalData(Request $request): array
+    {
+        return $request->validate([
+            'proposal' => ['required', 'uuid'],
+            'revision' => ['required', 'integer', 'min:1'],
+            'idempotency_key' => ['required', 'uuid'],
+        ]);
+    }
+
+    /** @param  array{outcome: string, booking: Booking, message: ?string}  $result */
+    private function answered(string $slug, string $originalId, array $result, string $success): RedirectResponse
+    {
+        if ($result['outcome'] === RespondToProposal::UNAVAILABLE) {
+            return to_route('bookings.show', [$slug, $originalId])->withErrors(['proposal' => $result['message']]);
+        }
+
+        return to_route('bookings.show', [$slug, $result['booking']->public_id])->with('status', $success);
     }
 }

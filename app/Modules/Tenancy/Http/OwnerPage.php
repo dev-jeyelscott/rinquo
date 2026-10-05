@@ -2,6 +2,7 @@
 
 namespace App\Modules\Tenancy\Http;
 
+use App\Modules\Booking\Support\ConflictBoard;
 use App\Modules\Scheduling\Readiness\ReadinessEvaluator;
 use App\Modules\Tenancy\Models\Organization;
 use Illuminate\Support\Str;
@@ -28,6 +29,9 @@ final class OwnerPage
                 'branchName' => $organization->branch?->name,
                 'publishedAt' => $organization->published_at?->toIso8601String(),
                 'shopUrl' => route('shops.show', $organization->slug),
+                'operationsUrl' => route('owner.operations.index', $organization, absolute: false),
+                'conflictsUrl' => route('owner.scheduling-conflicts.index', $organization, absolute: false),
+                'unresolvedConflicts' => ConflictBoard::unresolvedCount($organization),
                 'bookingRequestsUrl' => route('owner.booking-requests.index', $organization, absolute: false),
                 'baseUrl' => Str::beforeLast(route('owner.settings.profile', $organization, absolute: false), '/profile'),
             ],

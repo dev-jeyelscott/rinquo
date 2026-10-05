@@ -62,3 +62,18 @@ Boundaries:
   `Booking\Support\BookingIntake` additively.
 - A signed-in customer shares the `web` guard and the `users` identity with
   Owners (ADR 0004); a booking attaches only to the verified, signed-in user.
+- Scheduling conflicts (slice 05) are an operational layer beside the booking
+  lifecycle, in `Booking`: `scheduling_conflicts` (explicit, one unresolved per
+  booking), `scheduling_conflict_proposals` (one active per booking, a temporary
+  claim read by `Occupancy` until its deadline, never a booking) and an
+  append-only `scheduling_conflict_events`. Scheduling changes (hours, service
+  windows, consumption rules, resource and resource-type updates, resource
+  blocks) pass `ChangeOrganization::handle(..., assessImpact: true)`, which calls
+  the `Tenancy\Contracts\ChangeImpact` contract (bound to
+  `Booking\Conflicts\ScheduleImpactGate`) after the mutation, under the same
+  organization lock: no impact commits, impact needs a confirmation token minted
+  for exactly that payload and plan or the whole change rolls back. A booking
+  that still fits another compatible resource at the same time is moved there;
+  everything else becomes a conflict. Detection never notifies the customer; only
+  a durably sent proposal does. Customer acceptance is the only path that
+  confirms a replacement booking.

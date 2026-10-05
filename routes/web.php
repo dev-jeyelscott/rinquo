@@ -4,6 +4,8 @@ use App\Modules\Booking\Http\Controllers\BookingController;
 use App\Modules\Booking\Http\Controllers\BookingRequestsController;
 use App\Modules\Booking\Http\Controllers\BookingWizardController;
 use App\Modules\Booking\Http\Controllers\HoldController;
+use App\Modules\Booking\Http\Controllers\OperationsController;
+use App\Modules\Booking\Http\Controllers\SchedulingConflictsController;
 use App\Modules\Identity\Http\Controllers\OwnerAuthController;
 use App\Modules\Scheduling\Http\Controllers\BookingPolicyController;
 use App\Modules\Scheduling\Http\Controllers\CatalogController;
@@ -97,6 +99,36 @@ Route::prefix('owner')->name('owner.')->group(function (): void {
                 Route::post('{booking}/decline', [BookingRequestsController::class, 'decline'])->whereUuid('booking')->name('decline');
                 Route::post('{booking}/cancel', [BookingRequestsController::class, 'cancel'])->whereUuid('booking')->name('cancel');
             });
+
+        // Any active member (Owner or Staff) runs the day's bookings and walk-ins. Settings stay Owner-only.
+        Route::prefix('organizations/{organization}/operations')
+            ->name('operations.')
+            ->middleware('can:operate,organization')
+            ->group(function (): void {
+                Route::get('/', [OperationsController::class, 'index'])->name('index');
+                Route::post('bookings', [OperationsController::class, 'store'])->name('bookings.store');
+                Route::prefix('bookings/{booking}')->whereUuid('booking')->name('bookings.')->group(function (): void {
+                    Route::post('check-in', [OperationsController::class, 'checkIn'])->name('check-in');
+                    Route::post('assign', [OperationsController::class, 'assign'])->name('assign');
+                    Route::post('start', [OperationsController::class, 'start'])->name('start');
+                    Route::post('complete', [OperationsController::class, 'complete'])->name('complete');
+                    Route::post('no-show', [OperationsController::class, 'noShow'])->name('no-show');
+                    Route::post('reorder', [OperationsController::class, 'reorder'])->name('reorder');
+                });
+                Route::post('blocks', [OperationsController::class, 'block'])->name('blocks.store');
+                Route::post('blocks/{block}/release', [OperationsController::class, 'releaseBlock'])->whereUuid('block')->name('blocks.release');
+                Route::post('failures/{failure}/retry', [OperationsController::class, 'retryFailure'])->whereUuid('failure')->name('failures.retry');
+            });
+
+        // Any active member (Owner or Staff) resolves scheduling conflicts. Settings stay Owner-only.
+        Route::prefix('organizations/{organization}/scheduling-conflicts')
+            ->name('scheduling-conflicts.')
+            ->middleware('can:operate,organization')
+            ->group(function (): void {
+                Route::get('/', [SchedulingConflictsController::class, 'index'])->name('index');
+                Route::post('{conflict}/proposal', [SchedulingConflictsController::class, 'propose'])->whereUuid('conflict')->name('proposal.store');
+                Route::post('{conflict}/proposal/withdraw', [SchedulingConflictsController::class, 'withdraw'])->whereUuid('conflict')->name('proposal.withdraw');
+            });
     });
 });
 
@@ -130,4 +162,6 @@ Route::prefix('shops/{slug}')->group(function (): void {
     Route::get('bookings/{booking}', [BookingController::class, 'show'])->whereUuid('booking')->name('bookings.show');
     Route::post('bookings/{booking}/cancel', [BookingController::class, 'cancel'])->whereUuid('booking')->name('bookings.cancel');
     Route::post('bookings/{booking}/reschedule', [BookingController::class, 'reschedule'])->whereUuid('booking')->name('bookings.reschedule');
+    Route::post('bookings/{booking}/proposal/accept', [BookingController::class, 'acceptProposal'])->whereUuid('booking')->name('bookings.proposal.accept');
+    Route::post('bookings/{booking}/proposal/decline', [BookingController::class, 'declineProposal'])->whereUuid('booking')->name('bookings.proposal.decline');
 });

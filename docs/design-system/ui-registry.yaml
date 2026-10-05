@@ -527,8 +527,10 @@ components:
     responsive: Collapses on mobile
     status: stable
     notes: >
-      Not used in current reference designs; included for future
-      navigation patterns.
+      Used by the operations dashboard as the contextual container for routine
+      forms (walk-in, resource assignment, resource block): a bottom sheet on
+      phones and a bounded side drawer from sm up, so the live queue stays
+      visible. Consequential decisions use a modal (ConfirmAction) instead.
 
   - id: skeleton
     name: Skeleton
@@ -742,6 +744,17 @@ components:
         type: string
         required: false
         description: Dismiss button text, default "Cancel"; use a label distinct from confirmLabel (for example "Keep booking")
+      - name: confirmVariant
+        type: "'destructive' | 'default'"
+        required: false
+        description: Confirm button style; default destructive, use default for non-destructive confirmations such as a notification retry or a queue move
+      - name: triggerVariant
+        type: "'outline' | 'default'"
+        required: false
+      - name: disabled
+        type: boolean
+        required: false
+        description: Disables the trigger until a required choice is made (for example a replacement time)
     accessibility:
       - Focus is trapped in the dialog and restored to the trigger
       - Trigger has an accessible name that says what is affected
@@ -841,6 +854,66 @@ components:
       - Button
       - Spinner
 
+  - id: operation-stat-card
+    name: OperationStatCard
+    category: component
+    path: resources/js/components/operations/operation-stat-card.tsx
+    description: >
+      One operations counter from the staff dashboard (reference 03): a muted
+      label over a large tabular figure, with an optional one-line hint such as
+      "3 not arrived". The tone (info, warning, success, neutral) only
+      reinforces the label; the number and text carry the meaning.
+    reference_design: '03-staff-operations-dashboard.png'
+    props:
+      - name: label
+        type: string
+        required: true
+      - name: value
+        type: number
+        required: true
+      - name: tone
+        type: "'info' | 'warning' | 'success' | 'neutral'"
+        required: false
+      - name: hint
+        type: string
+        required: false
+    accessibility:
+      - Meaning is in the label, figure and hint text, never colour alone
+      - Callers place cards in a labelled list so the set reads as one group
+    responsive: Callers lay the cards out as four, two and one column
+    status: stable
+    dependencies:
+      - Card
+
+  - id: schedule-impact-dialog
+    name: ScheduleImpactDialog
+    category: component
+    path: resources/js/components/owner/schedule-impact-dialog.tsx
+    description: >
+      Review step for a scheduling change that would disrupt future bookings (a
+      resource block, capacity, hours, service-window or compatibility change).
+      The server has already planned the impact and written nothing; the dialog
+      names the exact count, separates bookings that stay at the same time on
+      another resource from conflicts needing staff, lists each booking, and on
+      "Apply changes" repeats the very same submission with the server-issued
+      confirmation token. A refreshed plan replaces a stale one and says so. It
+      is mounted once in OwnerShell, so every owner and operations form gets the
+      same review.
+    reference_design: '05-owner-scheduling-configuration.png'
+    accessibility:
+      - Radix dialog with focus trap, a title that states the count, and a description that says no time moves and no customer is contacted
+      - The outcome of each booking is text, never colour alone
+      - Keep current settings dismisses without applying anything
+      - The apply button is disabled with aria-busy while the request runs
+      - Buttons keep 44 px height on small screens
+    responsive: Scrolls inside the viewport on small screens; the booking list has its own bounded scroll
+    status: stable
+    dependencies:
+      - Dialog
+      - StatusChip
+      - Alert
+      - Button
+
 # ==============================================================================
 # COMPOSITIONS: Reusable multi-component patterns
 # ==============================================================================
@@ -922,6 +995,53 @@ compositions:
       - Labelled region with a real heading
       - Values are a description list (dt/dd)
     responsive: Stacks under the step content on small screens and sticks beside it on lg and above
+    status: stable
+
+  - id: operation-queue-row
+    name: OperationQueueRow
+    category: composition
+    path: resources/js/components/operations/operation-queue-row.tsx
+    description: >
+      One entry of the staff operations queue (reference 03): appointment time,
+      customer and vehicle, a status chip with its text label (Booked, Checked
+      in, In service, Completed, No-show), the assigned resource, the projected
+      finish and lateness while in service, and the one routine next action
+      (Check in, Start, Complete). Consequential actions use ConfirmAction with a
+      required reason (no-show, move up the queue, free the bay now); assignment
+      opens a contextual sheet (bottom sheet on phones, side drawer from sm up).
+      The server supplies which actions exist and re-validates every one.
+    reference_design: '03-staff-operations-dashboard.png'
+    uses:
+      - Card
+      - StatusChip
+      - ConfirmAction
+      - Sheet
+      - FormField
+      - Button
+      - Spinner
+    props:
+      - name: row
+        type: QueueRowData
+        required: true
+      - name: baseUrl
+        type: string
+        required: true
+      - name: timezone
+        type: string
+        required: true
+      - name: resources
+        type: array
+        required: true
+      - name: moveBefore
+        type: QueueRowData | null
+        required: true
+    accessibility:
+      - Row actions have accessible names that include the customer
+      - Status is text in a chip, with the resource and ETA as text
+      - Pending actions are disabled with aria-busy and a named spinner label
+      - Dialog and sheet focus is managed by the Radix dialog primitive
+      - Action buttons keep 44 px height on small screens
+    responsive: Time, details and actions share one row from sm up and stack on phones
     status: stable
 
   - id: service-card
@@ -1090,6 +1210,79 @@ compositions:
       Large number display with colored label.
       Used in operations dashboard header.
       Implement as part of dashboard feature.
+
+  - id: conflict-queue-row
+    name: ConflictQueueRow
+    category: composition
+    path: resources/js/components/conflicts/conflict-queue-row.tsx
+    description: >
+      One scheduling conflict in the staff queue (reference 04): customer, the
+      protected original appointment time, service and cause in words, and the
+      conflict state as a text chip (Needs proposal, Awaiting reply, Declined or
+      Expired needing staff, Moved at the same time). The whole row is a link that
+      opens the conflict in the resolution pane and marks the current one with
+      aria-current.
+    reference_design: '04-scheduling-conflict-resolution.png'
+    uses:
+      - StatusChip
+    props:
+      - name: row
+        type: ConflictRowData
+        required: true
+      - name: href
+        type: string
+        required: true
+      - name: selected
+        type: boolean
+        required: true
+      - name: timezone
+        type: string
+        required: true
+    accessibility:
+      - The state is chip text, never colour alone
+      - The selected row exposes aria-current
+      - Visible focus ring and a 44 px minimum height on small screens
+    responsive: Stacks above the resolution pane on small screens and sits beside it from xl up
+    status: stable
+
+  - id: reschedule-proposal-card
+    name: RescheduleProposalCard
+    category: composition
+    path: resources/js/components/booking/reschedule-proposal-card.tsx
+    description: >
+      The shop's replacement-time proposal on the customer's booking page. It
+      states that the original booking is still confirmed and reserved, shows the
+      proposed time and the response deadline, and offers Accept new time (behind
+      a confirmation that says the original time is released) and Keep my
+      original time. It never shows resources, capacity or the internal cause.
+    reference_design: '04-scheduling-conflict-resolution.png'
+    uses:
+      - Alert
+      - Button
+      - Dialog
+    props:
+      - name: proposal
+        type: ProposalForCustomer
+        required: true
+      - name: originalStartAt
+        type: string
+        required: true
+      - name: timezone
+        type: string
+        required: true
+      - name: acceptUrl
+        type: string
+        required: true
+      - name: declineUrl
+        type: string
+        required: true
+    accessibility:
+      - A labelled region whose heading says the shop proposed a new time
+      - Accepting needs an explicit dialog confirmation with focus management
+      - Pending answers disable both buttons and set aria-busy
+      - A failed or expired answer is announced in an alert
+    responsive: Single column; buttons are 44 px tall on small screens
+    status: stable
 
 # ==============================================================================
 # PATTERNS: Interaction and layout conventions

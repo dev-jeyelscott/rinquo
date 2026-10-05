@@ -14,6 +14,14 @@ use Throwable;
  */
 final class BookingNotifier
 {
+    /** Queues the mail only when the booking has an address (staff-entered contacts may have none). */
+    public static function queueIfAddressed(?string $email, BookingMailable $mail): void
+    {
+        if ($email !== null && $email !== '') {
+            self::queue($email, $mail);
+        }
+    }
+
     public static function queue(string $email, BookingMailable $mail): void
     {
         DB::afterCommit(function () use ($email, $mail): void {

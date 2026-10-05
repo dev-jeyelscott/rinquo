@@ -27,7 +27,16 @@ type Props = {
     reasonRequired?: boolean;
     /** Text of the dismiss button; it must differ from the confirm label. */
     dismissLabel?: string;
-    data?: Record<string, string | number>;
+    /** Confirm button style: destructive (default) or a neutral primary for non-destructive effects. */
+    confirmVariant?: 'destructive' | 'default';
+    /** Visible trigger style. */
+    triggerVariant?: 'outline' | 'default';
+    /** Disables the trigger, for example until a required choice is made. */
+    disabled?: boolean;
+    /** Extra fields to post; a function is evaluated when the action is confirmed (for example to issue an idempotency key). */
+    data?:
+        | Record<string, string | number>
+        | (() => Record<string, string | number>);
 };
 
 /**
@@ -47,6 +56,9 @@ export function ConfirmAction({
     reasonLabel,
     reasonRequired = false,
     dismissLabel = 'Cancel',
+    confirmVariant = 'destructive',
+    triggerVariant = 'outline',
+    disabled = false,
     data = {},
 }: Props) {
     const [open, setOpen] = useState(false);
@@ -56,7 +68,10 @@ export function ConfirmAction({
     function confirm() {
         router[method](
             url,
-            { ...data, ...(reasonLabel ? { reason: reason.trim() } : {}) },
+            {
+                ...(typeof data === 'function' ? data() : data),
+                ...(reasonLabel ? { reason: reason.trim() } : {}),
+            },
             {
                 preserveScroll: true,
                 onStart: () => setProcessing(true),
@@ -71,7 +86,13 @@ export function ConfirmAction({
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm" aria-label={ariaLabel}>
+                <Button
+                    variant={triggerVariant}
+                    size="sm"
+                    aria-label={ariaLabel}
+                    disabled={disabled}
+                    className="max-sm:h-11"
+                >
                     {label}
                 </Button>
             </DialogTrigger>
@@ -94,7 +115,7 @@ export function ConfirmAction({
                         {dismissLabel}
                     </Button>
                     <Button
-                        variant="destructive"
+                        variant={confirmVariant}
                         onClick={confirm}
                         disabled={
                             processing ||

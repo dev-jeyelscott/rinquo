@@ -42,6 +42,6 @@ final class ReplaceBranchHours
             }
 
             $audit->record('branch.hours_replaced', 'branch', $branch->id, $before, ['weekly' => $weekly, 'overrides' => $overrides]);
-        });
+        }, assessImpact: true);
     }
 }

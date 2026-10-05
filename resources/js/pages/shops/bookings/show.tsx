@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { BookingLiveStatus } from '@/components/booking/booking-live-status';
 import { BookingSummaryCard } from '@/components/booking/booking-summary-card';
+import { RescheduleProposalCard } from '@/components/booking/reschedule-proposal-card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
@@ -197,6 +198,16 @@ export default function Show({
                             </Button>
                         </AlertDescription>
                     </Alert>
+                ) : null}
+
+                {booking.proposal ? (
+                    <RescheduleProposalCard
+                        proposal={booking.proposal}
+                        originalStartAt={booking.startAt}
+                        timezone={booking.timezone}
+                        acceptUrl={urls.acceptProposal}
+                        declineUrl={urls.declineProposal}
+                    />
                 ) : null}
 
                 <BookingSummaryCard

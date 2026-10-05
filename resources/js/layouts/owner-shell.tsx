@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import { CheckCircle2Icon, CircleAlertIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { ScheduleImpactDialog } from '@/components/owner/schedule-impact-dialog';
 import { StatusChip } from '@/components/owner/status-chip';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,9 @@ export default function OwnerShell({ children }: { children: ReactNode }) {
     const { props, url } = usePage<OwnerPageProps>();
     const { appName, auth, flash, organization, readiness } = props;
     const onRequests = url.startsWith(organization.bookingRequestsUrl);
+    const onOperations = url.startsWith(organization.operationsUrl);
+    const onConflicts = url.startsWith(organization.conflictsUrl);
+    const onSettings = !onRequests && !onOperations && !onConflicts;
     const failing = new Set<string>(
         readiness.items.filter((item) => !item.passed).map((i) => i.tab),
     );
@@ -56,16 +60,36 @@ export default function OwnerShell({ children }: { children: ReactNode }) {
                     className="flex gap-2 px-3 pb-3 lg:grid lg:pb-0"
                 >
                     <MainLink
-                        href={`${organization.baseUrl}/profile`}
-                        active={!onRequests}
+                        href={organization.operationsUrl}
+                        active={onOperations}
                     >
-                        Settings
+                        Operations
+                    </MainLink>
+                    <MainLink
+                        href={organization.conflictsUrl}
+                        active={onConflicts}
+                    >
+                        Conflicts
+                        {organization.unresolvedConflicts > 0 ? (
+                            <span
+                                className="ml-2 rounded-full bg-warning px-2 text-xs font-semibold text-warning-foreground tabular-nums"
+                                aria-label={`${organization.unresolvedConflicts} unresolved`}
+                            >
+                                {organization.unresolvedConflicts}
+                            </span>
+                        ) : null}
                     </MainLink>
                     <MainLink
                         href={organization.bookingRequestsUrl}
                         active={onRequests}
                     >
                         Booking requests
+                    </MainLink>
+                    <MainLink
+                        href={`${organization.baseUrl}/profile`}
+                        active={onSettings}
+                    >
+                        Settings
                     </MainLink>
                 </nav>
                 <div className="mt-auto hidden px-6 py-4 text-sm lg:block">
@@ -78,9 +102,13 @@ export default function OwnerShell({ children }: { children: ReactNode }) {
             <div className="flex min-w-0 flex-1 flex-col">
                 <header className="flex flex-wrap items-center justify-between gap-3 border-b bg-background px-4 py-4 sm:px-8">
                     <h1 className="text-2xl font-semibold tracking-tight">
-                        {onRequests
-                            ? 'Booking requests'
-                            : 'Scheduling configuration'}
+                        {onOperations
+                            ? 'Today’s operations'
+                            : onConflicts
+                              ? 'Scheduling conflicts'
+                              : onRequests
+                                ? 'Booking requests'
+                                : 'Scheduling configuration'}
                     </h1>
                     <div className="flex flex-wrap items-center gap-2">
                         {organization.branchName ? (
@@ -98,7 +126,7 @@ export default function OwnerShell({ children }: { children: ReactNode }) {
                     </div>
                 </header>
                 <main className="flex-1 px-4 py-6 sm:px-8">
-                    {onRequests ? null : (
+                    {!onSettings ? null : (
                         <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
                             <nav
                                 aria-label="Settings"
@@ -155,6 +183,7 @@ export default function OwnerShell({ children }: { children: ReactNode }) {
                         ) : null}
                     </div>
                     {children}
+                    <ScheduleImpactDialog />
                 </main>
             </div>
         </div>

@@ -48,6 +48,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'flash' => [
                 'status' => fn () => $request->session()->get('status'),
+                'schedulingImpact' => fn () => $request->session()->get('scheduling_impact'),
             ],
             'realtime' => [
                 'key' => (string) config('broadcasting.connections.reverb.key'),

@@ -73,6 +73,30 @@ final class BranchCalendar
     }
 
     /**
+     * Whether a service span starting at $start (UTC) still lies inside one
+     * service window intersected with an opening interval of its local date.
+     * Unlike {@see self::starts()} it ignores the grid, minimum notice and
+     * horizon: it answers whether an existing booking is still serviceable.
+     */
+    public function covers(CarbonImmutable $start, int $spanMinutes): bool
+    {
+        $local = $start->setTimezone(Branch::TIMEZONE);
+        $date = $local->startOfDay();
+        $from = $local->hour * 60 + $local->minute;
+        $to = $from + $spanMinutes;
+
+        foreach ($this->windows[$date->dayOfWeekIso] ?? [] as [$windowStart, $windowEnd]) {
+            foreach ($this->openIntervals($date) as [$opens, $closes]) {
+                if ($from >= max($windowStart, $opens) && $to <= min($windowEnd, $closes)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Candidate start instants (UTC) on a local date for a span of
      * $spanMinutes. The service span (not the trailing buffer) must lie inside
      * one service window intersected with an opening interval, starts sit on

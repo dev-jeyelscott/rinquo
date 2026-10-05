@@ -155,10 +155,13 @@ export const bookingProps: BookingPageProps = {
             rescheduleReason: null,
             deadlineAt: null,
         },
+        proposal: null,
     },
     urls: {
         shop: '/shops/shine',
         cancel: '/shops/shine/bookings/b1/cancel',
         reschedule: '/shops/shine/bookings/b1/reschedule',
+        acceptProposal: '/shops/shine/bookings/b1/proposal/accept',
+        declineProposal: '/shops/shine/bookings/b1/proposal/decline',
     },
 };

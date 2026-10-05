@@ -9,3 +9,4 @@ Schedule::command('horizon:snapshot')->everyFiveMinutes();
 // frees at expiry through a time predicate, so a missed run never blocks booking.
 Schedule::command('bookings:expire')->everyMinute()->withoutOverlapping();
 Schedule::command('bookings:send-reminders')->everyMinute()->withoutOverlapping();
+Schedule::command('conflicts:expire-proposals')->everyMinute()->withoutOverlapping();

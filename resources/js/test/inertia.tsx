@@ -24,6 +24,8 @@ export const inertia = {
     nextGet: 'success' as 'success' | 'error' | 'network' | 'pending',
     /** Props merged into the page after a successful router.get (simulates the server reply). */
     getReply: null as Record<string, unknown> | null,
+    /** router.on listeners by event name. */
+    listeners: {} as Record<string, ((event: unknown) => void)[]>,
 };
 
 export function resetInertia(props: Record<string, unknown> = {}, url = '/') {
@@ -35,6 +37,7 @@ export function resetInertia(props: Record<string, unknown> = {}, url = '/') {
     inertia.hold = false;
     inertia.nextGet = 'success';
     inertia.getReply = null;
+    inertia.listeners = {};
 }
 
 function record(
@@ -203,6 +206,26 @@ export function inertiaModule() {
             ),
             put: vi.fn(),
             patch: vi.fn(),
+            visit: vi.fn((url: string, options?: Record<string, unknown>) => {
+                record(
+                    (options?.method as string | undefined) ?? 'get',
+                    url,
+                    (options?.data ?? {}) as Record<string, unknown>,
+                    options,
+                );
+                (options?.onStart as (() => void) | undefined)?.();
+                (options?.onFinish as (() => void) | undefined)?.();
+            }),
+            /** Event listeners registered through router.on; tests fire them through `inertia.listeners`. */
+            on: vi.fn((event: string, callback: (e: unknown) => void) => {
+                (inertia.listeners[event] ??= []).push(callback);
+
+                return () => {
+                    inertia.listeners[event] = (
+                        inertia.listeners[event] ?? []
+                    ).filter((listener) => listener !== callback);
+                };
+            }),
         },
     };
 }

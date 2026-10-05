@@ -30,6 +30,6 @@ final class ReplaceCapacityConsumption
             }
 
             $audit->record('variant.consumption_replaced', 'variant', $variant->id, ['rules' => $before], ['rules' => $rules]);
-        });
+        }, assessImpact: true);
     }
 }

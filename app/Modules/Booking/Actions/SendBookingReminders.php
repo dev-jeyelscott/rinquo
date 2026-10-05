@@ -26,6 +26,8 @@ final class SendBookingReminders
         $due = Booking::query()
             ->where('status', Booking::CONFIRMED)
             ->whereNull('reminder_sent_at')
+            ->whereNotNull('contact_email')
+            ->where('operational_state', Booking::SCHEDULED)
             ->where('scheduled_start_at', '>', $now)
             ->where('scheduled_start_at', '<=', $now->addHours($hours))
             ->whereRaw("confirmed_at < scheduled_start_at - (? * interval '1 hour')", [$hours])

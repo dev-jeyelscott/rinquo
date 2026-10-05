@@ -3,6 +3,7 @@
 namespace App\Modules\Booking\Mail;
 
 use App\Modules\Booking\Models\Booking;
+use App\Modules\Booking\Models\NotificationFailure;
 use App\Modules\Tenancy\Models\Organization;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -10,6 +11,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Throwable;
 
 /**
  * Base of every booking email. It carries only the booking id and renders from
@@ -33,6 +35,20 @@ abstract class BookingMailable extends Mailable implements ShouldQueue
     public function backoff(): array
     {
         return [30, 120, 600, 1800];
+    }
+
+    /**
+     * Called by the queue when delivery permanently fails. The booking stays as
+     * it is; the failure becomes a durable, tenant-scoped record that staff can
+     * see and retry. Recording never throws.
+     */
+    public function failed(Throwable $exception): void
+    {
+        try {
+            NotificationFailure::record($this, $exception);
+        } catch (Throwable $recording) {
+            report($recording);
+        }
     }
 
     abstract protected function subjectLine(Organization $organization, Booking $booking): string;
@@ -65,10 +81,15 @@ abstract class BookingMailable extends Mailable implements ShouldQueue
             $table .= '<tr><td style="padding:2px 12px 2px 0;color:#555">'.e($label).'</td><td><strong>'.e($value).'</strong></td></tr>';
         }
 
+        // Staff-entered contacts have no account, so there is no customer page to link to.
+        $link = $booking->source === Booking::SOURCE_ONLINE
+            ? '<p><a href="'.e(route('bookings.show', [$organization->slug, $booking->public_id])).'">View your booking</a></p>'
+            : '';
+
         return new Content(
             htmlString: '<p>'.e($this->lead($organization, $booking)).'</p>'
                 .'<table>'.$table.'</table>'
-                .'<p><a href="'.e(route('bookings.show', [$organization->slug, $booking->public_id])).'">View your booking</a></p>'
+                .$link
                 .'<p>'.e($organization->name).'</p>',
         );
     }

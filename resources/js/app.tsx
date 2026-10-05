@@ -16,7 +16,9 @@ void createInertiaApp({
     layout: (name) => {
         if (
             name.startsWith('owner/settings/') ||
-            name === 'owner/booking-requests'
+            name === 'owner/booking-requests' ||
+            name === 'owner/operations' ||
+            name === 'owner/scheduling-conflicts'
         ) {
             return OwnerShell;
         }

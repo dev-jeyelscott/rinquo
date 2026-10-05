@@ -26,6 +26,6 @@ final class ReplaceServiceWindows
             }
 
             $audit->record('service.windows_replaced', 'service', $service->id, ['windows' => $before], ['windows' => $windows]);
-        });
+        }, assessImpact: true);
     }
 }

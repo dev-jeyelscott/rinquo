@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Modules\Booking\Conflicts\ScheduleImpactGate;
 use App\Modules\Booking\TestingShopFixture;
 use App\Modules\Identity\TestingOtpPeek;
+use App\Modules\Tenancy\Contracts\ChangeImpact;
 use App\Support\Environment\RequiredEnvironment;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -21,7 +23,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Scheduling changes settle their impact on future bookings through the Booking module.
+        $this->app->bind(ChangeImpact::class, ScheduleImpactGate::class);
     }
 
     /**

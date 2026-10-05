@@ -16,7 +16,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $organization_id
  * @property string $public_id
  * @property int $hold_id
- * @property int $customer_user_id
+ * @property ?int $customer_user_id
+ * @property string $source
+ * @property string $operational_state
+ * @property int $operation_revision
+ * @property ?CarbonImmutable $checked_in_at
+ * @property ?CarbonImmutable $started_at
+ * @property ?CarbonImmutable $completed_at
+ * @property ?CarbonImmutable $no_show_at
+ * @property ?int $actual_resource_id
+ * @property ?CarbonImmutable $capacity_release_at
+ * @property ?CarbonImmutable $queue_priority_at
  * @property string $status
  * @property int $service_id
  * @property string $service_name
@@ -39,7 +49,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $approval_mode
  * @property array<string, int> $policy_snapshot
  * @property string $contact_name
- * @property string $contact_email
+ * @property ?string $contact_email
  * @property ?string $contact_phone
  * @property ?string $vehicle_plate
  * @property ?string $customer_notes
@@ -65,6 +75,22 @@ class Booking extends Model
 
     public const RESCHEDULED = 'rescheduled';
 
+    public const SOURCE_ONLINE = 'online';
+
+    public const SOURCE_STAFF = 'staff';
+
+    public const SOURCE_WALK_IN = 'walk_in';
+
+    public const SCHEDULED = 'scheduled';
+
+    public const CHECKED_IN = 'checked_in';
+
+    public const IN_SERVICE = 'in_service';
+
+    public const COMPLETED = 'completed';
+
+    public const NO_SHOW = 'no_show';
+
     protected $guarded = [];
 
     protected function casts(): array
@@ -79,6 +105,12 @@ class Booking extends Model
             'decided_at' => 'immutable_datetime',
             'expired_at' => 'immutable_datetime',
             'reminder_sent_at' => 'immutable_datetime',
+            'checked_in_at' => 'immutable_datetime',
+            'started_at' => 'immutable_datetime',
+            'completed_at' => 'immutable_datetime',
+            'no_show_at' => 'immutable_datetime',
+            'capacity_release_at' => 'immutable_datetime',
+            'queue_priority_at' => 'immutable_datetime',
         ];
     }
 
@@ -96,6 +128,54 @@ class Booking extends Model
     {
         return $this->status === self::CONFIRMED
             || ($this->isPending() && $this->pending_expires_at !== null && $this->pending_expires_at->isFuture());
+    }
+
+    /** The physical resource currently holding this booking's capacity. */
+    public function claimedResourceId(): int
+    {
+        return $this->actual_resource_id ?? $this->physical_resource_id;
+    }
+
+    /** Total service minutes from the immutable snapshot (variant plus add-ons). */
+    public function serviceMinutes(): int
+    {
+        return $this->variant_duration_minutes + $this->add_ons_duration_minutes;
+    }
+
+    /** When the service is projected to finish: actual start plus snapshot duration, else the planned end. */
+    public function projectedServiceEnd(): CarbonImmutable
+    {
+        return $this->started_at !== null
+            ? $this->started_at->addMinutes($this->serviceMinutes())
+            : $this->service_end_at;
+    }
+
+    /**
+     * When this booking stops claiming capacity. A recorded release (completion
+     * or confirmed no-show) wins; in service it extends past the plan for a late
+     * start or an overrun, always keeping the buffer; otherwise the plan holds.
+     * The historical snapshot timestamps are never read back from this value.
+     */
+    public function capacityEndsAt(CarbonImmutable $now): CarbonImmutable
+    {
+        if ($this->capacity_release_at !== null) {
+            return $this->capacity_release_at;
+        }
+        if ($this->operational_state === self::IN_SERVICE && $this->started_at !== null) {
+            $buffer = $this->buffer_minutes;
+
+            return $this->occupied_end_at
+                ->max($this->projectedServiceEnd()->addMinutes($buffer))
+                ->max($now->addMinutes($buffer));
+        }
+
+        return $this->occupied_end_at;
+    }
+
+    /** The queue ordering key: manual priority when set, otherwise the appointment time. */
+    public function queueKey(): CarbonImmutable
+    {
+        return $this->queue_priority_at ?? $this->scheduled_start_at;
     }
 
     /** @return HasMany<BookingAddOn, $this> */

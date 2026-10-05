@@ -15,6 +15,12 @@ export type OrganizationSummary = {
     /** UTC instant (ISO 8601) set by the explicit Publish action. */
     publishedAt: string | null;
     shopUrl: string;
+    /** Staff operations dashboard for members of this organization. */
+    operationsUrl: string;
+    /** Scheduling-conflict dashboard for members of this organization. */
+    conflictsUrl: string;
+    /** Conflicts still needing Staff action or a customer answer. */
+    unresolvedConflicts: number;
     /** Booking requests page for members of this organization. */
     bookingRequestsUrl: string;
     /** Base path of the Owner settings tabs, e.g. /owner/organizations/1/settings. */

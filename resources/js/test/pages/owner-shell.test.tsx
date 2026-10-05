@@ -18,6 +18,9 @@ const props = {
         branchName: 'Main Branch',
         publishedAt: null,
         shopUrl: 'x',
+        operationsUrl: '/owner/organizations/1/operations',
+        conflictsUrl: '/owner/organizations/1/scheduling-conflicts',
+        unresolvedConflicts: 0,
         bookingRequestsUrl: '/owner/organizations/1/booking-requests',
         baseUrl: '/owner/organizations/1/settings',
     },
@@ -66,7 +69,7 @@ describe('Owner shell', () => {
         render(<OwnerShell>page</OwnerShell>);
         const sidebar = screen.getByRole('navigation', { name: 'Main' });
 
-        expect(within(sidebar).getAllByRole('link')).toHaveLength(2);
+        expect(within(sidebar).getAllByRole('link')).toHaveLength(4);
         expect(
             within(sidebar).getByRole('link', { name: 'Settings' }),
         ).toHaveAttribute('aria-current', 'page');
@@ -78,6 +81,48 @@ describe('Owner shell', () => {
                 .getByRole('main')
                 .contains(screen.getByRole('navigation', { name: 'Settings' })),
         ).toBe(true);
+    });
+
+    it('shows the operations dashboard without the Owner-only configuration tabs', () => {
+        resetInertia(props, '/owner/organizations/1/operations');
+        render(<OwnerShell>page</OwnerShell>);
+
+        expect(
+            screen.getByRole('link', { name: 'Operations' }),
+        ).toHaveAttribute('aria-current', 'page');
+        expect(
+            screen.getByRole('heading', { name: 'Today’s operations' }),
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByRole('navigation', { name: 'Settings' }),
+        ).not.toBeInTheDocument();
+        expect(screen.queryByText('Owner only')).not.toBeInTheDocument();
+    });
+
+    it('shows the conflict count in the sidebar and the conflicts page without configuration tabs', () => {
+        resetInertia(
+            {
+                ...props,
+                organization: { ...props.organization, unresolvedConflicts: 3 },
+            },
+            '/owner/organizations/1/scheduling-conflicts',
+        );
+        render(<OwnerShell>page</OwnerShell>);
+
+        const link = screen.getByRole('link', { name: /Conflicts/ });
+        expect(link).toHaveAttribute('aria-current', 'page');
+        expect(within(link).getByLabelText('3 unresolved')).toHaveTextContent(
+            '3',
+        );
+        expect(
+            screen.getByRole('heading', {
+                level: 1,
+                name: 'Scheduling conflicts',
+            }),
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByRole('navigation', { name: 'Settings' }),
+        ).not.toBeInTheDocument();
     });
 
     it('shows Booking requests without the Owner-only configuration tabs', () => {

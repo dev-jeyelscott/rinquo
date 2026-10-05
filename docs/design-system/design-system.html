@@ -1324,7 +1324,7 @@
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Note:</span>
-                            <span class="registry-meta-value">Included for future navigation patterns</span>
+                            <span class="registry-meta-value">Contextual container for routine forms on the operations dashboard (walk-in, assignment, block)</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Category:</span>
@@ -1508,6 +1508,141 @@
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Category:</span>
                             <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="operation-stat-card" data-registry-id="operation-stat-card" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">OperationStatCard</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">operation-stat-card</div>
+                    <p class="registry-description">Operations counter from the staff dashboard: a muted label over a large tabular figure with an optional one-line hint. Tone only reinforces the label; the number and text carry the meaning.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/operations/operation-stat-card.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">03-staff-operations-dashboard.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">Card</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="operation-queue-row" data-registry-id="operation-queue-row" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">OperationQueueRow</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">operation-queue-row</div>
+                    <p class="registry-description">Staff queue entry: time, customer and vehicle, a text status chip, assigned resource, projected finish and lateness while in service, and the one routine next action. No-show, move up and early buffer release use ConfirmAction with a required reason; assignment opens a contextual sheet.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/operations/operation-queue-row.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">03-staff-operations-dashboard.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">Card, StatusChip, ConfirmAction, Sheet, FormField, Button, Spinner</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Composition</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="schedule-impact-dialog" data-registry-id="schedule-impact-dialog" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">ScheduleImpactDialog</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">schedule-impact-dialog</div>
+                    <p class="registry-description">Review step for a scheduling change that would disrupt future bookings. Names the exact count, separates bookings that stay at the same time on another resource from conflicts needing staff, and repeats the same submission with the server-issued token on Apply changes. A refreshed plan replaces a stale one and says so.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/owner/schedule-impact-dialog.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">05-owner-scheduling-configuration.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">Dialog, StatusChip, Alert, Button</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="conflict-queue-row" data-registry-id="conflict-queue-row" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">ConflictQueueRow</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">conflict-queue-row</div>
+                    <p class="registry-description">One scheduling conflict in the staff queue: customer, the protected original appointment time, service and cause in words, and the state as a text chip. The whole row links to the resolution pane and marks the current conflict with aria-current.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/conflicts/conflict-queue-row.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">04-scheduling-conflict-resolution.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">StatusChip</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Composition</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="reschedule-proposal-card" data-registry-id="reschedule-proposal-card" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">RescheduleProposalCard</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">reschedule-proposal-card</div>
+                    <p class="registry-description">The shop's replacement-time proposal on the customer's booking page: the original booking stays confirmed and reserved, the proposed time and deadline follow, and accepting is a deliberate confirmation. Never shows resources, capacity or the internal cause.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/booking/reschedule-proposal-card.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">04-scheduling-conflict-resolution.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">Alert, Button, Dialog</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Composition</span>
                         </div>
                     </div>
                 </article>

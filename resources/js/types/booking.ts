@@ -1,3 +1,4 @@
+import type { ProposalForCustomer } from '@/types/conflicts';
 import type { ShopPageProps } from '@/types/shop';
 
 /** Props the tenant-branded shell reads on every public shop page. */
@@ -150,8 +151,16 @@ export type BookingPageProps = ShopShellProps & {
             /** When the customer can no longer change the booking, if still open. */
             deadlineAt: string | null;
         };
+        /** The shop's active replacement proposal, if any; never carries resource or capacity detail. */
+        proposal: ProposalForCustomer | null;
     };
-    urls: { shop: string; cancel: string; reschedule: string };
+    urls: {
+        shop: string;
+        cancel: string;
+        reschedule: string;
+        acceptProposal: string;
+        declineProposal: string;
+    };
 };
 
 export type BookingRequest = {
