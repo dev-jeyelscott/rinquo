@@ -5,8 +5,10 @@ monolith (Inertia + React + TypeScript, PostgreSQL, Redis, Horizon, Reverb,
 S3-compatible storage). The planning package lives in [`docs/`](docs/README.md);
 the MVP roadmap is in [`docs/roadmaps/mvp/`](docs/roadmaps/mvp/master-roadmap.md).
 
-This repository currently contains the foundation only (slice 00): no
-business features yet.
+The foundation (slice 00) and the first business slice (slice 01, "Tenant
+becomes bookable") are in place: an Owner can sign in, create an organization,
+configure it and publish a tenant-branded shop page. Online booking is **not**
+accepted yet: slice 01 publishes a catalog only.
 
 ## Requirements
 
@@ -49,6 +51,33 @@ make smoke MAIL_TO=you@example.com  # also sends a Mailtrap smoke email
 | `redis`     | Redis 8: cache, sessions, queues                                |
 | `s3`        | RustFS, a local S3-compatible store; `s3-init` makes the bucket |
 
+## Owner flow (slice 01)
+
+1. Open <http://localhost/owner/auth/login>, enter your email and the 6-digit
+   code that is emailed to you (codes expire after 10 minutes; one resend per
+   minute). Locally the mail goes to your Mailtrap sandbox (`.env`
+   `MAIL_*`), so the code is delivered there.
+2. First sign-in only: create your organization (business name, shop address
+   and branch name). You get exactly one branch (`Asia/Manila`) and become its
+   Owner.
+3. In **Settings** complete Profile (branding, address, optional photos),
+   Business hours, Services (vehicle types, services, per-vehicle variants,
+   service windows, add-ons), and Resources (resource types, physical
+   resources and capacity). Set each variant's resource consumption: a variant
+   with no consumption is unavailable.
+4. On **Readiness** every check must pass, then press **Publish**. Publishing
+   is explicit and re-checked on the server; a later change that breaks
+   readiness unpublishes the shop automatically and never republishes it.
+5. The public page is `/shops/<shop-address>` (for example
+   <http://localhost/shops/spark-auto-wash>). Draft or unready shops show a
+   generic "not available" page.
+
+Tenant photos are stored privately in S3-compatible storage (`make setup`
+creates the bucket) and are served through the application, never by public
+URL. Records that bookings will reference are archived or deactivated, never
+deleted. Slice 01 shows services and prices only: there is no booking button
+until slice 02.
+
 ## Quality commands
 
 The same scripts run locally and in GitHub Actions.
@@ -67,7 +96,12 @@ The same scripts run locally and in GitHub Actions.
 | All non-E2E gates + build     | `make ci`               |                                                                      |
 | Browser smoke tests           | `make e2e`              | `npm run test:e2e` (Playwright)                                      |
 
-`make ci` and `make e2e` need the stack running (`make up`). `make e2e` runs
+`make ci` and `make e2e` need the stack running (`make up`). The Owner-journey
+browser test (`tests/Browser/owner-publish.spec.ts`) reads the emailed sign-in
+code through a route that exists only when the app runs with `APP_ENV=testing`;
+it skips itself otherwise. To run it locally, start the stack the way CI does:
+`npm run build && COMPOSE_FILE=compose.yaml:compose.ci.yaml docker compose up -d --wait`,
+then `make e2e` (it takes about a minute because of the sign-in resend cooldown). `make e2e` runs
 Playwright inside the official Playwright container against the running stack.
 
 Backend tests run against real PostgreSQL (`rinquo_testing`) and Redis

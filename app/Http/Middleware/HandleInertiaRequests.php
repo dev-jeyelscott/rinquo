@@ -43,6 +43,12 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'appName' => config('app.name'),
             'displayTimezone' => config('app.display_timezone'),
+            'auth' => [
+                'user' => $request->user() === null ? null : ['email' => $request->user()->email],
+            ],
+            'flash' => [
+                'status' => fn () => $request->session()->get('status'),
+            ],
             'realtime' => [
                 'key' => (string) config('broadcasting.connections.reverb.key'),
                 'host' => (string) config('broadcasting.connections.reverb.browser.host'),

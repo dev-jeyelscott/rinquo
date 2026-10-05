@@ -30,6 +30,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // in AppServiceProvider, so they keep working with a cached config.
         $middleware->trustHosts();
 
+        $middleware->redirectGuestsTo(fn (Request $request) => route('owner.auth.login'));
+        $middleware->redirectUsersTo(fn (Request $request) => route('owner.home'));
+
         $middleware->web(append: [
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,

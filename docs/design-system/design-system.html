@@ -1374,17 +1374,67 @@
                     </div>
                 </article>
 
-                <article id="service-card" data-registry-id="service-card" data-status="experimental" class="registry-card">
+                <article id="form-field" data-registry-id="form-field" data-status="stable" class="registry-card">
                     <div class="registry-header">
-                        <h3 class="registry-title">ServiceCard</h3>
+                        <h3 class="registry-title">FormField</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">form-field</div>
+                    <p class="registry-description">Persistent label, optional hint and associated error message around one native control (text, textarea, select, checkbox).</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/owner/form-field.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Variants:</span>
+                            <span class="registry-meta-value">text, textarea, select, checkbox</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="confirm-action" data-registry-id="confirm-action" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">ConfirmAction</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">confirm-action</div>
+                    <p class="registry-description">Dialog that confirms an archive or unpublish and then posts it to the server.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/owner/confirm-action.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">Dialog, Button</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                                <article id="service-card" data-registry-id="service-card" data-status="experimental" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">ShopServiceCard</h3>
                         <span class="registry-status status-experimental">Experimental</span>
                     </div>
                     <div class="registry-id">service-card</div>
-                    <p class="registry-description">Card displaying a service with description, duration, vehicle variants, and pricing. Includes select action button.</p>
+                    <p class="registry-description">Public storefront card with description, duration range, compatible vehicle types and a "From" price from available variants.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/shop/shop-service-card.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
                             <span class="registry-meta-label">Status:</span>
-                            <span class="registry-meta-value">Not yet implemented; required for customer shop home</span>
+                            <span class="registry-meta-value">Implemented without the Select action; booking arrives in slice 02</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Reference:</span>
@@ -1392,10 +1442,7 @@
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Uses:</span>
-                            <div class="tag-list">
-                                <span class="tag">Card</span>
-                                <span class="tag">Button</span>
-                            </div>
+                            <span class="registry-meta-value">Card</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Category:</span>
@@ -1404,7 +1451,149 @@
                     </div>
                 </article>
 
-                <article id="operations-stat-card" data-registry-id="operations-stat-card" data-status="experimental" class="registry-card">
+                                <article id="config-form" data-registry-id="config-form" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">ConfigForm</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">config-form</div>
+                    <p class="registry-description">Field-list driven form with submission state and inline server errors. Money is entered in pesos and submitted as integer centavos.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/owner/config-form.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">FormField, Button, Spinner</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Composition</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="section-card" data-registry-id="section-card" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">SectionCard</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">section-card</div>
+                    <p class="registry-description">Owner settings section: flat rounded card with a section title, a muted description and an optional status chip.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/owner/section-card.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">05-owner-scheduling-configuration.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="status-chip" data-registry-id="status-chip" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">StatusChip</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">status-chip</div>
+                    <p class="registry-description">Pill-shaped status chip (OWNER ONLY, OPEN NOW, 1 unit) with info, success, warning and neutral tones and an optional caps mode.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/owner/status-chip.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">01-customer-shop-home.png, 05-owner-scheduling-configuration.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="readiness-checklist" data-registry-id="readiness-checklist" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">ReadinessChecklist</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">readiness-checklist</div>
+                    <p class="registry-description">Readiness checklist with icon and text for pass or fail and a link to the tab that fixes each failing item.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/owner/readiness-checklist.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">StatusChip</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Composition</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="weekly-intervals-editor" data-registry-id="weekly-intervals-editor" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">WeeklyIntervalsEditor</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">weekly-intervals-editor</div>
+                    <p class="registry-description">Edits weekly local-time intervals, several per day, for business hours and service windows.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/owner/weekly-intervals-editor.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">FormField, Button</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Composition</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="tenant-shop-shell" data-registry-id="tenant-shop-shell" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">TenantShopShell</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">tenant-shop-shell</div>
+                    <p class="registry-description">Public tenant-branded shell: Rinquo wordmark with the shop name beneath, OPEN NOW or CLOSED NOW chip, quiet page background and the tenant brand color as one CSS variable.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/layouts/tenant-shop-shell.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">01-customer-shop-home.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">Badge</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Composition</span>
+                        </div>
+                    </div>
+                </article>
+
+<article id="operations-stat-card" data-registry-id="operations-stat-card" data-status="experimental" class="registry-card">
                     <div class="registry-header">
                         <h3 class="registry-title">OperationsStatCard</h3>
                         <span class="registry-status status-experimental">Experimental</span>
@@ -1617,26 +1806,25 @@
                     </div>
                 </article>
 
-                <article id="owner-configuration-tabs" data-registry-id="owner-configuration-tabs" data-status="experimental" class="registry-card">
+                                <article id="owner-configuration-tabs" data-registry-id="owner-configuration-tabs" data-status="stable" class="registry-card">
                     <div class="registry-header">
                         <h3 class="registry-title">Owner Configuration Tabs</h3>
-                        <span class="registry-status status-experimental">Experimental</span>
+                        <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">owner-configuration-tabs</div>
-                    <p class="registry-description">Tab interface for owner configuration pages with blue underline for active tab and "OWNER ONLY" indicator.</p>
+                    <p class="registry-description">Owner-only settings shell: dark sidebar (top bar on small screens), page header with branch and Draft or Published chips, pill tabs with aria-current beside an OWNER ONLY chip, and a status region.</p>
                     <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/layouts/owner-shell.tsx</span>
+                        </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Reference:</span>
                             <span class="registry-meta-value">05-owner-scheduling-configuration.png</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Tabs:</span>
-                            <div class="tag-list">
-                                <span class="tag">Resources</span>
-                                <span class="tag">Services</span>
-                                <span class="tag">Business Hours</span>
-                                <span class="tag">Booking Policy</span>
-                            </div>
+                            <span class="registry-meta-value">Profile, Business hours, Services, Resources, Readiness</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Category:</span>

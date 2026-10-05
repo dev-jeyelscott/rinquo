@@ -108,6 +108,14 @@ The database session timezone is always UTC.
 | `AWS_ENDPOINT`                | Endpoint for non-AWS providers              | -    | `https://<account>.r2.cloudflarestorage.com` |
 | `AWS_USE_PATH_STYLE_ENDPOINT` | `true` for the local emulator and some providers | - | `false` |
 | `AWS_URL`                     | Optional public/CDN base URL                | -    | - |
+| `RINQUO_MEDIA_DISK`           | Private disk for tenant logos and photos (defaults to `FILESYSTEM_DISK`) | - | `s3` |
+
+### Owner sign-in throttles
+
+| Variable                              | Purpose                                              | Req. | Safe example |
+| ------------------------------------- | ---------------------------------------------------- | ---- | ------------ |
+| `RINQUO_OTP_REQUESTS_PER_IP_PER_HOUR` | Sign-in code requests per IP per hour (default `20`) | -    | `20` |
+| `RINQUO_OTP_VERIFY_PER_IP`            | Code verification attempts per IP per 10 minutes (default `20`) | - | `20` |
 | `AWS_CONNECT_TIMEOUT`, `AWS_TIMEOUT` | Seconds                              | -    | `5`, `30` |
 
 Files are private by default; storage failures throw (they are never silently

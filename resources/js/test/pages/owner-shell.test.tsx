@@ -1,0 +1,100 @@
+import { render, screen, within } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+import OwnerShell from '@/layouts/owner-shell';
+import { inertia, resetInertia } from '@/test/inertia';
+
+vi.mock('@inertiajs/react', async () =>
+    (await import('@/test/inertia')).inertiaModule(),
+);
+
+const props = {
+    appName: 'Rinquo',
+    auth: { user: { email: 'owner@example.test' } },
+    flash: { status: null as string | null },
+    organization: {
+        id: 1,
+        name: 'Shine',
+        slug: 'shine',
+        branchName: 'Main Branch',
+        publishedAt: null,
+        shopUrl: 'x',
+        baseUrl: '/owner/organizations/1/settings',
+    },
+    readiness: {
+        isReady: false,
+        items: [
+            {
+                key: 'hours',
+                label: 'Business hours',
+                passed: false,
+                detail: '',
+                tab: 'hours',
+            },
+        ],
+    },
+};
+
+describe('Owner shell', () => {
+    beforeEach(() =>
+        resetInertia(props, '/owner/organizations/1/settings/hours'),
+    );
+
+    it('marks the current tab and flags tabs that need attention', () => {
+        render(<OwnerShell>page</OwnerShell>);
+        const nav = screen.getByRole('navigation', { name: 'Settings' });
+
+        expect(
+            within(nav).getByRole('link', { name: /business hours/i }),
+        ).toHaveAttribute('aria-current', 'page');
+        expect(
+            within(nav).getByRole('link', { name: /profile/i }),
+        ).not.toHaveAttribute('aria-current');
+        expect(
+            within(nav).getByLabelText('Needs attention'),
+        ).toBeInTheDocument();
+        expect(within(nav).getAllByRole('link')).toHaveLength(5);
+    });
+
+    it('keeps the sidebar to real destinations and the tabs in the content area', () => {
+        render(<OwnerShell>page</OwnerShell>);
+        const sidebar = screen.getByRole('navigation', { name: 'Main' });
+
+        expect(within(sidebar).getAllByRole('link')).toHaveLength(1);
+        expect(
+            within(sidebar).getByRole('link', { name: 'Settings' }),
+        ).toHaveAttribute('aria-current', 'page');
+        expect(
+            screen
+                .getByRole('main')
+                .contains(screen.getByRole('navigation', { name: 'Settings' })),
+        ).toBe(true);
+    });
+
+    it('labels the area as owner-only and shows branch and draft versus published', () => {
+        render(<OwnerShell>page</OwnerShell>);
+        expect(screen.getByText('Owner only')).toBeInTheDocument();
+        expect(screen.getByText('Main Branch')).toBeInTheDocument();
+        expect(screen.getByText('Draft')).toBeInTheDocument();
+        expect(
+            screen.getByRole('heading', {
+                level: 1,
+                name: 'Scheduling configuration',
+            }),
+        ).toBeInTheDocument();
+    });
+
+    it('announces a success message in a status region', () => {
+        inertia.props = { ...props, flash: { status: 'Profile saved.' } };
+        render(<OwnerShell>page</OwnerShell>);
+
+        expect(screen.getByRole('status')).toHaveTextContent('Profile saved.');
+    });
+
+    it('offers sign out as a POST', () => {
+        render(<OwnerShell>page</OwnerShell>);
+
+        expect(
+            screen.getAllByRole('link', { name: 'Sign out' })[0],
+        ).toHaveAttribute('data-method', 'post');
+    });
+});

@@ -7,6 +7,8 @@ declare module '@inertiajs/core' {
             appName: string;
             displayTimezone: string;
             realtime: RealtimeConfig;
+            auth: { user: { email: string } | null };
+            flash: { status: string | null };
             [key: string]: unknown;
         };
     }

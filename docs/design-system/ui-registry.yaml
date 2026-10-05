@@ -616,6 +616,133 @@ components:
     notes: >
       Wrap root component in TooltipProvider.
 
+  - id: form-field
+    name: FormField (TextField, TextareaField, SelectField, CheckboxField)
+    category: component
+    path: resources/js/components/owner/form-field.tsx
+    description: >
+      Persistent label, optional hint and associated error message around one
+      native control. The control receives aria-invalid and aria-describedby.
+    variants:
+      - text
+      - textarea
+      - select
+      - checkbox
+    props:
+      - name: label
+        type: string
+        required: true
+      - name: error
+        type: string
+        required: false
+      - name: hint
+        type: string
+        required: false
+      - name: required
+        type: boolean
+        required: false
+    accessibility:
+      - Visible label associated through htmlFor/id
+      - Error and hint linked with aria-describedby
+      - Native select and checkbox semantics
+      - Required marker is aria-hidden and also set as aria-required
+    responsive: Full width, constrained by its parent grid
+    status: stable
+    dependencies:
+      - Input
+      - Label
+    notes: >
+      Native select and textarea use the same tokens as Input; the Radix
+      Select primitive is not used inside forms.
+
+  - id: section-card
+    name: SectionCard
+    category: component
+    path: resources/js/components/owner/section-card.tsx
+    description: >
+      Owner settings section from reference 05: a flat, rounded card with a
+      section title (h2 or h3), a muted one-line description and an optional
+      status chip beside the title.
+    reference_design: '05-owner-scheduling-configuration.png'
+    props:
+      - name: title
+        type: string
+        required: true
+      - name: description
+        type: ReactNode
+        required: false
+      - name: badge
+        type: ReactNode
+        required: false
+      - name: headingLevel
+        type: "'h2' | 'h3'"
+        required: false
+    accessibility:
+      - Title is a real heading; the level is chosen to fit the page outline
+    responsive: Full width; callers place cards in a one or two column grid
+    status: stable
+    dependencies:
+      - Card
+
+  - id: status-chip
+    name: StatusChip
+    category: component
+    path: resources/js/components/owner/status-chip.tsx
+    description: >
+      Pill-shaped status chip from the reference screens (OWNER ONLY,
+      OPEN NOW, "1 unit"). Tones info, success, warning and neutral use
+      semantic tokens; an optional caps mode gives small tracked uppercase.
+    reference_design: '01-customer-shop-home.png, 05-owner-scheduling-configuration.png'
+    props:
+      - name: tone
+        type: "'info' | 'success' | 'warning' | 'neutral'"
+        required: false
+      - name: caps
+        type: boolean
+        required: false
+    accessibility:
+      - Meaning is always in the text; tone only reinforces it
+    responsive: Inline, never wraps
+    status: stable
+    dependencies:
+      - Badge
+
+  - id: confirm-action
+    name: ConfirmAction
+    category: component
+    path: resources/js/components/owner/confirm-action.tsx
+    description: >
+      Dialog that confirms a consequential, reversible-by-history state change
+      (archive, unpublish) and then posts it to the server.
+    props:
+      - name: label
+        type: string
+        required: true
+      - name: ariaLabel
+        type: string
+        required: true
+      - name: title
+        type: string
+        required: true
+      - name: description
+        type: string
+        required: true
+      - name: confirmLabel
+        type: string
+        required: true
+      - name: url
+        type: string
+        required: true
+    accessibility:
+      - Focus is trapped in the dialog and restored to the trigger
+      - Trigger has an accessible name that says what is affected
+      - Confirm button is disabled and aria-busy while submitting
+    responsive: Dialog is centered and constrained to the viewport
+    status: stable
+    dependencies:
+      - Dialog
+      - Button
+
 # ==============================================================================
 # COMPOSITIONS: Reusable multi-component patterns
 # ==============================================================================
@@ -663,36 +790,139 @@ compositions:
       Required for customer booking flow; implement to move to active.
 
   - id: service-card
-    name: ServiceCard
+    name: ShopServiceCard
     category: composition
+    path: resources/js/components/shop/shop-service-card.tsx
     description: >
-      Card displaying a service with description, duration,
-      vehicle variants, and pricing. Includes select action button.
-      Proposed: not yet implemented in component library.
+      Public storefront card showing a service with its description,
+      duration range, compatible vehicle types and a "From" price derived
+      only from complete, available variants.
     reference_design: '01-customer-shop-home.png'
     uses:
       - Card
-      - Button (Select action)
     props:
       - name: service
         type: object
         required: true
-      - name: icon
-        type: ReactNode
-        required: false
-      - name: onSelect
-        type: callback
-        required: true
     accessibility:
-      - Semantic card structure
-      - Clear action button
-    responsive: Full width cards in grid layout
+      - Semantic heading per service
+      - Decorative icon area is aria-hidden
+    responsive: Full width cards in a single column
     status: experimental
     notes: >
-      Shows service title, variants (Sedan, SUV), duration,
-      price (From P300), and select button. Light gray background
-      for service icon area.
-      Required for customer shop home page; implement to move to active.
+      Implemented without the reference "Select" action: slice 01 publishes
+      a catalog only and online booking is not accepted yet, so no booking
+      control ships. Slice 02 adds the Select action and moves this to stable.
+
+  - id: config-form
+    name: ConfigForm
+    category: composition
+    path: resources/js/components/owner/config-form.tsx
+    description: >
+      Small form driven by a field list (text, number, money, textarea, select,
+      checkbox, date, time). Owns submission state and shows server validation
+      errors beside their fields. Money fields are entered in pesos and
+      submitted as integer centavos.
+    uses:
+      - FormField
+      - Button
+      - Spinner
+    props:
+      - name: method
+        type: enum
+        required: true
+      - name: url
+        type: string
+        required: true
+      - name: fields
+        type: array
+        required: true
+      - name: initial
+        type: object
+        required: true
+      - name: submitLabel
+        type: string
+        required: true
+      - name: title
+        type: string
+        required: true
+    accessibility:
+      - Form has an accessible name
+      - Submit is disabled and aria-busy while processing
+      - Server errors are linked to their fields
+    responsive: Single column; the inline layout wraps fields in a responsive grid
+    status: stable
+
+  - id: readiness-checklist
+    name: ReadinessChecklist
+    category: composition
+    path: resources/js/components/owner/readiness-checklist.tsx
+    description: >
+      Authoritative readiness checklist. Each item shows an icon and a
+      Passed or Needs attention badge, its detail text and, when failing, a
+      link to the tab that fixes it.
+    uses:
+      - Badge
+    props:
+      - name: items
+        type: array
+        required: true
+      - name: baseUrl
+        type: string
+        required: true
+    accessibility:
+      - Pass and fail are conveyed by text and icon, never color alone
+      - List has an accessible name
+    responsive: Full width list
+    status: stable
+
+  - id: weekly-intervals-editor
+    name: WeeklyIntervalsEditor
+    category: composition
+    path: resources/js/components/owner/weekly-intervals-editor.tsx
+    description: >
+      Edits weekly local-time intervals (weekday, start, end) with several
+      intervals per day. Used for business hours and service windows.
+    uses:
+      - FormField
+      - Button
+    props:
+      - name: value
+        type: array
+        required: true
+      - name: onChange
+        type: callback
+        required: true
+      - name: errorPrefix
+        type: string
+        required: true
+    accessibility:
+      - Every control has a visible label naming its day
+      - Remove buttons are labelled with day and position
+      - Errors are announced with the field they belong to
+    responsive: Four-column row on sm and above, stacked on mobile
+    status: stable
+
+  - id: tenant-shop-shell
+    name: TenantShopShell
+    category: composition
+    path: resources/js/layouts/tenant-shop-shell.tsx
+    description: >
+      Public tenant-branded shell: Rinquo wordmark with the shop name
+      beneath it (and logo when present), an OPEN NOW or CLOSED NOW chip,
+      a quiet page background, and the tenant brand color exposed as one CSS
+      variable with a readable foreground computed from its luminance.
+    reference_design: '01-customer-shop-home.png'
+    uses:
+      - StatusChip
+    accessibility:
+      - Open/closed is text, not color alone
+      - Brand foreground is chosen for readable contrast
+    responsive: Content constrained to max-w-5xl with responsive gutters
+    status: stable
+    notes: >
+      The tenant brand color is tenant data, not a design token; everything
+      else uses canonical tokens. Unavailable shops render the neutral shell.
 
   - id: operations-stat-card
     name: OperationsStatCard
@@ -877,18 +1107,31 @@ patterns:
   - id: owner-configuration-tabs
     name: Owner Configuration Tabs
     category: pattern
+    path: resources/js/layouts/owner-shell.tsx
     description: >
-      Tab interface for owner configuration pages with blue underline
-      for active tab. Tabs: Resources, Services, Business hours, Booking policy.
+      Owner-only settings shell: dark sidebar (a compact top bar on small
+      screens) with the wordmark, organization and the Settings destination;
+      a page header with the title, branch chip and Draft/Published chip;
+      and, in the content area, pill tabs (one link per configuration tab)
+      beside an OWNER ONLY chip, plus a status region.
+      Tabs: Profile, Business hours, Services, Resources, Readiness.
     reference_design: '05-owner-scheduling-configuration.png'
     components:
-      - NavigationMenu (horizontal tabs with underline)
+      - StatusChip
+      - Alert
+      - Button
+    accessibility:
+      - nav landmark labelled "Main" for the sidebar and "Settings" for the tabs
+      - aria-current="page" on the active tab
+      - Tabs that fail readiness show an icon with the label "Needs attention"
+      - Success messages announced through role=status
     use_cases:
       - Owner settings and configuration pages
-    status: experimental
+    status: stable
     notes: >
-      Active tab has blue text and blue underline.
-      "OWNER ONLY" label shown in top right of page.
+      Navigation links rather than ARIA tabs, because each tab is its own
+      page. The shell only presents: the server policy decides access.
+      "Booking policy" from the reference is out of scope for this slice.
 
   - id: multi-option-selection
     name: Multi-Option Selection (Dialog or Inline)

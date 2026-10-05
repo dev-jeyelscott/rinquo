@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Modules\Identity\TestingOtpPeek;
 use App\Support\Environment\RequiredEnvironment;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Middleware\TrustProxies;
@@ -30,6 +31,8 @@ class AppServiceProvider extends ServiceProvider
 
         $this->configureDefaults();
         $this->configureTrustedProxies();
+
+        TestingOtpPeek::register();
     }
 
     /**

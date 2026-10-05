@@ -11,8 +11,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
     }, [realtime]);
 
     return (
-        <div className="flex min-h-screen flex-col bg-background text-foreground">
-            <header className="border-b border-border">
+        <div className="flex min-h-screen flex-col bg-secondary/60 text-foreground">
+            <header className="border-b border-border bg-background">
                 <div className="mx-auto flex h-14 w-full max-w-5xl items-center px-4 sm:px-6">
                     <span className="text-base font-semibold">{appName}</span>
                 </div>
