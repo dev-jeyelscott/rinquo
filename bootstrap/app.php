@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::get('/ready', ReadinessController::class)->name('ready');
         },
     )
+    ->withCommands([__DIR__.'/../app/Modules/Booking/Console'])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(AssignRequestId::class);
 

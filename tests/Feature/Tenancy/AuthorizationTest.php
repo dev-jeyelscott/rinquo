@@ -38,6 +38,8 @@ function settingsRoutes(object $records, $organization): array
         ['post', 'owner.settings.resources.store', ['resource_type_id' => $records->type->id, 'name' => 'Hacked', 'capacity' => 9]],
         ['patch', 'owner.settings.resources.update', ['name' => 'Hacked', 'capacity' => 9], ['physicalResource' => $records->resource->id]],
         ['post', 'owner.settings.resources.archive', [], ['physicalResource' => $records->resource->id]],
+        ['get', 'owner.settings.booking-policy', []],
+        ['put', 'owner.settings.booking-policy.update', ['approval_mode' => 'staff_approval', 'slot_interval_minutes' => 30, 'min_notice_minutes' => 0, 'horizon_days' => 1, 'approval_window_minutes' => 15]],
         ['get', 'owner.settings.readiness', []],
         ['post', 'owner.settings.publish', []],
         ['post', 'owner.settings.unpublish', []],

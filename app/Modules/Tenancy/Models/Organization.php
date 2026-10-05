@@ -3,6 +3,7 @@
 namespace App\Modules\Tenancy\Models;
 
 use App\Modules\Scheduling\Models\AddOn;
+use App\Modules\Scheduling\Models\BookingPolicy;
 use App\Modules\Scheduling\Models\PhysicalResource;
 use App\Modules\Scheduling\Models\ResourceType;
 use App\Modules\Scheduling\Models\Service;
@@ -45,6 +46,12 @@ class Organization extends Model
     public function branch(): HasOne
     {
         return $this->hasOne(Branch::class);
+    }
+
+    /** @return HasOne<BookingPolicy, $this> */
+    public function bookingPolicy(): HasOne
+    {
+        return $this->hasOne(BookingPolicy::class);
     }
 
     /** @return HasMany<Membership, $this> */

@@ -3,6 +3,7 @@
 namespace App\Modules\Tenancy\Actions;
 
 use App\Modules\Identity\Models\User;
+use App\Modules\Scheduling\Models\BookingPolicy;
 use App\Modules\Tenancy\Models\Branch;
 use App\Modules\Tenancy\Models\Membership;
 use App\Modules\Tenancy\Models\Organization;
@@ -29,6 +30,8 @@ final class CreateOrganization
 
                 $organization = Organization::query()->create(['name' => $name, 'slug' => $slug]);
                 $branch = $organization->branch()->create(['name' => $branchName]);
+                // Defaults come from the table; code never falls back silently.
+                $organization->bookingPolicy()->save(new BookingPolicy);
                 Membership::query()->create([
                     'organization_id' => $organization->id,
                     'user_id' => $owner->id,

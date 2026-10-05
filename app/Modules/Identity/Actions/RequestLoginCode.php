@@ -22,9 +22,10 @@ use Throwable;
 final class RequestLoginCode
 {
     /**
+     * @param  ?string  $shopName  Names the shop in the email when the code verifies a customer booking; null keeps the Owner sign-in wording.
      * @return string The raw browser-bound challenge token to keep in the session.
      */
-    public function handle(string $email, string $ip): string
+    public function handle(string $email, string $ip, ?string $shopName = null): string
     {
         $email = User::normalizeEmail($email);
         $config = (array) config('rinquo.otp');
@@ -53,7 +54,7 @@ final class RequestLoginCode
         ]);
 
         try {
-            Mail::to($email)->send(new LoginCodeMail($code, (int) $config['expires_minutes']));
+            Mail::to($email)->send(new LoginCodeMail($code, (int) $config['expires_minutes'], $shopName));
         } catch (Throwable $exception) {
             $challenge->forceFill(['consumed_at' => now()])->save();
             report($exception);

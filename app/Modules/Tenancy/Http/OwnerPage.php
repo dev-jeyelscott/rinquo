@@ -28,6 +28,7 @@ final class OwnerPage
                 'branchName' => $organization->branch?->name,
                 'publishedAt' => $organization->published_at?->toIso8601String(),
                 'shopUrl' => route('shops.show', $organization->slug),
+                'bookingRequestsUrl' => route('owner.booking-requests.index', $organization, absolute: false),
                 'baseUrl' => Str::beforeLast(route('owner.settings.profile', $organization, absolute: false), '/profile'),
             ],
             'readiness' => [

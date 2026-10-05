@@ -21,6 +21,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Customer booking
+    |--------------------------------------------------------------------------
+    |
+    | Platform-wide limits. The per-shop approval mode and time rules are the
+    | Owner's booking policy (booking_policies), not configuration.
+    */
+    'booking' => [
+        // How long a checkout hold keeps its time reserved.
+        'hold_minutes' => (int) env('RINQUO_BOOKING_HOLD_MINUTES', 15),
+        // Hold creations per IP within the decay window (anonymous holds are a capacity-exhaustion vector).
+        'hold_requests_per_ip' => (int) env('RINQUO_BOOKING_HOLD_REQUESTS_PER_IP', 30),
+        'hold_decay_minutes' => 10,
+        'confirm_per_ip' => (int) env('RINQUO_BOOKING_CONFIRM_PER_IP', 30),
+        'confirm_decay_minutes' => 10,
+        // The reminder email goes out this many hours before the start.
+        'reminder_hours_before' => 24,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Tenant media
     |--------------------------------------------------------------------------
     |

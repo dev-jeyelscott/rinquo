@@ -2,12 +2,16 @@
 
 namespace App\Providers;
 
+use App\Modules\Booking\TestingShopFixture;
 use App\Modules\Identity\TestingOtpPeek;
 use App\Support\Environment\RequiredEnvironment;
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Middleware\TrustProxies;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -32,7 +36,10 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
         $this->configureTrustedProxies();
 
+        $this->configureBookingRateLimits();
+
         TestingOtpPeek::register();
+        TestingShopFixture::register();
     }
 
     /**
@@ -62,5 +69,19 @@ class AppServiceProvider extends ServiceProvider
         }
 
         TrustProxies::at($proxies === ['*'] ? '*' : $proxies);
+    }
+
+    /** Anonymous holds are a capacity-exhaustion vector, so creating and confirming them is throttled per IP. */
+    protected function configureBookingRateLimits(): void
+    {
+        RateLimiter::for('booking-holds', fn (Request $request) => Limit::perMinutes(
+            (int) config('rinquo.booking.hold_decay_minutes'),
+            (int) config('rinquo.booking.hold_requests_per_ip'),
+        )->by($request->ip()));
+
+        RateLimiter::for('booking-confirm', fn (Request $request) => Limit::perMinutes(
+            (int) config('rinquo.booking.confirm_decay_minutes'),
+            (int) config('rinquo.booking.confirm_per_ip'),
+        )->by($request->ip()));
     }
 }

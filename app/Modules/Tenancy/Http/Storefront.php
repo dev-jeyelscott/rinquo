@@ -39,9 +39,27 @@ final class Storefront
     /** @return array<string, mixed> */
     public function payload(Organization $organization, ?CarbonImmutable $now = null): array
     {
+        $available = $this->readiness->evaluate($organization)->availableVariantIds();
+
+        return [
+            ...$this->shell($organization, $now),
+            'services' => $this->services($organization, $available),
+            // A visible shop is published and ready, so it accepts online booking.
+            'bookingAvailable' => true,
+            'bookingUrl' => route('bookings.wizard', $organization->slug, absolute: false),
+        ];
+    }
+
+    /**
+     * The props the tenant-branded shell needs on every public page: shop
+     * identity and brand, the branch, and today's open/closed state.
+     *
+     * @return array{shop: array<string, mixed>, branch: array<string, mixed>, hours: array<string, mixed>}
+     */
+    public function shell(Organization $organization, ?CarbonImmutable $now = null): array
+    {
         $now = ($now ?? CarbonImmutable::now())->setTimezone(Branch::TIMEZONE);
         $branch = $organization->branch()->firstOrFail();
-        $available = $this->readiness->evaluate($organization)->availableVariantIds();
 
         $media = $organization->media()->active()->orderBy('sort_order')->get();
         $mediaUrl = fn (?OrganizationMedia $item): ?array => $item === null ? null : [
@@ -67,9 +85,6 @@ final class Storefront
                 'timezone' => $branch->timezone,
             ],
             'hours' => $this->hours($organization, $now),
-            'services' => $this->services($organization, $available),
-            // Slice 02 owns the booking journey; no booking link ships here.
-            'bookingAvailable' => false,
         ];
     }
 

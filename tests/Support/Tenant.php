@@ -3,6 +3,7 @@
 namespace Tests\Support;
 
 use App\Modules\Identity\Models\User;
+use App\Modules\Scheduling\Models\BookingPolicy;
 use App\Modules\Scheduling\Models\BranchWeeklyHour;
 use App\Modules\Scheduling\Models\CapacityConsumption;
 use App\Modules\Scheduling\Models\PhysicalResource;
@@ -37,6 +38,7 @@ final class Tenant
         $user ??= self::user($slug.'-'.$role.'@example.test');
         $organization = Organization::query()->create(['name' => ucfirst($slug), 'slug' => $slug]);
         $organization->branch()->create(['name' => 'Main branch']);
+        $organization->bookingPolicy()->save(new BookingPolicy);
         Membership::query()->create(['organization_id' => $organization->id, 'user_id' => $user->id, 'role' => $role]);
 
         return [$user, $organization];

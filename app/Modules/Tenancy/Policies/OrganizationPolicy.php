@@ -31,4 +31,19 @@ class OrganizationPolicy
             ? Response::allow()
             : Response::deny('Only an owner can change this configuration.');
     }
+
+    /**
+     * Day-to-day operation (for example deciding booking requests): any active
+     * member, Owner or Staff. Non-members get a 404.
+     */
+    public function operate(User $user, Organization $organization): Response
+    {
+        $isMember = Membership::query()
+            ->where('organization_id', $organization->id)
+            ->where('user_id', $user->id)
+            ->where('is_active', true)
+            ->exists();
+
+        return $isMember ? Response::allow() : Response::denyAsNotFound();
+    }
 }

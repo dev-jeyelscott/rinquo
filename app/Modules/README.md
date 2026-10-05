@@ -25,11 +25,12 @@ vertical slice that owns it begins. Do not add empty or speculative modules.
 
 ## Current modules
 
-| Module       | Owns                                                                                                                       |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| `Identity`   | Verified email identities and Owner email-code sign-in (challenges, rate limits, the sign-in mail).                        |
-| `Tenancy`    | Organization, its one branch, memberships and the Owner policy, tenant media, audit events, publish/unpublish, storefront. |
-| `Scheduling` | Booking-feasibility configuration: hours, catalog, resources, capacity consumption and the shared readiness evaluator.     |
+| Module       | Owns                                                                                                                                                                                          |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Identity`   | Verified email identities and Owner email-code sign-in (challenges, rate limits, the sign-in mail).                                                                                           |
+| `Tenancy`    | Organization, its one branch, memberships and the Owner policy, tenant media, audit events, publish/unpublish, storefront.                                                                    |
+| `Scheduling` | Booking-feasibility configuration: hours, catalog, resources, capacity consumption, the Owner booking policy and the shared readiness evaluator.                                              |
+| `Booking`    | Availability search, temporary checkout holds, bookings and their immutable snapshots, the customer wizard, approval of pending requests, booking email and the expiry and reminder sweepers. |
 
 Boundaries:
 
@@ -42,6 +43,22 @@ Boundaries:
   storefront all call it; nothing keeps a stored "ready" flag.
 - Composite `(organization_id, id)` foreign keys make PostgreSQL reject a row
   that references another tenant's parent record.
-- Slice 01 publishes a catalog only. Booking tables, holds and availability
-  search belong to slice 02, which consumes the variants, windows, branch
-  calendar, resource capacities and consumption rules defined here.
+- Slice 01 publishes a catalog only. Slice 02 (`Booking`) consumes the
+  variants, windows, branch calendar, resource capacities and consumption
+  rules defined here.
+- `Booking` lock order: every capacity claim, conversion, approval and expiry
+  locks the `organizations` row `FOR UPDATE` first (the lock
+  `ChangeOrganization` uses, so configuration changes and claims serialize per
+  tenant), then the affected hold or booking, re-reads configuration and
+  occupancy, verifies and writes in one transaction with no network calls.
+- Live capacity claims are active unexpired holds, confirmed bookings and
+  unexpired pending-approval bookings. Expiry is a time predicate, so capacity
+  frees at the expiry instant before any sweeper runs. A claim fits ONE
+  physical resource (a variant's consumption rules are alternative resource
+  types); capacity is never aggregated across resources.
+- Booking snapshot columns are immutable (a PostgreSQL trigger); status, the
+  planned resource assignment and notification timestamps stay mutable.
+  Later slices extend `bookings.status`, the `policy_snapshot` keys and
+  `Booking\Support\BookingIntake` additively.
+- A signed-in customer shares the `web` guard and the `users` identity with
+  Owners (ADR 0004); a booking attaches only to the verified, signed-in user.
