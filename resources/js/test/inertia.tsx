@@ -16,8 +16,14 @@ export const inertia = {
     calls: [] as Call[],
     /** Errors the next form submission fails with (cleared after use). */
     nextErrors: null as Record<string, string> | null,
+    /** Make the next form submission fail with a network error (cleared after use). */
+    networkFailure: false,
     /** Keep forms in the processing state (simulates a slow request). */
     hold: false,
+    /** Outcome of the next router.get (a partial reload): success by default. */
+    nextGet: 'success' as 'success' | 'error' | 'network' | 'pending',
+    /** Props merged into the page after a successful router.get (simulates the server reply). */
+    getReply: null as Record<string, unknown> | null,
 };
 
 export function resetInertia(props: Record<string, unknown> = {}, url = '/') {
@@ -25,7 +31,10 @@ export function resetInertia(props: Record<string, unknown> = {}, url = '/') {
     inertia.url = url;
     inertia.calls = [];
     inertia.nextErrors = null;
+    inertia.networkFailure = false;
     inertia.hold = false;
+    inertia.nextGet = 'success';
+    inertia.getReply = null;
 }
 
 function record(
@@ -55,10 +64,21 @@ function useFormMock(initial: Record<string, unknown>) {
 
                 return;
             }
+            if (inertia.networkFailure) {
+                inertia.networkFailure = false;
+                (options?.onNetworkError as ((e: Error) => void) | undefined)?.(
+                    new Error('offline'),
+                );
+
+                return;
+            }
             if (inertia.nextErrors) {
-                setErrors(inertia.nextErrors);
+                const errors = inertia.nextErrors;
+                setErrors(errors);
                 inertia.nextErrors = null;
-                (options?.onError as ((e: unknown) => void) | undefined)?.({});
+                (options?.onError as ((e: unknown) => void) | undefined)?.(
+                    errors,
+                );
 
                 return;
             }
@@ -137,6 +157,47 @@ export function inertiaModule() {
                         (data ?? {}) as Record<string, unknown>,
                         options,
                     );
+                    (options?.onFinish as (() => void) | undefined)?.();
+                },
+            ),
+            get: vi.fn(
+                (
+                    url: string,
+                    data: unknown,
+                    options?: Record<string, unknown>,
+                ) => {
+                    record(
+                        'get',
+                        url,
+                        (data ?? {}) as Record<string, unknown>,
+                        options,
+                    );
+                    (options?.onStart as (() => void) | undefined)?.();
+
+                    if (inertia.nextGet === 'pending') {
+                        return;
+                    }
+                    if (inertia.nextGet === 'error') {
+                        (
+                            options?.onError as
+                                | ((e: Record<string, string>) => void)
+                                | undefined
+                        )?.({ date: 'failed' });
+                    } else if (inertia.nextGet === 'network') {
+                        (
+                            options?.onNetworkError as
+                                | ((e: Error) => void)
+                                | undefined
+                        )?.(new Error('offline'));
+                    } else {
+                        if (inertia.getReply) {
+                            inertia.props = {
+                                ...inertia.props,
+                                ...inertia.getReply,
+                            };
+                        }
+                        (options?.onSuccess as (() => void) | undefined)?.();
+                    }
                     (options?.onFinish as (() => void) | undefined)?.();
                 },
             ),

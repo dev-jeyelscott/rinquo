@@ -35,6 +35,8 @@ export type ShopPageProps = {
             priceCentavos: number;
         }[];
     }[];
-    /** False until slice 02 ships the booking journey. */
+    /** True for every visible shop: it is published and ready for online booking. */
     bookingAvailable: boolean;
+    /** Entry to the booking wizard, e.g. /shops/shine/book. */
+    bookingUrl: string;
 };

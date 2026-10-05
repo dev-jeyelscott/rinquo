@@ -1,14 +1,23 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { ShopServiceCard } from '@/components/shop/shop-service-card';
 import { Card, CardContent } from '@/components/ui/card';
 import type { ShopPageProps } from '@/types/shop';
 
 /**
  * Public storefront (reference 01). The hero leads with the tenant's own
- * outcome statement; because slice 01 accepts no bookings, the reference's
- * "Next available" and "Book Now" slot is an honest, non-interactive status.
+ * outcome statement and one primary "Book now" action into the wizard. The
+ * reference's home-page "Next available" is omitted: it depends on the vehicle
+ * and service, so it lives on the wizard's Schedule step. A shop that cannot
+ * take online bookings says so instead of offering a dead control.
  */
-export default function Show({ shop, branch, hours, services }: ShopPageProps) {
+export default function Show({
+    shop,
+    branch,
+    hours,
+    services,
+    bookingAvailable,
+    bookingUrl,
+}: ShopPageProps) {
     return (
         <>
             <Head title={shop.name} />
@@ -32,15 +41,26 @@ export default function Show({ shop, branch, hours, services }: ShopPageProps) {
                                 {shop.description}
                             </p>
                         </div>
-                        <div role="status" className="grid gap-0.5">
-                            <p className="text-lg font-semibold">
-                                Online booking unavailable
-                            </p>
-                            <p className="text-sm opacity-90">
-                                You can browse services and prices. Online
-                                booking is not open yet.
-                            </p>
-                        </div>
+                        {bookingAvailable ? (
+                            <div>
+                                <Link
+                                    href={bookingUrl}
+                                    className="inline-flex min-h-11 items-center rounded-lg bg-[var(--tenant-brand-foreground)] px-6 text-base font-semibold text-[var(--tenant-brand)] outline-none focus-visible:ring-[3px] focus-visible:ring-[var(--tenant-brand-foreground)]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--tenant-brand)]"
+                                >
+                                    Book now
+                                </Link>
+                            </div>
+                        ) : (
+                            <div role="status" className="grid gap-0.5">
+                                <p className="text-lg font-semibold">
+                                    Online booking unavailable
+                                </p>
+                                <p className="text-sm opacity-90">
+                                    You can browse services and prices. Online
+                                    booking is not open yet.
+                                </p>
+                            </div>
+                        )}
                     </div>
                     {shop.hero ? (
                         <img
@@ -121,7 +141,15 @@ export default function Show({ shop, branch, hours, services }: ShopPageProps) {
                         Services
                     </h2>
                     {services.map((service) => (
-                        <ShopServiceCard key={service.id} service={service} />
+                        <ShopServiceCard
+                            key={service.id}
+                            service={service}
+                            selectUrl={
+                                bookingAvailable
+                                    ? `${bookingUrl}?service=${service.id}`
+                                    : undefined
+                            }
+                        />
                     ))}
                 </section>
             </div>

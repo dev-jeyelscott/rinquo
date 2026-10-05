@@ -14,6 +14,7 @@ const organization = {
     slug: 'shine',
     publishedAt: null,
     shopUrl: 'http://localhost/shops/shine',
+    bookingRequestsUrl: '/owner/organizations/1/booking-requests',
     baseUrl: '/owner/organizations/1/settings',
 };
 

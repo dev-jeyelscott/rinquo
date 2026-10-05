@@ -15,6 +15,8 @@ export type OrganizationSummary = {
     /** UTC instant (ISO 8601) set by the explicit Publish action. */
     publishedAt: string | null;
     shopUrl: string;
+    /** Booking requests page for members of this organization. */
+    bookingRequestsUrl: string;
     /** Base path of the Owner settings tabs, e.g. /owner/organizations/1/settings. */
     baseUrl: string;
 };

@@ -5,7 +5,7 @@ import type { Page } from '@playwright/test';
 /**
  * Owner journey against the running stack: sign in with an emailed code,
  * create an organization, configure the minimum operating model, publish, view
- * the public page signed out, then remove capacity and see the shop go
+ * the public page signed out (with its booking entry points), then remove capacity and see the shop go
  * unavailable.
  *
  * The sign-in code is read from a route that exists only when the app runs with
@@ -252,7 +252,7 @@ test('an owner configures, publishes and unpublishes automatically a tenant shop
         page.getByText(/Published on .* \(Asia\/Manila\)/),
     ).toBeVisible();
 
-    // 8. A signed-out visitor sees the branded catalog and no booking control.
+    // 8. A signed-out visitor sees the branded catalog and the booking entry points.
     const visitor = await browser.newContext();
     const shop = await visitor.newPage();
     await shop.goto(`/shops/${slug}`);
@@ -265,8 +265,11 @@ test('an owner configures, publishes and unpublishes automatically a tenant shop
         shop.getByRole('heading', { name: 'Full wash' }),
     ).toBeVisible();
     await expect(shop.getByText('From ₱350')).toBeVisible();
-    await expect(shop.getByText('Online booking unavailable')).toBeVisible();
-    await expect(shop.getByRole('link', { name: /book/i })).toHaveCount(0);
+    await expect(shop.getByRole('link', { name: 'Book now' })).toBeVisible();
+    await expect(
+        shop.getByRole('link', { name: 'Select Full wash' }),
+    ).toBeVisible();
+    await expect(shop.getByText('Online booking unavailable')).toHaveCount(0);
     await expect(shop.getByText('Bay 1')).toHaveCount(0);
 
     // 9. Removing the last capacity unpublishes the shop immediately.

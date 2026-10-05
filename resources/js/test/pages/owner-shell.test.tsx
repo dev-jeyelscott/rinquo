@@ -18,6 +18,7 @@ const props = {
         branchName: 'Main Branch',
         publishedAt: null,
         shopUrl: 'x',
+        bookingRequestsUrl: '/owner/organizations/1/booking-requests',
         baseUrl: '/owner/organizations/1/settings',
     },
     readiness: {
@@ -52,22 +53,47 @@ describe('Owner shell', () => {
         expect(
             within(nav).getByLabelText('Needs attention'),
         ).toBeInTheDocument();
-        expect(within(nav).getAllByRole('link')).toHaveLength(5);
+        expect(within(nav).getAllByRole('link')).toHaveLength(6);
+        expect(
+            within(nav).getByRole('link', { name: 'Booking policy' }),
+        ).toHaveAttribute(
+            'href',
+            '/owner/organizations/1/settings/booking-policy',
+        );
     });
 
     it('keeps the sidebar to real destinations and the tabs in the content area', () => {
         render(<OwnerShell>page</OwnerShell>);
         const sidebar = screen.getByRole('navigation', { name: 'Main' });
 
-        expect(within(sidebar).getAllByRole('link')).toHaveLength(1);
+        expect(within(sidebar).getAllByRole('link')).toHaveLength(2);
         expect(
             within(sidebar).getByRole('link', { name: 'Settings' }),
         ).toHaveAttribute('aria-current', 'page');
+        expect(
+            within(sidebar).getByRole('link', { name: 'Booking requests' }),
+        ).not.toHaveAttribute('aria-current');
         expect(
             screen
                 .getByRole('main')
                 .contains(screen.getByRole('navigation', { name: 'Settings' })),
         ).toBe(true);
+    });
+
+    it('shows Booking requests without the Owner-only configuration tabs', () => {
+        resetInertia(props, '/owner/organizations/1/booking-requests');
+        render(<OwnerShell>page</OwnerShell>);
+
+        expect(
+            screen.getByRole('link', { name: 'Booking requests' }),
+        ).toHaveAttribute('aria-current', 'page');
+        expect(
+            screen.queryByRole('navigation', { name: 'Settings' }),
+        ).not.toBeInTheDocument();
+        expect(screen.queryByText('Owner only')).not.toBeInTheDocument();
+        expect(
+            screen.getByRole('heading', { level: 1, name: 'Booking requests' }),
+        ).toBeInTheDocument();
     });
 
     it('labels the area as owner-only and shows branch and draft versus published', () => {

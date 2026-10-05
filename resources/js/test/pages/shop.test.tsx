@@ -55,7 +55,8 @@ const props: ShopPageProps = {
             ],
         },
     ],
-    bookingAvailable: false,
+    bookingAvailable: true,
+    bookingUrl: '/shops/shine/book',
 };
 
 describe('Public shop page', () => {
@@ -85,25 +86,27 @@ describe('Public shop page', () => {
         );
     });
 
-    it('announces the unavailable booking state where the reference puts Book Now', () => {
+    it('offers Book now in the hero and a Select action per service', () => {
         render(<Show {...props} />);
+
+        expect(screen.getByRole('link', { name: 'Book now' })).toHaveAttribute(
+            'href',
+            '/shops/shine/book',
+        );
+        expect(
+            screen.getByRole('link', { name: 'Select Full wash' }),
+        ).toHaveAttribute('href', '/shops/shine/book?service=1');
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
+
+    it('says online booking is unavailable instead of offering dead controls when closed', () => {
+        render(<Show {...props} bookingAvailable={false} />);
 
         expect(screen.getByRole('status')).toHaveTextContent(
             'Online booking unavailable',
         );
-    });
-
-    it('never ships a booking control and says online booking is unavailable', () => {
-        render(<Show {...props} />);
-
         expect(
-            screen.getByText('Online booking unavailable'),
-        ).toBeInTheDocument();
-        expect(
-            screen.queryByRole('link', { name: /book/i }),
-        ).not.toBeInTheDocument();
-        expect(
-            screen.queryByRole('button', { name: /book|select/i }),
+            screen.queryByRole('link', { name: /book now|select/i }),
         ).not.toBeInTheDocument();
     });
 

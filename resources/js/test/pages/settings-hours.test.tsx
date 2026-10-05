@@ -16,6 +16,7 @@ const owner: OwnerPageProps = {
         slug: 'shine',
         publishedAt: null,
         shopUrl: 'x',
+        bookingRequestsUrl: '/owner/organizations/1/booking-requests',
         baseUrl: BASE,
     },
     readiness: { isReady: false, items: [] },
