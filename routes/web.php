@@ -95,6 +95,7 @@ Route::prefix('owner')->name('owner.')->group(function (): void {
                 Route::get('/', [BookingRequestsController::class, 'index'])->name('index');
                 Route::post('{booking}/approve', [BookingRequestsController::class, 'approve'])->whereUuid('booking')->name('approve');
                 Route::post('{booking}/decline', [BookingRequestsController::class, 'decline'])->whereUuid('booking')->name('decline');
+                Route::post('{booking}/cancel', [BookingRequestsController::class, 'cancel'])->whereUuid('booking')->name('cancel');
             });
     });
 });
@@ -127,4 +128,6 @@ Route::prefix('shops/{slug}')->group(function (): void {
     });
 
     Route::get('bookings/{booking}', [BookingController::class, 'show'])->whereUuid('booking')->name('bookings.show');
+    Route::post('bookings/{booking}/cancel', [BookingController::class, 'cancel'])->whereUuid('booking')->name('bookings.cancel');
+    Route::post('bookings/{booking}/reschedule', [BookingController::class, 'reschedule'])->whereUuid('booking')->name('bookings.reschedule');
 });

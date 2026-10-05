@@ -61,6 +61,10 @@ class Booking extends Model
 
     public const EXPIRED = 'expired';
 
+    public const CANCELLED = 'cancelled';
+
+    public const RESCHEDULED = 'rescheduled';
+
     protected $guarded = [];
 
     protected function casts(): array
@@ -86,6 +90,12 @@ class Booking extends Model
     public function isPending(): bool
     {
         return $this->status === self::PENDING_APPROVAL;
+    }
+
+    public function isLive(): bool
+    {
+        return $this->status === self::CONFIRMED
+            || ($this->isPending() && $this->pending_expires_at !== null && $this->pending_expires_at->isFuture());
     }
 
     /** @return HasMany<BookingAddOn, $this> */

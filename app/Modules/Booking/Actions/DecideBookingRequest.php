@@ -2,6 +2,7 @@
 
 namespace App\Modules\Booking\Actions;
 
+use App\Modules\Booking\Events\BookingLifecycleChanged;
 use App\Modules\Booking\Mail\BookingApprovedMail;
 use App\Modules\Booking\Mail\BookingDeclinedMail;
 use App\Modules\Booking\Models\Booking;
@@ -50,6 +51,7 @@ final class DecideBookingRequest
                 : ['status' => Booking::DECLINED, 'decided_at' => $now, 'decided_by_user_id' => $actor->id],
             )->save();
 
+            BookingLifecycleChanged::for($booking);
             (new AuditTrail($locked, $actor))->record(
                 $approve ? 'booking.approved' : 'booking.declined',
                 'booking',

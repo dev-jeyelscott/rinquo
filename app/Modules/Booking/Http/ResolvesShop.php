@@ -32,6 +32,17 @@ trait ResolvesShop
         return $organization;
     }
 
+    /**
+     * The shop of a booking that already exists. Unlike shop(), it does not
+     * require the shop to be accepting new bookings: a restricted or
+     * unpublished shop still lets its customers see and cancel what they hold.
+     * Ownership is still enforced by ownBooking().
+     */
+    protected function bookingShop(string $slug): Organization
+    {
+        return Organization::query()->where('slug', $slug)->firstOr(fn () => abort(404));
+    }
+
     /** The hold of this browser session inside the organization, or a 404. */
     protected function ownHold(Request $request, Organization $organization, string $publicId): Hold
     {

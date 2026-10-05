@@ -2,6 +2,7 @@
 
 namespace App\Modules\Booking\Actions;
 
+use App\Modules\Booking\Events\BookingLifecycleChanged;
 use App\Modules\Booking\Mail\BookingRequestExpiredMail;
 use App\Modules\Booking\Models\Booking;
 use App\Modules\Booking\Models\Hold;
@@ -54,7 +55,7 @@ final class ExpireBookings
                     ->orderBy('id')
                     ->limit(self::BOOKINGS_PER_ORGANIZATION)
                     ->lockForUpdate()
-                    ->get(['id', 'contact_email']);
+                    ->get(['id', 'public_id', 'contact_email']);
 
                 foreach ($stale as $booking) {
                     $changed = Booking::query()
@@ -65,6 +66,7 @@ final class ExpireBookings
 
                     if ($changed === 1) {
                         $requests++;
+                        BookingLifecycleChanged::dispatch($booking->public_id);
                         BookingNotifier::queue($booking->contact_email, new BookingRequestExpiredMail($booking->id));
                     }
                 }
