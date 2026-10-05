@@ -712,8 +712,9 @@ components:
     category: component
     path: resources/js/components/owner/confirm-action.tsx
     description: >
-      Dialog that confirms a consequential, reversible-by-history state change
-      (archive, unpublish) and then posts it to the server.
+      Dialog that confirms a consequential state change (archive, unpublish,
+      decline a booking request) and then posts it to the server. An optional
+      reason field is posted as `reason` when `reasonLabel` is set.
     props:
       - name: label
         type: string
@@ -733,6 +734,10 @@ components:
       - name: url
         type: string
         required: true
+      - name: reasonLabel
+        type: string
+        required: false
+        description: When set, shows an optional reason textarea (max 500) and posts it as `reason`
     accessibility:
       - Focus is trapped in the dialog and restored to the trigger
       - Trigger has an accessible name that says what is affected
@@ -742,6 +747,62 @@ components:
     dependencies:
       - Dialog
       - Button
+      - FormField
+
+  - id: choice-card
+    name: ChoiceCard
+    category: component
+    path: resources/js/components/booking/choice-card.tsx
+    description: >
+      Selectable card around a native radio or checkbox, used for the vehicle,
+      service and add-on choices. The native control stays in the accessibility
+      tree (grouping, keyboard use and announcements come from the platform);
+      the card draws the checked and focus states.
+    variants:
+      - radio
+      - checkbox
+    props:
+      - name: type
+        type: "'radio' | 'checkbox'"
+        required: true
+      - name: children
+        type: ReactNode
+        required: true
+    accessibility:
+      - Native input is visually hidden but focusable (sr-only peer)
+      - Checked state is a ring plus the native checked state, never colour alone
+      - Focus-visible ring on the card
+      - Wrap related cards in a fieldset with a legend
+    responsive: Full width; the minimum height keeps a 44px touch target
+    status: stable
+    dependencies: []
+
+  - id: hold-countdown
+    name: HoldCountdown
+    category: component
+    path: resources/js/components/booking/hold-countdown.tsx
+    description: >
+      Visible countdown for a temporary checkout hold. A plain timer while time
+      remains (not announced every second); a single alert when it ends,
+      saying the time was released and offering Choose another time.
+    props:
+      - name: remaining
+        type: number
+        required: true
+        description: Whole seconds left (from useCountdown)
+      - name: expired
+        type: boolean
+        required: true
+      - name: chooseAnotherUrl
+        type: string
+        required: true
+    accessibility:
+      - role=timer with tabular figures
+      - Expiry uses role=alert with text, an icon and a link, not colour alone
+    responsive: Inline text; the alert wraps its action below the message
+    status: stable
+    dependencies:
+      - Alert
 
 # ==============================================================================
 # COMPOSITIONS: Reusable multi-component patterns
@@ -751,43 +812,80 @@ compositions:
   - id: exact-start-time-selector
     name: ExactStartTimeSelector
     category: composition
+    path: resources/js/components/booking/exact-start-time-selector.tsx
     description: >
-      Composition for selecting exact-start booking time.
-      Includes date picker, time grid, and availability feedback.
-      Proposed: not yet implemented in component library.
+      Date strip over the booking horizon plus a grid of start-time chips
+      (reference 02). Unavailable times stay visible but disabled, named
+      "9:00 AM, unavailable" and struck through. A Next available action jumps
+      to the earliest start. Renders a specific message and recovery action for
+      loading (skeleton after 300 ms), closed day, no times left, nothing
+      available in the whole window, load error and offline. Customers only
+      receive a start time and a boolean: no capacity, units or resources.
     reference_design: '02-booking-schedule.png'
     uses:
-      - Select (month picker)
-      - Toggle (date selection)
-      - Toggle (time slot selection)
-      - Alert (availability info)
+      - ToggleGroup
+      - Skeleton
+      - Spinner
+      - Alert
+      - Button
     props:
-      - name: date
-        type: Date
-        required: true
-      - name: onDateChange
-        type: callback
-        required: true
-      - name: availableTimes
+      - name: dates
         type: array
         required: true
-      - name: selectedTime
+      - name: selectedDate
         type: string
         required: false
-      - name: onTimeSelect
-        type: callback
+      - name: availability
+        type: object
+        required: false
+      - name: selectedStart
+        type: string
+        required: false
+      - name: status
+        type: "'ready' | 'loading' | 'error' | 'offline'"
+        required: true
+      - name: nextAvailable
+        type: object
+        required: false
+    accessibility:
+      - Date and time chips are a radiogroup (ToggleGroup) with roving arrow-key focus
+      - Unavailable and closed options are disabled and say so in their accessible name
+      - Strikethrough and the word Closed back up the disabled colour
+      - Polite live region announces the selected time
+      - Skeleton and error states carry text and a Retry action
+    responsive: Date strip scrolls horizontally; the time grid auto-fills columns of at least 5.5rem
+    status: stable
+    notes: >
+      The reference shows a "40 min capacity" label; the project rule that
+      customers never see capacity wins, so the summary shows the service and
+      buffer minutes instead (recorded conflict).
+
+  - id: booking-summary-card
+    name: BookingSummaryCard
+    category: composition
+    path: resources/js/components/booking/booking-summary-card.tsx
+    description: >
+      Running summary of a booking: vehicle, service, add-ons, duration as
+      "service + buffer" minutes, the chosen time in Philippine time and the
+      total. Never shows capacity, units or resources.
+    reference_design: '02-booking-schedule.png'
+    uses:
+      - Card
+    props:
+      - name: totalCentavos
+        type: number
+        required: false
+      - name: startAt
+        type: string
+        required: false
+      - name: timezone
+        type: string
         required: true
     accessibility:
-      - ARIA-live for availability updates
-      - Keyboard navigation through times
-      - Clear selected state
-    responsive: Single-column on mobile, grid on larger screens
-    status: experimental
-    notes: >
-      Shows disabled times grayed out. Selected time highlighted in blue.
-      "Next available" button shows suggested slot. Capacity shown as
-      "40 min capacity" with progress bar indicator.
-      Required for customer booking flow; implement to move to active.
+      - Labelled region with a real heading
+      - Values are a description list (dt/dd)
+    responsive: Stacks under the step content on small screens and sticks beside it on lg and above
+    status: stable
 
   - id: service-card
     name: ShopServiceCard
@@ -795,24 +893,27 @@ compositions:
     path: resources/js/components/shop/shop-service-card.tsx
     description: >
       Public storefront card showing a service with its description,
-      duration range, compatible vehicle types and a "From" price derived
-      only from complete, available variants.
+      duration range, compatible vehicle types, a "From" price derived only
+      from complete, available variants and a Select action that opens the
+      booking wizard with the service preselected.
     reference_design: '01-customer-shop-home.png'
     uses:
       - Card
+      - Button
     props:
       - name: service
         type: object
         required: true
+      - name: selectUrl
+        type: string
+        required: false
+        description: Omitted when the shop cannot take online bookings
     accessibility:
       - Semantic heading per service
       - Decorative icon area is aria-hidden
+      - Select is a link whose accessible name includes the service name
     responsive: Full width cards in a single column
-    status: experimental
-    notes: >
-      Implemented without the reference "Select" action: slice 01 publishes
-      a catalog only and online booking is not accepted yet, so no booking
-      control ships. Slice 02 adds the Select action and moves this to stable.
+    status: stable
 
   - id: config-form
     name: ConfigForm
@@ -961,40 +1062,40 @@ patterns:
   - id: step-indicator
     name: Step Indicator
     category: pattern
+    path: resources/js/components/booking/step-indicator.tsx
     description: >
-      Visual progress indicator for multi-step booking flow.
-      Shows completed (filled circle), current (highlighted circle),
-      and upcoming (empty circle) steps with connecting lines.
+      Progress through the booking journey: numbered circles joined by lines,
+      completed (check mark) and current steps filled with the primary token.
+      An ordered list inside a labelled nav; the current step has
+      aria-current="step" and completed steps are announced as completed.
     reference_design: '02-booking-schedule.png'
-    implementation_notes: >
-      Reference design shows: numbered circles 1-5, with step 3 (Schedule)
-      highlighted in blue and completed steps 1-2 also blue.
-      Connected by blue lines between steps.
     use_cases:
-      - Booking flow: Vehicle → Service → Schedule → Details → Confirm
-    responsive: Adapts to screen width, stacks vertically on mobile
-    status: experimental
-    notes: >
-      Foundational pattern from reference designs.
-      Implement as reusable component to support multi-step flows.
+      - Booking flow: Vehicle, Service, Schedule, Details, Confirm
+    accessibility:
+      - nav landmark labelled "Booking progress" with an ordered list
+      - aria-current="step" on the current step
+      - Completed steps carry "(completed)" for screen readers
+      - Never colour alone: check mark, number and text
+    responsive: >
+      From sm up every label and connecting line shows; below sm only the
+      current label shows beside a "Step n of N" count.
+    status: stable
 
   - id: exact-start-time-selection
     name: Exact-start Time Selection
     category: pattern
     description: >
-      Booking pattern where customer selects a specific start time
-      rather than a time range. Shows available slots in 15-minute
-      increments with capacity indication.
+      Booking pattern where the customer selects a specific start time rather
+      than a time range. Start times fall on the Owner's slot-interval grid,
+      unavailable times are visible but disabled, and the earliest start is one
+      action away. Feasibility is decided per physical resource on the server;
+      the customer sees only the time and whether it is available.
     components:
       - ExactStartTimeSelector
     use_cases:
-      - Customer booking flow
+      - Customer booking flow (Schedule step)
     reference_design: '02-booking-schedule.png'
-    status: experimental
-    notes: >
-      Step 3 of booking. Shows calendar with selected date in blue.
-      Time slots below as buttons. Unavailable times grayed out.
-      Selected time has blue background. "Next available" suggestion shown.
+    status: stable
 
   - id: responsive-sidebar-nav
     name: Responsive Sidebar Navigation
@@ -1114,7 +1215,9 @@ patterns:
       a page header with the title, branch chip and Draft/Published chip;
       and, in the content area, pill tabs (one link per configuration tab)
       beside an OWNER ONLY chip, plus a status region.
-      Tabs: Profile, Business hours, Services, Resources, Readiness.
+      Tabs: Profile, Business hours, Services, Resources, Booking policy,
+      Readiness. The sidebar also links Booking requests (any member), which
+      hides the Owner-only tabs.
     reference_design: '05-owner-scheduling-configuration.png'
     components:
       - StatusChip
@@ -1131,7 +1234,7 @@ patterns:
     notes: >
       Navigation links rather than ARIA tabs, because each tab is its own
       page. The shell only presents: the server policy decides access.
-      "Booking policy" from the reference is out of scope for this slice.
+      Booking policy (approval mode and time rules) is implemented as a tab.
 
   - id: multi-option-selection
     name: Multi-Option Selection (Dialog or Inline)
@@ -1151,8 +1254,9 @@ patterns:
     reference_design: '02-booking-schedule.png, 04-scheduling-conflict-resolution.png'
     status: experimental
     notes: >
-      See reference design 02 for time selection and
-      reference design 04 for reschedule option selection.
+      Implemented for date and time selection in ExactStartTimeSelector
+      (ToggleGroup radiogroup). Reference design 04 (reschedule option
+      selection) is still to come, so this stays experimental.
 
 # ==============================================================================
 # STATUS & METADATA

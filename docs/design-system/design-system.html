@@ -1343,17 +1343,17 @@
             <p>Reusable multi-component patterns that combine primitives and components into domain-specific patterns.</p>
 
             <div class="registry-grid">
-                <article id="exact-start-time-selector" data-registry-id="exact-start-time-selector" data-status="experimental" class="registry-card">
+                <article id="exact-start-time-selector" data-registry-id="exact-start-time-selector" data-status="stable" class="registry-card">
                     <div class="registry-header">
                         <h3 class="registry-title">ExactStartTimeSelector</h3>
-                        <span class="registry-status status-experimental">Experimental</span>
+                        <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">exact-start-time-selector</div>
-                    <p class="registry-description">Composition for selecting exact-start booking time with date picker, time grid, and availability feedback.</p>
+                    <p class="registry-description">Date strip plus start-time chips. Unavailable times stay visible but disabled, named "unavailable" and struck through; Next available jumps to the earliest start. Loading, closed, empty, no-availability, error and offline each have a message and recovery. Customers only see a time and a boolean.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
-                            <span class="registry-meta-label">Status:</span>
-                            <span class="registry-meta-value">Not yet implemented; required for customer booking flow</span>
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/booking/exact-start-time-selector.tsx</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Reference:</span>
@@ -1361,11 +1361,34 @@
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Uses:</span>
-                            <div class="tag-list">
-                                <span class="tag">Select</span>
-                                <span class="tag">Toggle</span>
-                                <span class="tag">Alert</span>
-                            </div>
+                            <span class="registry-meta-value">ToggleGroup, Skeleton, Spinner, Alert, Button</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Composition</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="booking-summary-card" data-registry-id="booking-summary-card" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">BookingSummaryCard</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">booking-summary-card</div>
+                    <p class="registry-description">Running booking summary: vehicle, service, add-ons, "service + buffer" minutes, time in Philippine time and total. Never shows capacity, units or resources.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/booking/booking-summary-card.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">02-booking-schedule.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">Card</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Category:</span>
@@ -1403,7 +1426,7 @@
                         <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">confirm-action</div>
-                    <p class="registry-description">Dialog that confirms an archive or unpublish and then posts it to the server.</p>
+                    <p class="registry-description">Dialog that confirms an archive, unpublish or decline and then posts it to the server. An optional reason field is posted as reason.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Path:</span>
@@ -1411,7 +1434,7 @@
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Uses:</span>
-                            <span class="registry-meta-value">Dialog, Button</span>
+                            <span class="registry-meta-value">Dialog, Button, FormField</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Category:</span>
@@ -1420,21 +1443,63 @@
                     </div>
                 </article>
 
-                                <article id="service-card" data-registry-id="service-card" data-status="experimental" class="registry-card">
+                <article id="choice-card" data-registry-id="choice-card" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">ChoiceCard</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">choice-card</div>
+                    <p class="registry-description">Selectable card around a native radio or checkbox for vehicle, service and add-on choices. Checked state is a ring plus the native state, never colour alone.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/booking/choice-card.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Variants:</span>
+                            <span class="registry-meta-value">radio, checkbox</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="hold-countdown" data-registry-id="hold-countdown" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">HoldCountdown</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">hold-countdown</div>
+                    <p class="registry-description">Visible countdown for a temporary checkout hold; a single alert with a recovery link when the time is released.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/booking/hold-countdown.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">Alert</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="service-card" data-registry-id="service-card" data-status="stable" class="registry-card">
                     <div class="registry-header">
                         <h3 class="registry-title">ShopServiceCard</h3>
-                        <span class="registry-status status-experimental">Experimental</span>
+                        <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">service-card</div>
-                    <p class="registry-description">Public storefront card with description, duration range, compatible vehicle types and a "From" price from available variants.</p>
+                    <p class="registry-description">Public storefront card with description, duration range, compatible vehicle types, a "From" price from available variants and a Select action that opens the wizard with the service preselected.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Path:</span>
                             <span class="registry-meta-value">resources/js/components/shop/shop-service-card.tsx</span>
-                        </div>
-                        <div class="registry-meta-row">
-                            <span class="registry-meta-label">Status:</span>
-                            <span class="registry-meta-value">Implemented without the Select action; booking arrives in slice 02</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Reference:</span>
@@ -1442,7 +1507,7 @@
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Uses:</span>
-                            <span class="registry-meta-value">Card</span>
+                            <span class="registry-meta-value">Card, Button</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Category:</span>
@@ -1632,21 +1697,25 @@
             <p>Interaction and layout conventions documented for consistent UI behavior across the application.</p>
 
             <div class="registry-grid">
-                <article id="step-indicator" data-registry-id="step-indicator" data-status="experimental" class="registry-card">
+                <article id="step-indicator" data-registry-id="step-indicator" data-status="stable" class="registry-card">
                     <div class="registry-header">
                         <h3 class="registry-title">Step Indicator</h3>
-                        <span class="registry-status status-experimental">Experimental</span>
+                        <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">step-indicator</div>
-                    <p class="registry-description">Visual progress indicator for multi-step booking flow with completed (filled circle), current (highlighted), and upcoming (empty) steps.</p>
+                    <p class="registry-description">Progress through the booking journey: numbered circles joined by lines, an ordered list with aria-current="step" on the current step and completed steps announced. Narrow screens show the current label and "Step n of N".</p>
                     <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/booking/step-indicator.tsx</span>
+                        </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Reference:</span>
                             <span class="registry-meta-value">02-booking-schedule.png</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Use Cases:</span>
-                            <span class="registry-meta-value">Booking flow progress</span>
+                            <span class="registry-meta-value">Booking flow: Vehicle, Service, Schedule, Details, Confirm</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Category:</span>
@@ -1655,13 +1724,13 @@
                     </div>
                 </article>
 
-                <article id="exact-start-time-selection" data-registry-id="exact-start-time-selection" data-status="experimental" class="registry-card">
+                <article id="exact-start-time-selection" data-registry-id="exact-start-time-selection" data-status="stable" class="registry-card">
                     <div class="registry-header">
                         <h3 class="registry-title">Exact-start Time Selection</h3>
-                        <span class="registry-status status-experimental">Experimental</span>
+                        <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">exact-start-time-selection</div>
-                    <p class="registry-description">Booking pattern where customer selects a specific start time rather than range. Shows available slots in 15-minute increments with capacity indication.</p>
+                    <p class="registry-description">The customer selects a specific start time on the Owner's slot-interval grid. Unavailable times are visible but disabled; feasibility is decided per physical resource on the server and only the time and availability are shown.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Reference:</span>
@@ -1669,7 +1738,7 @@
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Use Cases:</span>
-                            <span class="registry-meta-value">Customer booking flow (step 3)</span>
+                            <span class="registry-meta-value">Customer booking flow (Schedule step)</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Category:</span>
@@ -1707,7 +1776,7 @@
                         <span class="registry-status status-experimental">Experimental</span>
                     </div>
                     <div class="registry-id">capacity-aware-booking</div>
-                    <p class="registry-description">Booking system prevents overbooking by showing resource capacity, consumption per service, and available slots. Disables unavailable times with conflict warnings.</p>
+                    <p class="registry-description">Booking system prevents overbooking. Slice 02 implements the server-side guarantees and the customer-safe view (available or not, never capacity); the staff capacity bar is still to come.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">References:</span>
@@ -1824,7 +1893,7 @@
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Tabs:</span>
-                            <span class="registry-meta-value">Profile, Business hours, Services, Resources, Readiness</span>
+                            <span class="registry-meta-value">Profile, Business hours, Services, Resources, Booking policy, Readiness; sidebar also links Booking requests</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Category:</span>
