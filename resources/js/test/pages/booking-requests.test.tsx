@@ -35,6 +35,8 @@ const request: BookingRequest = {
     startAt: '2026-10-06T02:00:00+00:00',
     pendingExpiresAt: new Date(Date.now() + 90 * 60_000).toISOString(),
     timezone: 'Asia/Manila',
+    revision: 1,
+    cancelUrl: '/owner/organizations/1/booking-requests/b1/cancel',
 };
 
 const none = { previousUrl: null, nextUrl: null };

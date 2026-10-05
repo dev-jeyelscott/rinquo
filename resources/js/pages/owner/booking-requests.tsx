@@ -210,6 +210,21 @@ function RequestRow({
                             reasonLabel="Reason (optional, kept in the audit log)"
                             url={`${baseUrl}/decline`}
                         />
+                        <ConfirmAction
+                            label="Cancel booking"
+                            ariaLabel={`Cancel booking for ${request.customerName}`}
+                            title={`Cancel ${request.customerName}'s booking?`}
+                            description={`This releases ${when}. A reason is required and the cancellation cannot be undone.`}
+                            confirmLabel="Cancel booking"
+                            reasonLabel="Cancellation reason"
+                            reasonRequired
+                            dismissLabel="Keep booking"
+                            url={request.cancelUrl}
+                            data={{
+                                revision: request.revision,
+                                idempotency_key: crypto.randomUUID(),
+                            }}
+                        />
                     </div>
                 </CardContent>
             </Card>

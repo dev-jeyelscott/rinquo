@@ -147,6 +147,18 @@ export const bookingProps: BookingPageProps = {
         pendingExpiresAt: null,
         contactName: 'Ana Cruz',
         contactEmail: 'ana@example.test',
+        revision: 1,
+        actions: {
+            canCancel: true,
+            canReschedule: true,
+            reason: null,
+            rescheduleReason: null,
+            deadlineAt: null,
+        },
     },
-    urls: { shop: '/shops/shine' },
+    urls: {
+        shop: '/shops/shine',
+        cancel: '/shops/shine/bookings/b1/cancel',
+        reschedule: '/shops/shine/bookings/b1/reschedule',
+    },
 };

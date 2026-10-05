@@ -128,7 +128,9 @@ export type BookingStatus =
     | 'pending_approval'
     | 'confirmed'
     | 'declined'
-    | 'expired';
+    | 'expired'
+    | 'cancelled'
+    | 'rescheduled';
 
 export type BookingPageProps = ShopShellProps & {
     booking: Omit<BookingSummary, 'priceCentavos' | 'addOns'> & {
@@ -138,8 +140,18 @@ export type BookingPageProps = ShopShellProps & {
         pendingExpiresAt: string | null;
         contactName: string;
         contactEmail: string;
+        revision: number;
+        actions: {
+            canCancel: boolean;
+            canReschedule: boolean;
+            reason: string | null;
+            /** Why rescheduling alone is blocked (for example a restricted shop). */
+            rescheduleReason: string | null;
+            /** When the customer can no longer change the booking, if still open. */
+            deadlineAt: string | null;
+        };
     };
-    urls: { shop: string };
+    urls: { shop: string; cancel: string; reschedule: string };
 };
 
 export type BookingRequest = {
@@ -155,4 +167,6 @@ export type BookingRequest = {
     startAt: string;
     pendingExpiresAt: string;
     timezone: string;
+    revision: number;
+    cancelUrl: string;
 };

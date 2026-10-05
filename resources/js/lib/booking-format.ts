@@ -46,6 +46,51 @@ export function localDateOf(startAt: string, timeZone: string): string {
     }).format(new Date(startAt));
 }
 
+/** Offset in ms of `timeZone` from UTC at the given instant. */
+function zoneOffsetMs(instantMs: number, timeZone: string): number {
+    const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone,
+        hourCycle: 'h23',
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+    }).formatToParts(new Date(instantMs));
+    const get = (type: string) =>
+        Number(parts.find((part) => part.type === type)?.value);
+    const asUtc = Date.UTC(
+        get('year'),
+        get('month') - 1,
+        get('day'),
+        get('hour'),
+        get('minute'),
+        get('second'),
+    );
+
+    return asUtc - Math.floor(instantMs / 1000) * 1000;
+}
+
+/**
+ * Reads a `datetime-local` value ("2026-10-10T10:00") as wall-clock time in
+ * `timeZone` (never the browser's zone) and returns the UTC instant as ISO 8601.
+ * Returns '' for an empty or unparsable value.
+ */
+export function wallTimeToInstant(local: string, timeZone: string): string {
+    const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(local);
+    if (!match) {
+        return '';
+    }
+    const [year, month, day, hour, minute] = match.slice(1).map(Number);
+    const wall = Date.UTC(year, month - 1, day, hour, minute);
+    // Two passes settle the offset across a daylight-saving boundary.
+    let instant = wall - zoneOffsetMs(wall, timeZone);
+    instant = wall - zoneOffsetMs(instant, timeZone);
+
+    return new Date(instant).toISOString();
+}
+
 /** "mm:ss" for a countdown in seconds. */
 export function formatClock(seconds: number): string {
     const safe = Math.max(0, Math.floor(seconds));

@@ -24,6 +24,10 @@ type Props = {
     method?: 'post' | 'put' | 'patch';
     /** When set, the dialog asks for an optional reason (max 500) and posts it as `reason`. */
     reasonLabel?: string;
+    reasonRequired?: boolean;
+    /** Text of the dismiss button; it must differ from the confirm label. */
+    dismissLabel?: string;
+    data?: Record<string, string | number>;
 };
 
 /**
@@ -41,6 +45,9 @@ export function ConfirmAction({
     url,
     method = 'post',
     reasonLabel,
+    reasonRequired = false,
+    dismissLabel = 'Cancel',
+    data = {},
 }: Props) {
     const [open, setOpen] = useState(false);
     const [processing, setProcessing] = useState(false);
@@ -49,9 +56,7 @@ export function ConfirmAction({
     function confirm() {
         router[method](
             url,
-            reasonLabel && reason.trim() !== ''
-                ? { reason: reason.trim() }
-                : {},
+            { ...data, ...(reasonLabel ? { reason: reason.trim() } : {}) },
             {
                 preserveScroll: true,
                 onStart: () => setProcessing(true),
@@ -78,6 +83,7 @@ export function ConfirmAction({
                 {reasonLabel ? (
                     <TextareaField
                         label={reasonLabel}
+                        required={reasonRequired}
                         maxLength={500}
                         value={reason}
                         onChange={(event) => setReason(event.target.value)}
@@ -85,12 +91,15 @@ export function ConfirmAction({
                 ) : null}
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setOpen(false)}>
-                        Cancel
+                        {dismissLabel}
                     </Button>
                     <Button
                         variant="destructive"
                         onClick={confirm}
-                        disabled={processing}
+                        disabled={
+                            processing ||
+                            (reasonRequired && reason.trim() === '')
+                        }
                         aria-busy={processing}
                     >
                         {processing ? 'Working...' : confirmLabel}
