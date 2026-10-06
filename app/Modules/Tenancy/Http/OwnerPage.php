@@ -28,6 +28,7 @@ final class OwnerPage
                 'slug' => $organization->slug,
                 'branchName' => $organization->branch?->name,
                 'publishedAt' => $organization->published_at?->toIso8601String(),
+                'directoryOptedIn' => $organization->directory_opted_in,
                 'shopUrl' => route('shops.show', $organization->slug),
                 'operationsUrl' => route('owner.operations.index', $organization, absolute: false),
                 'conflictsUrl' => route('owner.scheduling-conflicts.index', $organization, absolute: false),

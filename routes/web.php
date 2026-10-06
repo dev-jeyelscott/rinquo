@@ -6,12 +6,15 @@ use App\Modules\Booking\Http\Controllers\BookingWizardController;
 use App\Modules\Booking\Http\Controllers\HoldController;
 use App\Modules\Booking\Http\Controllers\OperationsController;
 use App\Modules\Booking\Http\Controllers\SchedulingConflictsController;
+use App\Modules\Customer\Http\Controllers\CustomerAccountController;
+use App\Modules\Customer\Http\Controllers\CustomerAuthController;
 use App\Modules\Identity\Http\Controllers\OwnerAuthController;
 use App\Modules\Scheduling\Http\Controllers\BookingPolicyController;
 use App\Modules\Scheduling\Http\Controllers\CatalogController;
 use App\Modules\Scheduling\Http\Controllers\HoursController;
 use App\Modules\Scheduling\Http\Controllers\RecordController;
 use App\Modules\Scheduling\Http\Controllers\ResourcesController;
+use App\Modules\Tenancy\Http\Controllers\DirectoryPreferenceController;
 use App\Modules\Tenancy\Http\Controllers\OnboardingController;
 use App\Modules\Tenancy\Http\Controllers\OwnerHomeController;
 use App\Modules\Tenancy\Http\Controllers\ProfileController;
@@ -87,6 +90,8 @@ Route::prefix('owner')->name('owner.')->group(function (): void {
                 Route::get('readiness', [PublicationController::class, 'show'])->name('readiness');
                 Route::post('publish', [PublicationController::class, 'publish'])->name('publish');
                 Route::post('unpublish', [PublicationController::class, 'unpublish'])->name('unpublish');
+                Route::get('directory', [DirectoryPreferenceController::class, 'show'])->name('directory');
+                Route::put('directory', [DirectoryPreferenceController::class, 'update'])->name('directory.update');
             });
 
         // Any active member (Owner or Staff) decides booking requests.
@@ -129,6 +134,27 @@ Route::prefix('owner')->name('owner.')->group(function (): void {
                 Route::post('{conflict}/proposal', [SchedulingConflictsController::class, 'propose'])->whereUuid('conflict')->name('proposal.store');
                 Route::post('{conflict}/proposal/withdraw', [SchedulingConflictsController::class, 'withdraw'])->whereUuid('conflict')->name('proposal.withdraw');
             });
+    });
+});
+
+/* Neutral Rinquo customer account. Tenant branding is only entered via /shops. */
+Route::prefix('account')->name('customer.')->group(function (): void {
+    Route::middleware('guest')->prefix('auth')->name('auth.')->group(function (): void {
+        Route::get('login', [CustomerAuthController::class, 'show'])->name('login');
+        Route::post('code', [CustomerAuthController::class, 'requestCode'])->name('code');
+        Route::post('verify', [CustomerAuthController::class, 'verify'])->name('verify');
+    });
+    Route::middleware('auth')->group(function (): void {
+        Route::get('directory', [CustomerAccountController::class, 'directory'])->name('directory');
+        Route::get('bookings', [CustomerAccountController::class, 'bookings'])->name('bookings');
+        Route::get('profile', [CustomerAccountController::class, 'profile'])->name('profile');
+        Route::patch('profile', [CustomerAccountController::class, 'updateProfile'])->name('profile.update');
+        Route::post('profile/email-change', [CustomerAccountController::class, 'requestEmailChange'])->name('profile.email-change.request');
+        Route::post('profile/email-change/verify', [CustomerAccountController::class, 'verifyEmailChange'])->name('profile.email-change.verify');
+        Route::get('vehicles', [CustomerAccountController::class, 'vehicles'])->name('vehicles');
+        Route::post('vehicles', [CustomerAccountController::class, 'storeVehicle'])->name('vehicles.store');
+        Route::post('vehicles/{vehicle}/archive', [CustomerAccountController::class, 'archiveVehicle'])->name('vehicles.archive');
+        Route::post('logout', [CustomerAccountController::class, 'logout'])->name('logout');
     });
 });
 

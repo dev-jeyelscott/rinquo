@@ -30,11 +30,11 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 #[UsePolicy(OrganizationPolicy::class)]
 class Organization extends Model
 {
-    protected $fillable = ['name', 'slug', 'tagline', 'description', 'brand_color'];
+    protected $fillable = ['name', 'slug', 'tagline', 'description', 'brand_color', 'directory_opted_in'];
 
     protected function casts(): array
     {
-        return ['published_at' => 'immutable_datetime'];
+        return ['published_at' => 'immutable_datetime', 'directory_opted_in' => 'boolean'];
     }
 
     public function isPublished(): bool

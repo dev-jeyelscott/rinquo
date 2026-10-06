@@ -56,13 +56,16 @@ describe('Owner shell', () => {
         expect(
             within(nav).getByLabelText('Needs attention'),
         ).toBeInTheDocument();
-        expect(within(nav).getAllByRole('link')).toHaveLength(6);
+        expect(within(nav).getAllByRole('link')).toHaveLength(7);
         expect(
             within(nav).getByRole('link', { name: 'Booking policy' }),
         ).toHaveAttribute(
             'href',
             '/owner/organizations/1/settings/booking-policy',
         );
+        expect(
+            within(nav).getByRole('link', { name: 'Directory' }),
+        ).toHaveAttribute('href', '/owner/organizations/1/settings/directory');
     });
 
     it('keeps the sidebar to real destinations and the tabs in the content area', () => {

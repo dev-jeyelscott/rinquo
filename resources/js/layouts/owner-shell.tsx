@@ -16,6 +16,7 @@ const TABS = [
     { key: 'resources', label: 'Resources' },
     { key: 'booking-policy', label: 'Booking policy' },
     { key: 'readiness', label: 'Readiness' },
+    { key: 'directory', label: 'Directory' },
 ] as const;
 
 /**
