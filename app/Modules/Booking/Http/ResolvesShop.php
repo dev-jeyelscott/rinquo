@@ -13,15 +13,15 @@ use Inertia\Inertia;
 
 /**
  * Shared by the public booking controllers: every route resolves its shop
- * through Storefront::visibleOrganization(), so a draft, unknown or unready
- * shop is the same generic 404, and holds or bookings are only ever looked up
+ * through Storefront::bookableOrganization(), so a draft, unknown, unready,
+ * closed or subscription-restricted shop is the same generic 404, and holds or bookings are only ever looked up
  * inside that organization.
  */
 trait ResolvesShop
 {
     protected function shop(Request $request, string $slug): Organization
     {
-        $organization = app(Storefront::class)->visibleOrganization($slug);
+        $organization = app(Storefront::class)->bookableOrganization($slug);
 
         if ($organization === null) {
             throw new HttpResponseException(

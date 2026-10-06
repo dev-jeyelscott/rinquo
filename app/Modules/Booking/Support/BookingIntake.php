@@ -7,6 +7,7 @@ use App\Modules\Scheduling\Models\Service;
 use App\Modules\Scheduling\Models\ServiceVehicleVariant;
 use App\Modules\Scheduling\Models\VehicleType;
 use App\Modules\Scheduling\Readiness\ReadinessEvaluator;
+use App\Modules\Subscription\Access\AccessResolver;
 use App\Modules\Tenancy\Models\Organization;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -15,20 +16,30 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 /**
  * The gate every capacity claim passes under the organization lock: the shop
  * must accept new bookings, and the selected offer (variant and add-ons) must
- * be currently bookable. Later slices (for example subscription restriction)
- * extend {@see self::assertAcceptingNewBookings()} rather than adding a local
- * flag elsewhere.
+ * be currently bookable. Subscription restriction and Owner closure enter
+ * through {@see AccessResolver}, never a local flag.
  */
 final class BookingIntake
 {
-    public function __construct(private readonly ReadinessEvaluator $readiness) {}
+    public function __construct(private readonly ReadinessEvaluator $readiness, private readonly AccessResolver $access) {}
 
-    /** The shop is public (published and ready); otherwise it is a 404. */
+    /**
+     * The shop is public (published and ready), otherwise it is a 404; and its
+     * subscription and closure must allow new work (a specific validation error).
+     */
     public function assertAcceptingNewBookings(Organization $organization): void
     {
         if (! $organization->isPublished() || ! $this->readiness->evaluate($organization)->isReady()) {
             throw new NotFoundHttpException;
         }
+
+        $this->assertNewWorkAllowed($organization);
+    }
+
+    /** Entitlement and closure only: for staff-entered work, which never needs the shop to be published. */
+    public function assertNewWorkAllowed(Organization $organization): void
+    {
+        $this->access->assertAcceptingNewBookings($organization);
     }
 
     /**

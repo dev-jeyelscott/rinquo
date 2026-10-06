@@ -11,11 +11,20 @@ use App\Modules\Booking\Models\ConflictProposal;
 use App\Modules\Booking\Models\Hold;
 use App\Modules\Booking\Models\SchedulingConflict;
 use App\Modules\Identity\Models\User;
+use App\Modules\Subscription\Actions\ApplyPaidPayment;
+use App\Modules\Subscription\Models\Payment;
+use App\Modules\Subscription\Models\PaymentRequest;
+use App\Modules\Subscription\Models\Subscription;
+use App\Modules\Subscription\Models\WebhookEvent;
+use App\Modules\Tenancy\Actions\RecoverClosure;
+use App\Modules\Tenancy\Actions\RequestClosure;
 use App\Modules\Tenancy\Models\Membership;
+use App\Modules\Tenancy\Models\OrganizationClosure;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Tests\Support\Billing;
 use Tests\Support\Shop;
 use Tests\Support\Tenant;
 
@@ -362,4 +371,49 @@ test('a staff proposal and a customer hold racing for the last unit leave exactl
     foreach (peakLoads() as $peak) {
         expect($peak)->toBeLessThanOrEqual(1);
     }
+});
+
+test('simultaneous webhook jobs for one paid request extend entitlement exactly once', function () {
+    Billing::fake();
+    [$owner, $organization] = Tenant::organization();
+    test()->actingAs($owner)->post(route('owner.settings.billing.renewal', $organization))->assertSessionHasNoErrors();
+    $request = PaymentRequest::query()->sole();
+    $before = Subscription::query()->sole();
+
+    // Three redeliveries of one provider payment under different event ids, plus three attempts at a "second" payment.
+    $eventIds = [];
+    foreach (range(1, 6) as $i) {
+        $event = new WebhookEvent;
+        $event->forceFill([
+            'provider_event_id' => "evt_race_{$i}", 'event_type' => 'payment.paid', 'livemode' => false, 'status' => WebhookEvent::RECEIVED,
+            'provider_payment_intent_id' => $request->provider_payment_intent_id, 'provider_payment_id' => $i <= 3 ? 'pay_race_same' : "pay_race_other_{$i}",
+            'amount_centavos' => $request->amount_centavos, 'currency' => 'PHP', 'paid_at' => now(), 'received_at' => now(),
+        ])->save();
+        $eventIds[] = $event->id;
+    }
+    commitFixtures();
+
+    $results = race(array_map(fn (int $id) => fn () => app(ApplyPaidPayment::class)->handle($id)->status, $eventIds));
+
+    expect(summarize($results))->toBe(['won' => 6, 'rejected' => 0, 'error' => 0]);
+    $after = Subscription::query()->sole();
+    expect(Payment::query()->count())->toBe(1)
+        ->and($after->paid_until->equalTo($before->trial_ends_at->setTimezone('Asia/Manila')->addMonthNoOverflow()->utc()))->toBeTrue()
+        ->and(WebhookEvent::query()->where('status', WebhookEvent::PROCESSED)->count())->toBeGreaterThanOrEqual(1)
+        ->and(WebhookEvent::query()->where('status', WebhookEvent::RECEIVED)->count())->toBe(0);
+});
+
+test('parallel closure requests produce one closure and recovery racing the deadline never double-writes', function () {
+    [$owner, $organization] = Tenant::organization();
+    commitFixtures();
+
+    $results = race(array_map(fn (int $i) => fn () => app(RequestClosure::class)->handle($organization, $owner, $organization->name)->id, range(1, 5)));
+
+    expect(summarize($results))->toBe(['won' => 1, 'rejected' => 4, 'error' => 0])
+        ->and(OrganizationClosure::query()->count())->toBe(1);
+
+    $results = race(array_map(fn (int $i) => fn () => app(RecoverClosure::class)->handle($organization, $owner)->id, range(1, 4)));
+
+    expect(summarize($results))->toBe(['won' => 1, 'rejected' => 3, 'error' => 0])
+        ->and(OrganizationClosure::query()->sole()->recovered_at)->not->toBeNull();
 });

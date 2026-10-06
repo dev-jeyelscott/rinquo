@@ -7,6 +7,7 @@ use App\Modules\Scheduling\Models\BranchWeeklyHour;
 use App\Modules\Scheduling\Models\Service;
 use App\Modules\Scheduling\Models\ServiceVehicleVariant;
 use App\Modules\Scheduling\Readiness\ReadinessEvaluator;
+use App\Modules\Subscription\Access\AccessResolver;
 use App\Modules\Tenancy\Models\Branch;
 use App\Modules\Tenancy\Models\Organization;
 use App\Modules\Tenancy\Models\OrganizationMedia;
@@ -14,7 +15,9 @@ use Carbon\CarbonImmutable;
 
 /**
  * Builds the public storefront payload. A shop is visible only while it is
- * published AND still passes the shared readiness evaluator. The payload
+ * published, still passes the shared readiness evaluator and is not closed. A
+ * restricted shop stays visible (billing never clears publication) but reports
+ * that it takes no new bookings. The payload
  * carries only active, complete variants and never exposes physical resources,
  * capacities, consumption units, audit data or draft configuration.
  */
@@ -22,7 +25,7 @@ final class Storefront
 {
     private const DAYS = [1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday', 7 => 'Sunday'];
 
-    public function __construct(private readonly ReadinessEvaluator $readiness) {}
+    public function __construct(private readonly ReadinessEvaluator $readiness, private readonly AccessResolver $access) {}
 
     /** Resolves a publicly visible organization, or null (draft, unknown or unready). */
     public function visibleOrganization(string $slug): ?Organization
@@ -33,19 +36,36 @@ final class Storefront
             return null;
         }
 
-        return $this->readiness->evaluate($organization)->isReady() ? $organization : null;
+        if (! $this->readiness->evaluate($organization)->isReady() || $this->access->for($organization)->isClosed()) {
+            return null;
+        }
+
+        return $organization;
+    }
+
+    /**
+     * Resolves a visible organization that is also accepting new bookings, or null.
+     * Restriction is distinguished from invisibility only on the storefront page.
+     */
+    public function bookableOrganization(string $slug): ?Organization
+    {
+        $organization = $this->visibleOrganization($slug);
+
+        return $organization !== null && $this->access->for($organization)->acceptsNewBookings() ? $organization : null;
     }
 
     /** @return array<string, mixed> */
     public function payload(Organization $organization, ?CarbonImmutable $now = null): array
     {
         $available = $this->readiness->evaluate($organization)->availableVariantIds();
+        $reason = $this->access->for($organization)->newBookingBlockReason();
 
         return [
             ...$this->shell($organization, $now),
             'services' => $this->services($organization, $available),
-            // A visible shop is published and ready, so it accepts online booking.
-            'bookingAvailable' => true,
+            // A visible shop is published and ready; online booking also needs a current subscription.
+            'bookingAvailable' => $reason === null,
+            'bookingUnavailableReason' => $reason,
             'bookingUrl' => route('bookings.wizard', $organization->slug, absolute: false),
         ];
     }

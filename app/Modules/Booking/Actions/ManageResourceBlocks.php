@@ -53,7 +53,7 @@ final class ManageResourceBlocks
             ]);
 
             return $block;
-        }, assessImpact: true);
+        }, assessImpact: true, configurationWrite: false); // a day-of operational control, not subscription-gated configuration
     }
 
     public function release(Organization $organization, User $actor, string $publicId): ResourceBlock

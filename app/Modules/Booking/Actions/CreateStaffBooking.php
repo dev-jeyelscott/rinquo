@@ -54,6 +54,9 @@ final class CreateStaffBooking
                 return $replay;
             }
 
+            // Authoritative under the lock: a restricted or closed shop takes no new walk-ins or appointments.
+            $this->intake->assertNewWorkAllowed($locked);
+
             $offer = $this->intake->resolveOffer($locked, $data['vehicle_type_id'], $data['service_id'], array_map('intval', $data['add_on_ids']));
             $policy = $locked->bookingPolicy()->firstOrFail();
             $now = CarbonImmutable::now();

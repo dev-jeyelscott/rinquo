@@ -8,6 +8,7 @@ use App\Modules\Booking\Actions\RespondToProposal;
 use App\Modules\Booking\Http\ResolvesShop;
 use App\Modules\Booking\Models\Booking;
 use App\Modules\Booking\Models\ConflictProposal;
+use App\Modules\Subscription\Access\AccessResolver;
 use App\Modules\Tenancy\Http\Storefront;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,12 +23,13 @@ class BookingController extends Controller
 {
     use ResolvesShop;
 
-    public function show(Request $request, string $slug, string $booking, Storefront $storefront): Response
+    public function show(Request $request, string $slug, string $booking, Storefront $storefront, AccessResolver $access): Response
     {
         $organization = $this->bookingShop($slug);
         $record = $this->ownBooking($request, $organization, $booking)->load('addOns');
         $actions = ManageBooking::eligibility($record);
-        $restricted = $actions['canReschedule'] && $storefront->visibleOrganization($slug) === null;
+        $restricted = $actions['canReschedule']
+            && ($storefront->visibleOrganization($slug) === null || ! $access->for($organization)->allowsCustomerReschedule());
         // Only the active, unexpired proposal is shown; nothing about resources, capacity or the cause.
         $proposal = ConflictProposal::query()->where('organization_id', $organization->id)->where('booking_id', $record->id)
             ->where('status', ConflictProposal::ACTIVE)->where('expires_at', '>', now())->first();
@@ -90,7 +92,9 @@ class BookingController extends Controller
 
     public function reschedule(Request $request, string $slug, string $booking, ManageBooking $lifecycle)
     {
-        $organization = $this->shop($request, $slug);
+        // The organization-locked action enforces publication, readiness and entitlement; the
+        // customer keeps a specific explanation instead of a generic 404 for an existing booking.
+        $organization = $this->bookingShop($slug);
         $record = $this->ownBooking($request, $organization, $booking);
         $data = $request->validate([
             'revision' => ['required', 'integer', 'min:1'],

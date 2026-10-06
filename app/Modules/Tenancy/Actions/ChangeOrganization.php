@@ -4,6 +4,7 @@ namespace App\Modules\Tenancy\Actions;
 
 use App\Modules\Identity\Models\User;
 use App\Modules\Scheduling\Readiness\ReadinessEvaluator;
+use App\Modules\Subscription\Access\AccessResolver;
 use App\Modules\Tenancy\Contracts\ChangeImpact;
 use App\Modules\Tenancy\Models\Organization;
 use Closure;
@@ -13,7 +14,8 @@ use Illuminate\Support\Facades\DB;
  * The one door for scheduling-critical writes. In a single transaction it:
  *
  * 1. locks the organization row (one consistent lock order, so competing
- *    publishes and mutations serialize and cannot deadlock);
+ *    publishes and mutations serialize and cannot deadlock) and rejects
+ *    configuration writes from a restricted or closed organization;
  * 2. runs the mutation, which records its own audit events;
  * 3. for scheduling changes ($assessImpact), settles the impact on future
  *    bookings: no impact commits, impact needs a confirmation minted for exactly
@@ -26,19 +28,31 @@ use Illuminate\Support\Facades\DB;
  */
 final class ChangeOrganization
 {
-    public function __construct(private readonly ReadinessEvaluator $readiness, private readonly ChangeImpact $impact) {}
+    public function __construct(
+        private readonly ReadinessEvaluator $readiness,
+        private readonly ChangeImpact $impact,
+        private readonly AccessResolver $access,
+    ) {}
 
     /**
      * @template T
      *
      * @param  Closure(Organization, AuditTrail): T  $mutation
      * @param  bool  $assessImpact  true for changes that can disrupt future bookings (hours, windows, compatibility, resources)
+     * @param  bool  $configurationWrite  true (default) when the change is configuration that a restricted or closed
+     *                                    organization must not make; false for day-to-day operational controls
      * @return T
      */
-    public function handle(Organization $organization, User $actor, Closure $mutation, bool $assessImpact = false): mixed
+    public function handle(Organization $organization, User $actor, Closure $mutation, bool $assessImpact = false, bool $configurationWrite = true): mixed
     {
-        return DB::transaction(function () use ($organization, $actor, $mutation, $assessImpact): mixed {
+        return DB::transaction(function () use ($organization, $actor, $mutation, $assessImpact, $configurationWrite): mixed {
             $locked = Organization::query()->whereKey($organization->id)->lockForUpdate()->firstOrFail();
+
+            // Authoritative under the lock: a stale tab or a request that crosses the grace boundary cannot write.
+            if ($configurationWrite) {
+                $this->access->assertConfigurationWritable($locked);
+            }
+
             $audit = new AuditTrail($locked, $actor);
 
             $result = $mutation($locked, $audit);

@@ -8,6 +8,7 @@ use App\Modules\Customer\Actions\ChangeCustomerEmail;
 use App\Modules\Customer\Models\CustomerProfile;
 use App\Modules\Customer\Models\CustomerVehicle;
 use App\Modules\Scheduling\Readiness\ReadinessEvaluator;
+use App\Modules\Subscription\Access\AccessResolver;
 use App\Modules\Tenancy\Models\Organization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,10 +20,11 @@ class CustomerAccountController extends Controller
 {
     private const EMAIL_TOKEN = 'customer_email_change.token';
 
-    public function directory(Request $request, ReadinessEvaluator $readiness): Response
+    public function directory(Request $request, ReadinessEvaluator $readiness, AccessResolver $access): Response
     {
         $query = trim((string) $request->query('q', ''));
-        $shops = Organization::query()->where('directory_opted_in', true)->whereNotNull('published_at')->with('branch')->orderBy('name')->get()
+        // Listed only while the shop can take new bookings: restriction and closure remove it without touching published_at.
+        $shops = $access->scopeAcceptingNewBookings(Organization::query()->where('directory_opted_in', true)->whereNotNull('published_at'))->with('branch')->orderBy('name')->get()
             ->filter(fn (Organization $organization): bool => $readiness->evaluate($organization)->isReady())
             ->filter(fn (Organization $organization): bool => $query === '' || str_contains(mb_strtolower($organization->name.' '.$organization->branch?->city), mb_strtolower($query)))
             ->take(50)->map(fn (Organization $organization): array => ['name' => $organization->name, 'city' => $organization->branch?->city, 'url' => route('shops.show', $organization->slug, absolute: false)])->values();
