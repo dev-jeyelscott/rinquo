@@ -8,6 +8,7 @@ import {
     vi,
 } from 'vite-plus/test';
 import SchedulingConflicts from '@/pages/owner/scheduling-conflicts';
+import { ACTIVE_ENTITLEMENT, BILLING_URL } from '@/test/fixtures/entitlement';
 import { inertia, resetInertia } from '@/test/inertia';
 import type { ConflictRowData, ConflictsPageData } from '@/types/conflicts';
 import type { OwnerPageProps } from '@/types/owner';
@@ -28,8 +29,10 @@ const owner: OwnerPageProps = {
         unresolvedConflicts: 1,
         bookingRequestsUrl: '/owner/organizations/1/booking-requests',
         baseUrl: '/owner/organizations/1/settings',
+        billingUrl: BILLING_URL,
     },
     readiness: { isReady: true, items: [] },
+    entitlement: ACTIVE_ENTITLEMENT,
 };
 
 function row(overrides: Partial<ConflictRowData> = {}): ConflictRowData {

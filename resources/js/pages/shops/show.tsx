@@ -16,6 +16,7 @@ export default function Show({
     hours,
     services,
     bookingAvailable,
+    bookingUnavailableReason,
     bookingUrl,
 }: ShopPageProps) {
     return (
@@ -55,9 +56,12 @@ export default function Show({
                                 <p className="text-lg font-semibold">
                                     Online booking unavailable
                                 </p>
-                                <p className="text-sm opacity-90">
-                                    You can browse services and prices. Online
-                                    booking is not open yet.
+                                <p className="max-w-[60ch] text-sm opacity-90">
+                                    {bookingUnavailableReason ??
+                                        'You can browse services and prices. Online booking is not open yet.'}
+                                    {bookingUnavailableReason
+                                        ? ' You can still browse services and prices.'
+                                        : ''}
                                 </p>
                             </div>
                         )}

@@ -54,6 +54,7 @@ export default function Operations({
     resources,
     catalog,
     urls,
+    entitlement,
 }: Props) {
     const { props } = usePage<{ errors?: Record<string, string> }>();
     const [loading, setLoading] = useState(false);
@@ -128,6 +129,11 @@ export default function Operations({
                         url={urls.create}
                         catalog={catalog}
                         timezone={day.timezone}
+                        unavailableReason={
+                            entitlement.acceptsNewBookings
+                                ? null
+                                : 'New walk-ins and bookings are paused. Existing bookings can still be worked.'
+                        }
                     />
                 </div>
 

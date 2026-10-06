@@ -110,6 +110,26 @@ describe('Public shop page', () => {
         ).not.toBeInTheDocument();
     });
 
+    it('explains a subscription restriction without offering booking and keeps the services visible', () => {
+        render(
+            <Show
+                {...props}
+                bookingAvailable={false}
+                bookingUnavailableReason="This shop is not taking new bookings right now. Existing bookings are not affected."
+            />,
+        );
+
+        expect(screen.getByRole('status')).toHaveTextContent(
+            'not taking new bookings right now',
+        );
+        expect(screen.getByRole('status')).toHaveTextContent(
+            'still browse services and prices',
+        );
+        expect(
+            screen.queryByRole('link', { name: /book now|select/i }),
+        ).not.toBeInTheDocument();
+    });
+
     it('falls back gracefully without a hero photo or a phone number', () => {
         render(<Show {...props} branch={{ ...props.branch, phone: null }} />);
 

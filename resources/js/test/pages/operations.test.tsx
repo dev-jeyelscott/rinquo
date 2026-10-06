@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import Operations from '@/pages/owner/operations';
+import { ACTIVE_ENTITLEMENT, BILLING_URL } from '@/test/fixtures/entitlement';
 import { inertia, resetInertia } from '@/test/inertia';
 import type { OperationsPageData, QueueRowData } from '@/types/operations';
 import type { OwnerPageProps } from '@/types/owner';
@@ -21,8 +22,10 @@ const owner: OwnerPageProps = {
         unresolvedConflicts: 0,
         bookingRequestsUrl: '/owner/organizations/1/booking-requests',
         baseUrl: '/owner/organizations/1/settings',
+        billingUrl: BILLING_URL,
     },
     readiness: { isReady: true, items: [] },
+    entitlement: ACTIVE_ENTITLEMENT,
 };
 
 function row(overrides: Partial<QueueRowData> = {}): QueueRowData {
@@ -537,5 +540,28 @@ describe('Operations dashboard', () => {
         expect(inertia.calls[0].url).toBe(
             '/owner/organizations/1/operations/blocks/k1/release',
         );
+    });
+
+    it('pauses new walk-ins with the reason while a restricted shop keeps working existing bookings', () => {
+        render(
+            <Operations
+                {...owner}
+                entitlement={{
+                    ...ACTIVE_ENTITLEMENT,
+                    state: 'restricted',
+                    acceptsNewBookings: false,
+                }}
+                {...data({ queue: [row()] })}
+            />,
+        );
+
+        const add = screen.getByRole('button', { name: 'Add walk-in' });
+        expect(add).toBeDisabled();
+        expect(add).toHaveAccessibleDescription(
+            /New walk-ins and bookings are paused/,
+        );
+        expect(
+            screen.getByRole('button', { name: /^Check in / }),
+        ).toBeEnabled();
     });
 });

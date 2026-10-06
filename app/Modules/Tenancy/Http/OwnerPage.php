@@ -4,6 +4,7 @@ namespace App\Modules\Tenancy\Http;
 
 use App\Modules\Booking\Support\ConflictBoard;
 use App\Modules\Scheduling\Readiness\ReadinessEvaluator;
+use App\Modules\Subscription\Support\BillingPresenter;
 use App\Modules\Tenancy\Models\Organization;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -35,7 +36,9 @@ final class OwnerPage
                 'unresolvedConflicts' => ConflictBoard::unresolvedCount($organization),
                 'bookingRequestsUrl' => route('owner.booking-requests.index', $organization, absolute: false),
                 'baseUrl' => Str::beforeLast(route('owner.settings.profile', $organization, absolute: false), '/profile'),
+                'billingUrl' => route('owner.settings.billing', $organization, absolute: false),
             ],
+            'entitlement' => app(BillingPresenter::class)->summary($organization),
             'readiness' => [
                 'isReady' => $readiness->isReady(),
                 'items' => $readiness->items,

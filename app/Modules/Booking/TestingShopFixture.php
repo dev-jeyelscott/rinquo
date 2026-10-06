@@ -14,7 +14,9 @@ use App\Modules\Scheduling\Models\Service;
 use App\Modules\Scheduling\Models\ServiceVehicleVariant;
 use App\Modules\Scheduling\Models\ServiceWindow;
 use App\Modules\Scheduling\Models\VehicleType;
+use App\Modules\Subscription\Models\Subscription;
 use App\Modules\Tenancy\Actions\CreateOrganization;
+use App\Modules\Tenancy\Actions\RequestClosure;
 use App\Modules\Tenancy\Models\Membership;
 use App\Modules\Tenancy\Models\Organization;
 use Carbon\CarbonImmutable;
@@ -59,6 +61,8 @@ final class TestingShopFixture
             'approval_mode' => ['nullable', 'in:auto_confirm,staff_approval'],
             'staff' => ['nullable', 'boolean'],
             'booking_in_minutes' => ['nullable', 'integer', 'between:30,2880'],
+            // Starts the shop already restricted (trial and grace ended) or explicitly closed by its Owner.
+            'entitlement' => ['nullable', 'in:restricted,closed'],
         ]);
 
         return DB::transaction(function () use ($data): JsonResponse {
@@ -107,6 +111,8 @@ final class TestingShopFixture
                 ? self::seedBooking($organization, $variant, $type, $vehicle, $service, $slug, (int) $data['booking_in_minutes'])
                 : null;
 
+            self::applyEntitlement($organization, $owner, $data['entitlement'] ?? null);
+
             return response()->json([
                 'customerEmail' => $booking?->contact_email,
                 'bookingId' => $booking?->public_id,
@@ -118,6 +124,18 @@ final class TestingShopFixture
                 'addOnId' => $addOn->getKey(),
             ]);
         });
+    }
+
+    /** Puts the seeded shop in a restricted or closed state through the real tables, never a flag. */
+    private static function applyEntitlement(Organization $organization, User $owner, ?string $entitlement): void
+    {
+        if ($entitlement === 'restricted') {
+            Subscription::query()->where('organization_id', $organization->id)->update(['trial_ends_at' => now()->subDays(10), 'grace_ends_at' => now()->subDay()]);
+        }
+
+        if ($entitlement === 'closed') {
+            app(RequestClosure::class)->handle($organization, $owner, $organization->name);
+        }
     }
 
     /** A confirmed online booking on the shop's only resource, starting on the next quarter hour after the offset. */

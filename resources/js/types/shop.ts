@@ -37,6 +37,8 @@ export type ShopPageProps = {
     }[];
     /** True for every visible shop: it is published and ready for online booking. */
     bookingAvailable: boolean;
+    /** Why the shop takes no new bookings (restricted subscription), or null. */
+    bookingUnavailableReason?: string | null;
     /** Entry to the booking wizard, e.g. /shops/shine/book. */
     bookingUrl: string;
 };

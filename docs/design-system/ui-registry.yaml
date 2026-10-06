@@ -854,6 +854,44 @@ components:
       - Button
       - Spinner
 
+  - id: entitlement-banner
+    name: EntitlementBanner
+    category: component
+    path: resources/js/components/owner/entitlement-banner.tsx
+    description: >
+      Persistent notice at the top of every Owner and Staff page when the
+      organization is in its grace period, restricted, or explicitly closed.
+      It names what still works (existing bookings, check-in, completion and
+      customer cancellations) and what is paused (new bookings and
+      configuration), shows the exact date that applies, and offers renewal or
+      closure review as the one action. Silent for trial and paid
+      organizations. Restriction is explained as a state, not an outage, and
+      nothing is described as deleted.
+    props:
+      - name: entitlement
+        type: Entitlement
+        required: true
+        description: Server-derived state, dates and closure summary
+      - name: billingUrl
+        type: string
+        required: true
+      - name: onBilling
+        type: boolean
+        required: true
+        description: Hides the action on the billing page, where recovery is already in view
+      - name: timezone
+        type: string
+        required: true
+    accessibility:
+      - Alert with role=status, a title, an icon and text; meaning is never colour alone
+      - The action is a link with a 44 px touch target on small screens
+      - Dates use tabular figures
+    responsive: Full width above the page content; the action wraps below the message
+    status: stable
+    dependencies:
+      - Alert
+      - Button
+
   - id: operation-stat-card
     name: OperationStatCard
     category: component

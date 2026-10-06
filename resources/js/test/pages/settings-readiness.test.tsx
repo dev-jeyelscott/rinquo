@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import Readiness from '@/pages/owner/settings/readiness';
+import { ACTIVE_ENTITLEMENT, BILLING_URL } from '@/test/fixtures/entitlement';
 import { inertia, resetInertia } from '@/test/inertia';
 import type { OwnerPageProps } from '@/types/owner';
 
@@ -19,6 +20,7 @@ const organization = {
     unresolvedConflicts: 0,
     bookingRequestsUrl: '/owner/organizations/1/booking-requests',
     baseUrl: '/owner/organizations/1/settings',
+    billingUrl: BILLING_URL,
 };
 
 const failing: OwnerPageProps['readiness'] = {
@@ -62,6 +64,7 @@ function renderPage(
         <Readiness
             organization={organization}
             readiness={failing}
+            entitlement={ACTIVE_ENTITLEMENT}
             variants={variants}
             branchTimezone="Asia/Manila"
             {...over}

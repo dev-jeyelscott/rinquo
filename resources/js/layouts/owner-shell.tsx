@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import { CheckCircle2Icon, CircleAlertIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { EntitlementBanner } from '@/components/owner/entitlement-banner';
 import { ScheduleImpactDialog } from '@/components/owner/schedule-impact-dialog';
 import { StatusChip } from '@/components/owner/status-chip';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -31,11 +32,16 @@ const TABS = [
  */
 export default function OwnerShell({ children }: { children: ReactNode }) {
     const { props, url } = usePage<OwnerPageProps>();
-    const { appName, auth, flash, organization, readiness } = props;
+    const { appName, auth, flash, organization, readiness, entitlement } =
+        props;
+    const timezone = props.displayTimezone ?? 'Asia/Manila';
+    const accessError = props.errors?.access;
     const onRequests = url.startsWith(organization.bookingRequestsUrl);
     const onOperations = url.startsWith(organization.operationsUrl);
     const onConflicts = url.startsWith(organization.conflictsUrl);
-    const onSettings = !onRequests && !onOperations && !onConflicts;
+    const onBilling = url.startsWith(organization.billingUrl);
+    const onSettings =
+        !onRequests && !onOperations && !onConflicts && !onBilling;
     const failing = new Set<string>(
         readiness.items.filter((item) => !item.passed).map((i) => i.tab),
     );
@@ -86,6 +92,9 @@ export default function OwnerShell({ children }: { children: ReactNode }) {
                     >
                         Booking requests
                     </MainLink>
+                    <MainLink href={organization.billingUrl} active={onBilling}>
+                        Billing
+                    </MainLink>
                     <MainLink
                         href={`${organization.baseUrl}/profile`}
                         active={onSettings}
@@ -109,7 +118,9 @@ export default function OwnerShell({ children }: { children: ReactNode }) {
                               ? 'Scheduling conflicts'
                               : onRequests
                                 ? 'Booking requests'
-                                : 'Scheduling configuration'}
+                                : onBilling
+                                  ? 'Billing'
+                                  : 'Scheduling configuration'}
                     </h1>
                     <div className="flex flex-wrap items-center gap-2">
                         {organization.branchName ? (
@@ -167,7 +178,27 @@ export default function OwnerShell({ children }: { children: ReactNode }) {
                             </StatusChip>
                         </div>
                     )}
+                    <EntitlementBanner
+                        entitlement={entitlement}
+                        billingUrl={organization.billingUrl}
+                        onBilling={onBilling}
+                        timezone={timezone}
+                    />
                     <div aria-live="polite" className="mb-4 empty:hidden">
+                        {accessError ? (
+                            <Alert
+                                role="alert"
+                                className="border-destructive/40 bg-destructive/10"
+                            >
+                                <CircleAlertIcon
+                                    aria-hidden="true"
+                                    className="text-destructive"
+                                />
+                                <AlertDescription className="text-foreground">
+                                    {accessError}
+                                </AlertDescription>
+                            </Alert>
+                        ) : null}
                         {flash.status ? (
                             <Alert
                                 role="status"

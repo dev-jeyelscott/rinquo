@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import OwnerShell from '@/layouts/owner-shell';
+import { ACTIVE_ENTITLEMENT, BILLING_URL } from '@/test/fixtures/entitlement';
 import { inertia, resetInertia } from '@/test/inertia';
 
 vi.mock('@inertiajs/react', async () =>
@@ -23,7 +24,9 @@ const props = {
         unresolvedConflicts: 0,
         bookingRequestsUrl: '/owner/organizations/1/booking-requests',
         baseUrl: '/owner/organizations/1/settings',
+        billingUrl: BILLING_URL,
     },
+    entitlement: ACTIVE_ENTITLEMENT,
     readiness: {
         isReady: false,
         items: [
@@ -72,7 +75,7 @@ describe('Owner shell', () => {
         render(<OwnerShell>page</OwnerShell>);
         const sidebar = screen.getByRole('navigation', { name: 'Main' });
 
-        expect(within(sidebar).getAllByRole('link')).toHaveLength(4);
+        expect(within(sidebar).getAllByRole('link')).toHaveLength(5);
         expect(
             within(sidebar).getByRole('link', { name: 'Settings' }),
         ).toHaveAttribute('aria-current', 'page');

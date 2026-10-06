@@ -29,6 +29,16 @@ test('the fixture can seed a confirmed booking for a known customer', function (
     $this->getJson('/__testing/bookings?slug=fixture-booked')->assertOk()->assertExactJson(['count' => 1]);
 });
 
+test('the fixture can seed a restricted or closed shop through the real entitlement tables', function () {
+    $this->postJson('/__testing/shop', ['slug' => 'fixture-restricted', 'entitlement' => 'restricted'])->assertOk();
+    $this->postJson('/__testing/shop', ['slug' => 'fixture-closed', 'entitlement' => 'closed'])->assertOk();
+
+    $restricted = app(Storefront::class);
+    expect($restricted->visibleOrganization('fixture-restricted'))->not->toBeNull()
+        ->and($restricted->bookableOrganization('fixture-restricted'))->toBeNull()
+        ->and($restricted->visibleOrganization('fixture-closed'))->toBeNull();
+});
+
 test('the fixture routes exist only when APP_ENV is testing', function () {
     $routes = fn (string $environment): int => (function () use ($environment): int {
         app()->detectEnvironment(fn () => $environment);

@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import Profile from '@/pages/owner/settings/profile';
 import Resources from '@/pages/owner/settings/resources';
+import { ACTIVE_ENTITLEMENT, BILLING_URL } from '@/test/fixtures/entitlement';
 import { inertia, resetInertia } from '@/test/inertia';
 import type { OwnerPageProps } from '@/types/owner';
 
@@ -22,8 +23,10 @@ const owner: OwnerPageProps = {
         unresolvedConflicts: 0,
         bookingRequestsUrl: '/owner/organizations/1/booking-requests',
         baseUrl: BASE,
+        billingUrl: BILLING_URL,
     },
     readiness: { isReady: false, items: [] },
+    entitlement: ACTIVE_ENTITLEMENT,
 };
 
 describe('Resources settings', () => {

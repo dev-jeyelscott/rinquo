@@ -25,12 +25,37 @@ export type OrganizationSummary = {
     bookingRequestsUrl: string;
     /** Base path of the Owner settings tabs, e.g. /owner/organizations/1/settings. */
     baseUrl: string;
+    /** Billing page, reachable in every entitlement state. */
+    billingUrl: string;
+};
+
+export type EntitlementState = 'trial' | 'paid' | 'grace' | 'restricted';
+
+export type ClosureSummary = {
+    /** recoverable until its deadline; deletion_eligible afterwards. */
+    state: 'recoverable' | 'deletion_eligible';
+    requestedAt: string;
+    recoverableUntil: string;
+    deletionEligibleAt: string | null;
+};
+
+/** Server-derived entitlement and closure, shared by every Owner and Staff page. */
+export type Entitlement = {
+    state: EntitlementState;
+    trialEndsAt: string | null;
+    paidUntil: string | null;
+    graceEndsAt: string | null;
+    closed: boolean;
+    closure: ClosureSummary | null;
+    acceptsNewBookings: boolean;
+    allowsConfigurationWrites: boolean;
 };
 
 /** Props every Owner settings page receives from OwnerPage::render(). */
 export type OwnerPageProps = {
     organization: OrganizationSummary;
     readiness: { isReady: boolean; items: ReadinessItem[] };
+    entitlement: Entitlement;
 };
 
 export type AvailabilityReason =
