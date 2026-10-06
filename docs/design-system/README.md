@@ -1,21 +1,60 @@
 # Design System
 
-Canonical UI design system for Rinquo, established from approved reference designs.
+Rinquo's design system standardizes approved visual and interaction patterns for implementation.
+
+It is governed by Locked Decisions and Approved Reference UI. It does not independently redefine product or visual decisions.
 
 ## Authority
 
-The design system is third in the authority order: **locked decisions → approved reference UI → design system/tokens/registry → reusable components → page implementation/tests** (see `docs/planning-decisions.md` → Authority order). Tokens, primitives, the registry, and showcase conform upward to locked decisions and approved reference UI. Never change a token, registry entry, component, or documented pattern merely to match existing page code; a locked contract changes only after explicit approval at the higher level, then propagates downward.
+Design-system authority follows Decision 211.
 
-### Explicitly unlocked composition
+The UI authority hierarchy is:
 
-The Owner mobile settings shell is not yet visually locked (Decisions 44 and 46; no approved Owner-mobile reference). The current `owner-shell.tsx` and its registry entry may be documented as current behavior but are not canonical or locked visual authority for mobile. Retain this unresolved status until a new approved Owner-mobile reference exists (see `docs/reference-ui/README.md`).
+`Locked Decisions → Approved Reference UI → Design System → Reusable Components → Page Implementation → Tests`
 
-## Source of Truth
+The design system must conform to all applicable higher-authority sources.
 
-- **Design Tokens**: CSS custom properties in `resources/css/app.css` (Tailwind CSS theme configuration)
-- **UI Primitives**: `resources/js/components/ui/` (Radix UI + Tailwind CSS components)
-- **UI Registry**: `docs/design-system/ui-registry.yaml` (canonical reusable components)
-- **Reference Designs**: `docs/reference-ui/` (visual specifications for approved patterns)
+### Locked Decisions
+
+`docs/decision.md` is the highest authority for approved navigation, UX, responsive behavior, product rules, and explicitly locked design decisions.
+
+A design-system rule that conflicts with a later Locked Decision is stale and must be corrected.
+
+### Approved Reference UI
+
+Approved Reference UI provides the visual implementation baseline where no higher Locked Decision says otherwise.
+
+Reference approval follows Decision 212.
+
+Only artifacts explicitly marked `Approved` in:
+
+`docs/reference-ui/README.md`
+
+are authoritative.
+
+A reference is authoritative only for the surface, state, pattern, and viewport it actually represents.
+
+### Design-system sources
+
+The implementation-level design system consists of:
+
+- **Design Tokens:** `resources/css/app.css`
+- **Token Documentation:** `docs/design-system/tokens.md`
+- **UI Primitives:** `resources/js/components/ui/`
+- **UI Registry:** `docs/design-system/ui-registry.yaml`
+- **Documented Patterns:** this design-system documentation
+
+These sources standardize approved patterns but remain below Locked Decisions and Approved Reference UI in authority.
+
+### Current implementation
+
+Existing components and page code show what is currently implemented.
+
+They are not automatically canonical design authority.
+
+When existing implementation conflicts with a higher-authority source, treat the implementation as needing correction.
+
+Do not update this design system merely to legitimize implementation drift.
 
 ## Design Principles
 
@@ -62,6 +101,7 @@ Status-specific colors (implemented via badges and utility classes):
 ### Spacing
 
 Uses Tailwind's default spacing scale:
+
 - `space-1` = 0.25rem (4px)
 - `space-2` = 0.5rem (8px)
 - `space-3` = 0.75rem (12px)
@@ -120,6 +160,29 @@ The UI registry (`docs/design-system/ui-registry.yaml`) tracks:
 - **Compositions**: Multi-component reusable patterns
 - **Patterns**: Interaction or layout conventions (e.g., "exact-start time selection")
 
+### Registry authority
+
+The UI registry is a catalog of canonical implementation patterns, not an independent product-design authority.
+
+Registry entries must have an authoritative basis in one or more of:
+
+- A Locked Decision
+- Approved Reference UI
+- An already-approved design-system pattern
+
+A registry entry must not be changed solely because current implementation differs from its approved contract.
+
+`status: stable` means the registered implementation pattern is considered stable for reuse.
+
+It does not mean:
+
+- The component overrides a Locked Decision
+- The component overrides Approved Reference UI
+- Existing implementation has been retroactively approved
+- A visual pattern is locked merely because it is widely used
+
+If a registry entry conflicts with a higher-authority source, the registry entry is stale and must be reconciled.
+
 ### When to Register
 
 - Register new reusable UI when you create or materially change it
@@ -138,6 +201,22 @@ When a component is replaced or abandoned:
 
 ## Contribution Rules
 
+### Before making a design-system change
+
+Before introducing or materially changing a reusable UI pattern:
+
+1. Read the applicable Locked Decisions.
+2. Check the Reference UI manifest for applicable Approved references.
+3. Inspect existing design-system patterns and tokens.
+4. Determine whether the proposed change is:
+    - implementation of an existing approved pattern,
+    - a non-material implementation detail, or
+    - a new material visual or interaction pattern.
+5. If it introduces a material new canonical pattern, obtain approval before registering it as canonical.
+6. Update the design system only after its authoritative basis is established.
+
+Do not implement first and update the design system afterward solely to make the documentation match the code.
+
 ### Adding a New Reusable Component
 
 1. Ensure the component solves a repeated problem (appears in 2+ places or 2+ reference designs)
@@ -150,10 +229,15 @@ When a component is replaced or abandoned:
 
 ### Modifying an Existing Component
 
-1. Check the registry for its use sites and dependents
-2. Ensure changes are backward-compatible when possible
-3. If breaking: update the registry with version info, file an issue to migrate consumers
-4. Re-run tests and lint
+1. Check applicable Locked Decisions.
+2. Check applicable Approved Reference UI.
+3. Check the registry for use sites and dependents.
+4. Determine whether the requested change alters a canonical visual or interaction contract.
+5. Preserve backward compatibility where it does not conflict with the approved contract.
+6. If the existing component is incorrect, fix or replace it instead of preserving the defect for compatibility.
+7. If the change intentionally replaces an approved pattern, update the authoritative source first.
+8. Update affected registry entries and consumers.
+9. Re-run applicable tests, accessibility checks, linting, and type checks.
 
 ### Styling
 
@@ -172,11 +256,29 @@ All components are responsive by design:
 - **Large (`xl`, 1280px)**: Content-constrained for readability
 
 Example Tailwind breakpoint usage:
+
 ```tsx
 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-  {/* responsive grid */}
+    {/* responsive grid */}
 </div>
 ```
+
+### Responsive authority
+
+Responsive implementation must follow applicable Locked Decisions and Approved Reference UI.
+
+Desktop and mobile references are separate contracts when the composition materially differs.
+
+Do not infer an unrepresented mobile composition from a desktop reference and describe it as approved.
+
+When a viewport is not explicitly covered by Approved Reference UI:
+
+1. Follow applicable Locked Decisions.
+2. Reuse existing approved responsive design-system patterns.
+3. Preserve accessibility and touch requirements.
+4. Treat the resulting composition as an implementation choice unless it is separately approved.
+
+Tablet layouts may normally interpolate between approved mobile and desktop behavior unless a materially different composition requires explicit approval.
 
 ## Status Indicators
 
@@ -211,10 +313,12 @@ Validated on every commit:
 - **Type checking**: TypeScript (no `any` types for UI props)
 - **Linting**: ESLint + Prettier for code style
 - **Component tests**: Representative tests for each primitive and common compositions
-- **Visual regression**: Reference designs serve as the visual spec (no automated pixel-perfect testing)
+- **Visual contract**: Approved Reference UI serves as the visual baseline for the surfaces and viewports it explicitly covers.
+- **Visual regression**: Automated pixel-perfect regression is not currently required, so implementation review must explicitly compare affected UI against applicable Approved Reference UI.
 - **Accessibility**: Radix UI provides WCAG-compliant foundations; manually test keyboard and screen-reader scenarios
 
 Run locally:
+
 ```bash
 npm run types          # TypeScript check
 npm run lint           # ESLint
@@ -222,12 +326,23 @@ npm run test           # Unit tests
 npm run format:check   # Prettier
 ```
 
-## Questions or Updates?
+## Design-system change workflow
 
 When the design system needs an update:
 
-1. Check the registry and reference designs for precedent
-2. If the change affects multiple components or introduces new tokens, file a task under the Design System epic
-3. Use the `design-system` skill to update the canonical system and registry
-4. Do not make design changes in page code without first updating the system
-5. Do not change the system, registry, or a reference to match existing code; escalate any locked-contract change for explicit approval first
+1. Read applicable Locked Decisions.
+2. Check `docs/reference-ui/README.md` for applicable Approved Reference UI.
+3. Determine whether the requested change is already authorized.
+4. If a material new pattern is required, approve its authoritative basis first.
+5. Update affected Reference UI when applicable.
+6. Update tokens or design-system documentation.
+7. Update `docs/design-system/ui-registry.yaml`.
+8. Update reusable components.
+9. Update page implementation.
+10. Update tests.
+
+The direction of change is:
+
+`Approval → Reference → Design System → Implementation → Tests`
+
+Never reverse this flow solely because existing code already behaves differently.

@@ -1,1558 +1,1657 @@
 ---
 metadata:
-  schema_version: '1.0'
-  created_date: '2026-10-04'
-  project: rinquo
-  description: Canonical UI registry for Rinquo booking platform
-  source_of_truth: 'resources/js/components/'
+    schema_version: "1.1"
+    created_date: "2026-10-04"
+    project: rinquo
+    description: Canonical implementation registry for approved Rinquo UI patterns
+
+    authority:
+        locked_decisions: "docs/decision.md"
+        reference_ui_manifest: "docs/reference-ui/README.md"
+        design_system: "docs/design-system/README.md"
+        precedence: >
+            Locked Decisions > Approved Reference UI > Design System >
+            Reusable Components > Page Implementation > Tests
+
+    implementation_root: "resources/js/components/"
+
+    notes: >
+        This registry catalogs canonical implementation patterns. It is not an
+        independent product or design authority. Registry entries must conform to
+        applicable Locked Decisions and Approved Reference UI. Existing code must
+        not be promoted into this registry solely because it is already implemented.
 
 # ==============================================================================
 # PRIMITIVES: Foundational reusable controls from Radix UI
 # ==============================================================================
 
 primitives:
-  - id: button
-    name: Button
-    category: primitive
-    path: resources/js/components/ui/button.tsx
-    description: >
-      Accessible button component with variants for primary, secondary,
-      destructive, and outline states. Supports loading, disabled, and
-      icon-only configurations.
-    variants:
-      - default
-      - destructive
-      - outline
-      - secondary
-      - ghost
-      - link
-    props:
-      - name: variant
-        type: enum
-        required: false
-        description: Button style variant
-      - name: size
-        type: enum
-        required: false
-        description: Button size (sm, md, lg)
-      - name: disabled
-        type: boolean
-        required: false
-      - name: children
-        type: ReactNode
-        required: true
-    accessibility:
-      - Native button element
-      - Focus visible with ring
-      - Disabled state prevents interaction
-      - Loading state provides feedback
-    responsive: mobile-first with touch targets 44px minimum
-    status: stable
-    dependencies:
-      - class-variance-authority
-      - clsx
-    notes: >
-      Core component. Used throughout for all interactions.
-      Always provide clear label text or aria-label.
+    - id: button
+      name: Button
+      category: primitive
+      path: resources/js/components/ui/button.tsx
+      description: >
+          Accessible button component with variants for primary, secondary,
+          destructive, and outline states. Supports loading, disabled, and
+          icon-only configurations.
+      variants:
+          - default
+          - destructive
+          - outline
+          - secondary
+          - ghost
+          - link
+      props:
+          - name: variant
+            type: enum
+            required: false
+            description: Button style variant
+          - name: size
+            type: enum
+            required: false
+            description: Button size (sm, md, lg)
+          - name: disabled
+            type: boolean
+            required: false
+          - name: children
+            type: ReactNode
+            required: true
+      accessibility:
+          - Native button element
+          - Focus visible with ring
+          - Disabled state prevents interaction
+          - Loading state provides feedback
+      responsive: mobile-first with touch targets 44px minimum
+      status: stable
+      dependencies:
+          - class-variance-authority
+          - clsx
+      notes: >
+          Core component. Used throughout for all interactions.
+          Always provide clear label text or aria-label.
 
-  - id: input
-    name: Input
-    category: primitive
-    path: resources/js/components/ui/input.tsx
-    description: >
-      Accessible text input with support for type variants,
-      error states, and placeholder text.
-    props:
-      - name: type
-        type: string
-        required: false
-        default: text
-      - name: placeholder
-        type: string
-        required: false
-      - name: disabled
-        type: boolean
-        required: false
-      - name: value
-        type: string
-        required: false
-    accessibility:
-      - Should be wrapped with Label component
-      - Visible error states
-      - Placeholder is not a substitute for label
-    responsive: Full width by default, constrained by parent
-    status: stable
-    dependencies: []
-    notes: Always pair with Label for proper form semantics.
+    - id: input
+      name: Input
+      category: primitive
+      path: resources/js/components/ui/input.tsx
+      description: >
+          Accessible text input with support for type variants,
+          error states, and placeholder text.
+      props:
+          - name: type
+            type: string
+            required: false
+            default: text
+          - name: placeholder
+            type: string
+            required: false
+          - name: disabled
+            type: boolean
+            required: false
+          - name: value
+            type: string
+            required: false
+      accessibility:
+          - Should be wrapped with Label component
+          - Visible error states
+          - Placeholder is not a substitute for label
+      responsive: Full width by default, constrained by parent
+      status: stable
+      dependencies: []
+      notes: Always pair with Label for proper form semantics.
 
-  - id: label
-    name: Label
-    category: primitive
-    path: resources/js/components/ui/label.tsx
-    description: Accessible form label for associating with inputs.
-    props:
-      - name: htmlFor
-        type: string
-        required: true
-        description: ID of associated input
-      - name: children
-        type: ReactNode
-        required: true
-    accessibility:
-      - Associated via htmlFor attribute
-      - Essential for screen readers
-    status: stable
-    dependencies: []
-    notes: Required for all form inputs.
+    - id: label
+      name: Label
+      category: primitive
+      path: resources/js/components/ui/label.tsx
+      description: Accessible form label for associating with inputs.
+      props:
+          - name: htmlFor
+            type: string
+            required: true
+            description: ID of associated input
+          - name: children
+            type: ReactNode
+            required: true
+      accessibility:
+          - Associated via htmlFor attribute
+          - Essential for screen readers
+      status: stable
+      dependencies: []
+      notes: Required for all form inputs.
 
-  - id: card
-    name: Card
-    category: primitive
-    path: resources/js/components/ui/card.tsx
-    description: >
-      Container component for grouping related content.
-      Includes Header, Title, Description, and Footer subcomponents.
-    subcomponents:
-      - Card
-      - CardHeader
-      - CardFooter
-      - CardTitle
-      - CardDescription
-      - CardContent
-    props:
-      - name: children
-        type: ReactNode
-        required: true
-    accessibility: Semantic section element
-    status: stable
-    dependencies: []
-    responsive: >
-      Full width with padding. Constrained via parent grid or container.
-    notes: >
-      Used for services, queue items, booking cards.
-      Use CardHeader + CardTitle for consistency.
+    - id: card
+      name: Card
+      category: primitive
+      path: resources/js/components/ui/card.tsx
+      description: >
+          Container component for grouping related content.
+          Includes Header, Title, Description, and Footer subcomponents.
+      subcomponents:
+          - Card
+          - CardHeader
+          - CardFooter
+          - CardTitle
+          - CardDescription
+          - CardContent
+      props:
+          - name: children
+            type: ReactNode
+            required: true
+      accessibility: Semantic section element
+      status: stable
+      dependencies: []
+      responsive: >
+          Full width with padding. Constrained via parent grid or container.
+      notes: >
+          Used for services, queue items, booking cards.
+          Use CardHeader + CardTitle for consistency.
 
-  - id: checkbox
-    name: Checkbox
-    category: primitive
-    path: resources/js/components/ui/checkbox.tsx
-    description: Accessible checkbox with keyboard support.
-    props:
-      - name: id
-        type: string
-        required: true
-      - name: checked
-        type: boolean
-        required: false
-      - name: disabled
-        type: boolean
-        required: false
-    accessibility:
-      - Keyboard navigation
-      - Visible focus state
-      - Proper label association
-    status: stable
-    dependencies:
-      - '@radix-ui/react-checkbox'
-    notes: Always wrap with Label for accessibility.
+    - id: checkbox
+      name: Checkbox
+      category: primitive
+      path: resources/js/components/ui/checkbox.tsx
+      description: Accessible checkbox with keyboard support.
+      props:
+          - name: id
+            type: string
+            required: true
+          - name: checked
+            type: boolean
+            required: false
+          - name: disabled
+            type: boolean
+            required: false
+      accessibility:
+          - Keyboard navigation
+          - Visible focus state
+          - Proper label association
+      status: stable
+      dependencies:
+          - "@radix-ui/react-checkbox"
+      notes: Always wrap with Label for accessibility.
 
-  - id: select
-    name: Select
-    category: primitive
-    path: resources/js/components/ui/select.tsx
-    description: >
-      Accessible dropdown select component with search support
-      (when configured).
-    subcomponents:
-      - Select
-      - SelectTrigger
-      - SelectValue
-      - SelectContent
-      - SelectItem
-      - SelectGroup
-      - SelectLabel
-    props:
-      - name: value
-        type: string
-        required: false
-      - name: onValueChange
-        type: callback
-        required: false
-    accessibility:
-      - Keyboard navigation (arrow keys)
-      - Screen reader support
-      - Focus management
-    status: stable
-    dependencies:
-      - '@radix-ui/react-select'
-    notes: >
-      Use for single-select dropdowns. Prefer custom components
-      for multi-select scenarios.
+    - id: select
+      name: Select
+      category: primitive
+      path: resources/js/components/ui/select.tsx
+      description: >
+          Accessible dropdown select component with search support
+          (when configured).
+      subcomponents:
+          - Select
+          - SelectTrigger
+          - SelectValue
+          - SelectContent
+          - SelectItem
+          - SelectGroup
+          - SelectLabel
+      props:
+          - name: value
+            type: string
+            required: false
+          - name: onValueChange
+            type: callback
+            required: false
+      accessibility:
+          - Keyboard navigation (arrow keys)
+          - Screen reader support
+          - Focus management
+      status: stable
+      dependencies:
+          - "@radix-ui/react-select"
+      notes: >
+          Use for single-select dropdowns. Prefer custom components
+          for multi-select scenarios.
 
-  - id: dialog
-    name: Dialog
-    category: primitive
-    path: resources/js/components/ui/dialog.tsx
-    description: >
-      Accessible modal dialog with backdrop, focus trap,
-      and escape key handling.
-    subcomponents:
-      - Dialog
-      - DialogTrigger
-      - DialogContent
-      - DialogHeader
-      - DialogFooter
-      - DialogTitle
-      - DialogDescription
-    accessibility:
-      - Focus trap (focus stays within dialog)
-      - Escape key closes dialog
-      - Backdrop prevents interaction with page
-      - Proper heading structure
-    status: stable
-    dependencies:
-      - '@radix-ui/react-dialog'
-    notes: >
-      Use for confirmations, forms, and detailed information.
-      Always include DialogTitle for accessibility.
+    - id: dialog
+      name: Dialog
+      category: primitive
+      path: resources/js/components/ui/dialog.tsx
+      description: >
+          Accessible modal dialog with backdrop, focus trap,
+          and escape key handling.
+      subcomponents:
+          - Dialog
+          - DialogTrigger
+          - DialogContent
+          - DialogHeader
+          - DialogFooter
+          - DialogTitle
+          - DialogDescription
+      accessibility:
+          - Focus trap (focus stays within dialog)
+          - Escape key closes dialog
+          - Backdrop prevents interaction with page
+          - Proper heading structure
+      status: stable
+      dependencies:
+          - "@radix-ui/react-dialog"
+      notes: >
+          Use for confirmations, forms, and detailed information.
+          Always include DialogTitle for accessibility.
 
-  - id: navigation-menu
-    name: NavigationMenu
-    category: primitive
-    path: resources/js/components/ui/navigation-menu.tsx
-    description: >
-      Accessible navigation menu with keyboard support and
-      submenu capability.
-    subcomponents:
-      - NavigationMenu
-      - NavigationMenuList
-      - NavigationMenuItem
-      - NavigationMenuTrigger
-      - NavigationMenuContent
-      - NavigationMenuLink
-    accessibility:
-      - Keyboard navigation
-      - ARIA roles
-      - Focus management
-    status: stable
-    dependencies:
-      - '@radix-ui/react-navigation-menu'
+    - id: navigation-menu
+      name: NavigationMenu
+      category: primitive
+      path: resources/js/components/ui/navigation-menu.tsx
+      description: >
+          Accessible navigation menu with keyboard support and
+          submenu capability.
+      subcomponents:
+          - NavigationMenu
+          - NavigationMenuList
+          - NavigationMenuItem
+          - NavigationMenuTrigger
+          - NavigationMenuContent
+          - NavigationMenuLink
+      accessibility:
+          - Keyboard navigation
+          - ARIA roles
+          - Focus management
+      status: stable
+      dependencies:
+          - "@radix-ui/react-navigation-menu"
 
-  - id: dropdown-menu
-    name: DropdownMenu
-    category: primitive
-    path: resources/js/components/ui/dropdown-menu.tsx
-    description: >
-      Accessible dropdown menu for actions triggered from buttons
-      (e.g., tenant selector, settings).
-    subcomponents:
-      - DropdownMenu
-      - DropdownMenuTrigger
-      - DropdownMenuContent
-      - DropdownMenuItem
-      - DropdownMenuCheckboxItem
-      - DropdownMenuRadioItem
-      - DropdownMenuLabel
-      - DropdownMenuSeparator
-    accessibility:
-      - Keyboard navigation
-      - Focus trap
-      - Escape key
-    status: stable
-    dependencies:
-      - '@radix-ui/react-dropdown-menu'
-    notes: >
-      Use for action menus. For page-level navigation,
-      use NavigationMenu.
+    - id: dropdown-menu
+      name: DropdownMenu
+      category: primitive
+      path: resources/js/components/ui/dropdown-menu.tsx
+      description: >
+          Accessible dropdown menu for actions triggered from buttons
+          (e.g., tenant selector, settings).
+      subcomponents:
+          - DropdownMenu
+          - DropdownMenuTrigger
+          - DropdownMenuContent
+          - DropdownMenuItem
+          - DropdownMenuCheckboxItem
+          - DropdownMenuRadioItem
+          - DropdownMenuLabel
+          - DropdownMenuSeparator
+      accessibility:
+          - Keyboard navigation
+          - Focus trap
+          - Escape key
+      status: stable
+      dependencies:
+          - "@radix-ui/react-dropdown-menu"
+      notes: >
+          Use for action menus. For page-level navigation,
+          use NavigationMenu.
 
-  - id: separator
-    name: Separator
-    category: primitive
-    path: resources/js/components/ui/separator.tsx
-    description: Visual divider between sections.
-    props:
-      - name: orientation
-        type: enum
-        default: horizontal
-    accessibility: Decorative (role=none)
-    status: stable
-    dependencies:
-      - '@radix-ui/react-separator'
+    - id: separator
+      name: Separator
+      category: primitive
+      path: resources/js/components/ui/separator.tsx
+      description: Visual divider between sections.
+      props:
+          - name: orientation
+            type: enum
+            default: horizontal
+      accessibility: Decorative (role=none)
+      status: stable
+      dependencies:
+          - "@radix-ui/react-separator"
 
-  - id: avatar
-    name: Avatar
-    category: primitive
-    path: resources/js/components/ui/avatar.tsx
-    description: >
-      User avatar with fallback to initials. Supports images,
-      initials, and placeholder states.
-    subcomponents:
-      - Avatar
-      - AvatarImage
-      - AvatarFallback
-    props:
-      - name: src
-        type: string
-        required: false
-      - name: fallback
-        type: string
-        required: true
-    accessibility:
-      - Semantic image or initials
-      - Alt text for images
-    status: stable
-    dependencies:
-      - '@radix-ui/react-avatar'
-    notes: >
-      Used for customer/staff identities in queue and
-      booking displays.
+    - id: avatar
+      name: Avatar
+      category: primitive
+      path: resources/js/components/ui/avatar.tsx
+      description: >
+          User avatar with fallback to initials. Supports images,
+          initials, and placeholder states.
+      subcomponents:
+          - Avatar
+          - AvatarImage
+          - AvatarFallback
+      props:
+          - name: src
+            type: string
+            required: false
+          - name: fallback
+            type: string
+            required: true
+      accessibility:
+          - Semantic image or initials
+          - Alt text for images
+      status: stable
+      dependencies:
+          - "@radix-ui/react-avatar"
+      notes: >
+          Used for customer/staff identities in queue and
+          booking displays.
 
-  - id: toggle
-    name: Toggle
-    category: primitive
-    path: resources/js/components/ui/toggle.tsx
-    description: >
-      Accessible toggle button for binary states
-      (e.g., date selection).
-    props:
-      - name: pressed
-        type: boolean
-        required: false
-      - name: onPressedChange
-        type: callback
-        required: false
-      - name: disabled
-        type: boolean
-        required: false
-    accessibility:
-      - ARIA pressed state
-      - Keyboard support
-      - Focus visible
-    status: stable
-    dependencies:
-      - '@radix-ui/react-toggle'
-    notes: Use for date pickers and time slot selection.
+    - id: toggle
+      name: Toggle
+      category: primitive
+      path: resources/js/components/ui/toggle.tsx
+      description: >
+          Accessible toggle button for binary states
+          (e.g., date selection).
+      props:
+          - name: pressed
+            type: boolean
+            required: false
+          - name: onPressedChange
+            type: callback
+            required: false
+          - name: disabled
+            type: boolean
+            required: false
+      accessibility:
+          - ARIA pressed state
+          - Keyboard support
+          - Focus visible
+      status: stable
+      dependencies:
+          - "@radix-ui/react-toggle"
+      notes: Use for date pickers and time slot selection.
 
-  - id: toggle-group
-    name: ToggleGroup
-    category: primitive
-    path: resources/js/components/ui/toggle-group.tsx
-    description: >
-      Accessible toggle group for selecting from multiple options
-      with exclusive or multiple selection modes.
-    props:
-      - name: type
-        type: enum
-        description: 'single or multiple'
-        required: true
-      - name: value
-        type: string | array
-        required: false
-      - name: onValueChange
-        type: callback
-        required: false
-    accessibility:
-      - ARIA role group
-      - Keyboard navigation
-      - Focus visible
-    status: stable
-    dependencies:
-      - '@radix-ui/react-toggle-group'
-    notes: Use for exclusive or multi-select button groups.
+    - id: toggle-group
+      name: ToggleGroup
+      category: primitive
+      path: resources/js/components/ui/toggle-group.tsx
+      description: >
+          Accessible toggle group for selecting from multiple options
+          with exclusive or multiple selection modes.
+      props:
+          - name: type
+            type: enum
+            description: "single or multiple"
+            required: true
+          - name: value
+            type: string | array
+            required: false
+          - name: onValueChange
+            type: callback
+            required: false
+      accessibility:
+          - ARIA role group
+          - Keyboard navigation
+          - Focus visible
+      status: stable
+      dependencies:
+          - "@radix-ui/react-toggle-group"
+      notes: Use for exclusive or multi-select button groups.
 
-  - id: collapsible
-    name: Collapsible
-    category: primitive
-    path: resources/js/components/ui/collapsible.tsx
-    description: >
-      Accessible collapsible section with keyboard support
-      and animated open/close.
-    subcomponents:
-      - Collapsible
-      - CollapsibleTrigger
-      - CollapsibleContent
-    accessibility:
-      - ARIA expanded state
-      - Keyboard navigation
-      - Semantic button trigger
-    status: stable
-    dependencies:
-      - '@radix-ui/react-collapsible'
+    - id: collapsible
+      name: Collapsible
+      category: primitive
+      path: resources/js/components/ui/collapsible.tsx
+      description: >
+          Accessible collapsible section with keyboard support
+          and animated open/close.
+      subcomponents:
+          - Collapsible
+          - CollapsibleTrigger
+          - CollapsibleContent
+      accessibility:
+          - ARIA expanded state
+          - Keyboard navigation
+          - Semantic button trigger
+      status: stable
+      dependencies:
+          - "@radix-ui/react-collapsible"
 
-  - id: sidebar
-    name: Sidebar
-    category: primitive
-    path: resources/js/components/ui/sidebar.tsx
-    description: >
-      Responsive sidebar navigation component with collapsible menu,
-      dark navy branding, and active state indicators.
-    subcomponents:
-      - Sidebar
-      - SidebarContent
-      - SidebarFooter
-      - SidebarMenu
-      - SidebarMenuItem
-      - SidebarMenuButton
-    accessibility:
-      - Semantic nav element
-      - Keyboard navigation
-      - ARIA labels
-    responsive: Full-width on mobile, fixed on desktop
-    status: stable
-    dependencies:
-      - '@radix-ui/react-collapsible'
-    notes: >
-      Uses dark navy background (#001f3f) from reference designs.
-      Active items highlighted in blue.
+    - id: sidebar
+      name: Sidebar
+      category: primitive
+      path: resources/js/components/ui/sidebar.tsx
+      description: >
+          Responsive sidebar navigation component with collapsible menu,
+          dark navy branding, and active state indicators.
+      subcomponents:
+          - Sidebar
+          - SidebarContent
+          - SidebarFooter
+          - SidebarMenu
+          - SidebarMenuItem
+          - SidebarMenuButton
+      accessibility:
+          - Semantic nav element
+          - Keyboard navigation
+          - ARIA labels
+      responsive: Full-width on mobile, fixed on desktop
+      status: stable
+      dependencies:
+          - "@radix-ui/react-collapsible"
+      notes: >
+          Uses dark navy background (#001f3f) from reference designs.
+          Active items highlighted in blue.
 
-  - id: sheet
-    name: Sheet
-    category: primitive
-    path: resources/js/components/ui/sheet.tsx
-    description: >
-      Accessible slide-out panel from screen edge with backdrop
-      and focus management.
-    subcomponents:
-      - Sheet
-      - SheetTrigger
-      - SheetContent
-      - SheetHeader
-      - SheetTitle
-      - SheetDescription
-    accessibility:
-      - Focus trap
-      - Escape key closes
-      - Backdrop click closes
-    status: stable
-    dependencies: []
-    notes: >
-      Useful for mobile navigation drawers and side panels.
+    - id: sheet
+      name: Sheet
+      category: primitive
+      path: resources/js/components/ui/sheet.tsx
+      description: >
+          Accessible slide-out panel from screen edge with backdrop
+          and focus management.
+      subcomponents:
+          - Sheet
+          - SheetTrigger
+          - SheetContent
+          - SheetHeader
+          - SheetTitle
+          - SheetDescription
+      accessibility:
+          - Focus trap
+          - Escape key closes
+          - Backdrop click closes
+      status: stable
+      dependencies: []
+      notes: >
+          Useful for mobile navigation drawers and side panels.
 
 # ==============================================================================
 # COMPONENTS: Reusable product UI built from primitives
 # ==============================================================================
 
 components:
-  - id: alert
-    name: Alert
-    category: component
-    path: resources/js/components/ui/alert.tsx
-    description: >
-      Semantic alert box for errors, warnings, info, and success messages.
-      Visible in conflict resolution, operational failures, and status updates.
-    variants:
-      - default
-      - destructive
-    props:
-      - name: variant
-        type: enum
-        required: true
-      - name: title
-        type: string
-        required: false
-      - name: children
-        type: ReactNode
-        required: true
-    accessibility:
-      - role=alert for real-time alerts
-      - Semantic color + text (not color alone)
-      - Clear call-to-action when needed
-    responsive: Full width, constrained by parent
-    status: stable
-    dependencies:
-      - Button (for actions)
-    use_cases:
-      - 'Scheduling conflict warning (red): "Booking cannot be fulfilled"'
-      - 'Email failure: displayed with supporting text'
-      - 'Info messages: status updates and confirmations'
-    notes: >
-      Only default and destructive variants exist in implementation.
-      For success, warning, or info colors, use inline styling or
-      create variants as needed. Reference designs show destructive
-      (red) alerts for conflicts and informational (blue) alerts.
+    - id: alert
+      name: Alert
+      category: component
+      path: resources/js/components/ui/alert.tsx
+      description: >
+          Semantic alert box for errors, warnings, info, and success messages.
+          Visible in conflict resolution, operational failures, and status updates.
+      variants:
+          - default
+          - destructive
+      props:
+          - name: variant
+            type: enum
+            required: true
+          - name: title
+            type: string
+            required: false
+          - name: children
+            type: ReactNode
+            required: true
+      accessibility:
+          - role=alert for real-time alerts
+          - Semantic color + text (not color alone)
+          - Clear call-to-action when needed
+      responsive: Full width, constrained by parent
+      status: stable
+      dependencies:
+          - Button (for actions)
+      use_cases:
+          - 'Scheduling conflict warning (red): "Booking cannot be fulfilled"'
+          - "Email failure: displayed with supporting text"
+          - "Info messages: status updates and confirmations"
+      notes: >
+          Only default and destructive variants exist in implementation.
+          For success, warning, or info colors, use inline styling or
+          create variants as needed. Reference designs show destructive
+          (red) alerts for conflicts and informational (blue) alerts.
 
-  - id: badge
-    name: Badge
-    category: component
-    path: resources/js/components/ui/badge.tsx
-    description: >
-      Small label for status indicators: booking status,
-      resource availability, payment status.
-    variants:
-      - default
-      - secondary
-      - destructive
-      - outline
-    props:
-      - name: variant
-        type: enum
-        required: false
-      - name: children
-        type: string
-        required: true
-    accessibility: >
-      Semantic text. Avoid relying on color alone;
-      include status text.
-    status: stable
-    use_cases:
-      - 'Booking status: "Checked in" (blue default), "Waiting" (via className), "Confirmed"'
-      - 'Availability: "Available", "Blocked"'
-      - 'Resource usage: "1 / 2" (capacity)'
-    notes: >
-      Implementation provides 4 variants: default (blue), secondary (gray),
-      destructive (red), outline. For warning/success colors, use className
-      overrides or additional variants as patterns emerge.
-      Reference designs use custom styling for amber/orange "Awaiting reply"
-      and green "Available" status indicators.
+    - id: badge
+      name: Badge
+      category: component
+      path: resources/js/components/ui/badge.tsx
+      description: >
+          Small label for status indicators: booking status,
+          resource availability, payment status.
+      variants:
+          - default
+          - secondary
+          - destructive
+          - outline
+      props:
+          - name: variant
+            type: enum
+            required: false
+          - name: children
+            type: string
+            required: true
+      accessibility: >
+          Semantic text. Avoid relying on color alone;
+          include status text.
+      status: stable
+      use_cases:
+          - 'Booking status: "Checked in" (blue default), "Waiting" (via className), "Confirmed"'
+          - 'Availability: "Available", "Blocked"'
+          - 'Resource usage: "1 / 2" (capacity)'
+      notes: >
+          Implementation provides 4 variants: default (blue), secondary (gray),
+          destructive (red), outline. For warning/success colors, use className
+          overrides or additional variants as patterns emerge.
+          Reference designs use custom styling for amber/orange "Awaiting reply"
+          and green "Available" status indicators.
 
-  - id: breadcrumb
-    name: Breadcrumb
-    category: component
-    path: resources/js/components/ui/breadcrumb.tsx
-    description: Navigation hierarchy for multi-step flows.
-    subcomponents:
-      - Breadcrumb
-      - BreadcrumbList
-      - BreadcrumbItem
-      - BreadcrumbLink
-      - BreadcrumbSeparator
-      - BreadcrumbPage
-    props:
-      - name: items
-        type: array
-        required: true
-    accessibility:
-      - aria-label on nav
-      - Semantic links and current page
-    responsive: Collapses on mobile
-    status: stable
-    notes: >
-      Used by the operations dashboard as the contextual container for routine
-      forms (walk-in, resource assignment, resource block): a bottom sheet on
-      phones and a bounded side drawer from sm up, so the live queue stays
-      visible. Consequential decisions use a modal (ConfirmAction) instead.
+    - id: breadcrumb
+      name: Breadcrumb
+      category: component
+      path: resources/js/components/ui/breadcrumb.tsx
+      description: Navigation hierarchy for multi-step flows.
+      subcomponents:
+          - Breadcrumb
+          - BreadcrumbList
+          - BreadcrumbItem
+          - BreadcrumbLink
+          - BreadcrumbSeparator
+          - BreadcrumbPage
+      props:
+          - name: items
+            type: array
+            required: true
+      accessibility:
+          - aria-label on nav
+          - Semantic links and current page
+      responsive: Collapses on mobile
+      status: stable
+      notes: >
+          Used by the operations dashboard as the contextual container for routine
+          forms (walk-in, resource assignment, resource block): a bottom sheet on
+          phones and a bounded side drawer from sm up, so the live queue stays
+          visible. Consequential decisions use a modal (ConfirmAction) instead.
 
-  - id: skeleton
-    name: Skeleton
-    category: component
-    path: resources/js/components/ui/skeleton.tsx
-    description: >
-      Placeholder component for loading states.
-      Shows animated pulse to indicate content is loading.
-    props:
-      - name: className
-        type: string
-        required: false
-    accessibility: Marked as decorative (aria-hidden)
-    status: stable
-    notes: >
-      Use for skeleton screens while data is fetching.
-      Pair with proper loading indicators for accessibility.
+    - id: skeleton
+      name: Skeleton
+      category: component
+      path: resources/js/components/ui/skeleton.tsx
+      description: >
+          Placeholder component for loading states.
+          Shows animated pulse to indicate content is loading.
+      props:
+          - name: className
+            type: string
+            required: false
+      accessibility: Marked as decorative (aria-hidden)
+      status: stable
+      notes: >
+          Use for skeleton screens while data is fetching.
+          Pair with proper loading indicators for accessibility.
 
-  - id: spinner
-    name: Spinner
-    category: component
-    path: resources/js/components/ui/spinner.tsx
-    description: >
-      Animated loading indicator for inline operations.
-    props:
-      - name: className
-        type: string
-        required: false
-    accessibility: >
-      Include aria-busy or role=status with live region
-      for context.
-    status: stable
-    notes: >
-      Use for button loading states and async operations.
-      Pair with text ("Loading...") for accessibility.
+    - id: spinner
+      name: Spinner
+      category: component
+      path: resources/js/components/ui/spinner.tsx
+      description: >
+          Animated loading indicator for inline operations.
+      props:
+          - name: className
+            type: string
+            required: false
+      accessibility: >
+          Include aria-busy or role=status with live region
+          for context.
+      status: stable
+      notes: >
+          Use for button loading states and async operations.
+          Pair with text ("Loading...") for accessibility.
 
-  - id: icon
-    name: Icon
-    category: component
-    path: resources/js/components/ui/icon.tsx
-    description: >
-      Simple icon wrapper for lucide-react icons.
-    props:
-      - name: icon
-        type: ReactNode
-        required: true
-      - name: className
-        type: string
-        required: false
-    accessibility: >
-      Icons should have aria-label or be children of labeled elements.
-      Never use icons alone for meaning.
-    status: stable
-    notes: >
-      Re-exports lucide-react for consistent icon sizing.
+    - id: icon
+      name: Icon
+      category: component
+      path: resources/js/components/ui/icon.tsx
+      description: >
+          Simple icon wrapper for lucide-react icons.
+      props:
+          - name: icon
+            type: ReactNode
+            required: true
+          - name: className
+            type: string
+            required: false
+      accessibility: >
+          Icons should have aria-label or be children of labeled elements.
+          Never use icons alone for meaning.
+      status: stable
+      notes: >
+          Re-exports lucide-react for consistent icon sizing.
 
-  - id: placeholder-pattern
-    name: PlaceholderPattern
-    category: component
-    path: resources/js/components/ui/placeholder-pattern.tsx
-    description: >
-      Placeholder or no-data state component.
-    status: stable
-    notes: >
-      Minimal implementation. Use for empty states with
-      appropriate messaging.
+    - id: placeholder-pattern
+      name: PlaceholderPattern
+      category: component
+      path: resources/js/components/ui/placeholder-pattern.tsx
+      description: >
+          Placeholder or no-data state component.
+      status: stable
+      notes: >
+          Minimal implementation. Use for empty states with
+          appropriate messaging.
 
-  - id: tooltip
-    name: Tooltip
-    category: component
-    path: resources/js/components/ui/tooltip.tsx
-    description: >
-      Accessible tooltip for supplementary information.
-    subcomponents:
-      - TooltipProvider
-      - Tooltip
-      - TooltipTrigger
-      - TooltipContent
-    accessibility:
-      - Keyboard accessible
-      - Screen reader announcements
-    status: stable
-    dependencies:
-      - '@radix-ui/react-tooltip'
-    notes: >
-      Wrap root component in TooltipProvider.
+    - id: tooltip
+      name: Tooltip
+      category: component
+      path: resources/js/components/ui/tooltip.tsx
+      description: >
+          Accessible tooltip for supplementary information.
+      subcomponents:
+          - TooltipProvider
+          - Tooltip
+          - TooltipTrigger
+          - TooltipContent
+      accessibility:
+          - Keyboard accessible
+          - Screen reader announcements
+      status: stable
+      dependencies:
+          - "@radix-ui/react-tooltip"
+      notes: >
+          Wrap root component in TooltipProvider.
 
-  - id: form-field
-    name: FormField (TextField, TextareaField, SelectField, CheckboxField)
-    category: component
-    path: resources/js/components/owner/form-field.tsx
-    description: >
-      Persistent label, optional hint and associated error message around one
-      native control. The control receives aria-invalid and aria-describedby.
-    variants:
-      - text
-      - textarea
-      - select
-      - checkbox
-    props:
-      - name: label
-        type: string
-        required: true
-      - name: error
-        type: string
-        required: false
-      - name: hint
-        type: string
-        required: false
-      - name: required
-        type: boolean
-        required: false
-    accessibility:
-      - Visible label associated through htmlFor/id
-      - Error and hint linked with aria-describedby
-      - Native select and checkbox semantics
-      - Required marker is aria-hidden and also set as aria-required
-    responsive: Full width, constrained by its parent grid
-    status: stable
-    dependencies:
-      - Input
-      - Label
-    notes: >
-      Native select and textarea use the same tokens as Input; the Radix
-      Select primitive is not used inside forms.
+    - id: form-field
+      name: FormField (TextField, TextareaField, SelectField, CheckboxField)
+      category: component
+      path: resources/js/components/owner/form-field.tsx
+      description: >
+          Persistent label, optional hint and associated error message around one
+          native control. The control receives aria-invalid and aria-describedby.
+      variants:
+          - text
+          - textarea
+          - select
+          - checkbox
+      props:
+          - name: label
+            type: string
+            required: true
+          - name: error
+            type: string
+            required: false
+          - name: hint
+            type: string
+            required: false
+          - name: required
+            type: boolean
+            required: false
+      accessibility:
+          - Visible label associated through htmlFor/id
+          - Error and hint linked with aria-describedby
+          - Native select and checkbox semantics
+          - Required marker is aria-hidden and also set as aria-required
+      responsive: Full width, constrained by its parent grid
+      status: stable
+      dependencies:
+          - Input
+          - Label
+      notes: >
+          Native select and textarea use the same tokens as Input; the Radix
+          Select primitive is not used inside forms.
 
-  - id: section-card
-    name: SectionCard
-    category: component
-    path: resources/js/components/owner/section-card.tsx
-    description: >
-      Owner settings section from reference 05: a flat, rounded card with a
-      section title (h2 or h3), a muted one-line description and an optional
-      status chip beside the title.
-    reference_design: '05-owner-scheduling-configuration.png'
-    props:
-      - name: title
-        type: string
-        required: true
-      - name: description
-        type: ReactNode
-        required: false
-      - name: badge
-        type: ReactNode
-        required: false
-      - name: headingLevel
-        type: "'h2' | 'h3'"
-        required: false
-    accessibility:
-      - Title is a real heading; the level is chosen to fit the page outline
-    responsive: Full width; callers place cards in a one or two column grid
-    status: stable
-    dependencies:
-      - Card
+    - id: section-card
+      name: SectionCard
+      category: component
+      path: resources/js/components/owner/section-card.tsx
+      description: >
+          Owner settings section from reference 05: a flat, rounded card with a
+          section title (h2 or h3), a muted one-line description and an optional
+          status chip beside the title.
+      reference_design: "05-owner-scheduling-configuration.png"
+      props:
+          - name: title
+            type: string
+            required: true
+          - name: description
+            type: ReactNode
+            required: false
+          - name: badge
+            type: ReactNode
+            required: false
+          - name: headingLevel
+            type: "'h2' | 'h3'"
+            required: false
+      accessibility:
+          - Title is a real heading; the level is chosen to fit the page outline
+      responsive: Full width; callers place cards in a one or two column grid
+      status: stable
+      dependencies:
+          - Card
 
-  - id: status-chip
-    name: StatusChip
-    category: component
-    path: resources/js/components/owner/status-chip.tsx
-    description: >
-      Pill-shaped status chip from the reference screens (OWNER ONLY,
-      OPEN NOW, "1 unit"). Tones info, success, warning and neutral use
-      semantic tokens; an optional caps mode gives small tracked uppercase.
-    reference_design: '01-customer-shop-home.png, 05-owner-scheduling-configuration.png'
-    props:
-      - name: tone
-        type: "'info' | 'success' | 'warning' | 'neutral'"
-        required: false
-      - name: caps
-        type: boolean
-        required: false
-    accessibility:
-      - Meaning is always in the text; tone only reinforces it
-    responsive: Inline, never wraps
-    status: stable
-    dependencies:
-      - Badge
+    - id: status-chip
+      name: StatusChip
+      category: component
+      path: resources/js/components/owner/status-chip.tsx
+      description: >
+          Pill-shaped status chip from the reference screens (OWNER ONLY,
+          OPEN NOW, "1 unit"). Tones info, success, warning and neutral use
+          semantic tokens; an optional caps mode gives small tracked uppercase.
+      reference_design: "01-customer-shop-home.png, 05-owner-scheduling-configuration.png"
+      props:
+          - name: tone
+            type: "'info' | 'success' | 'warning' | 'neutral'"
+            required: false
+          - name: caps
+            type: boolean
+            required: false
+      accessibility:
+          - Meaning is always in the text; tone only reinforces it
+      responsive: Inline, never wraps
+      status: stable
+      dependencies:
+          - Badge
 
-  - id: confirm-action
-    name: ConfirmAction
-    category: component
-    path: resources/js/components/owner/confirm-action.tsx
-    description: >
-      Dialog that confirms a consequential state change (archive, unpublish,
-      decline a booking request) and then posts it to the server. An optional
-      reason field is posted as `reason` when `reasonLabel` is set.
-    props:
-      - name: label
-        type: string
-        required: true
-      - name: ariaLabel
-        type: string
-        required: true
-      - name: title
-        type: string
-        required: true
-      - name: description
-        type: string
-        required: true
-      - name: confirmLabel
-        type: string
-        required: true
-      - name: url
-        type: string
-        required: true
-      - name: reasonLabel
-        type: string
-        required: false
-        description: When set, shows an optional reason textarea (max 500) and posts it as `reason`
-      - name: dismissLabel
-        type: string
-        required: false
-        description: Dismiss button text, default "Cancel"; use a label distinct from confirmLabel (for example "Keep booking")
-      - name: confirmVariant
-        type: "'destructive' | 'default'"
-        required: false
-        description: Confirm button style; default destructive, use default for non-destructive confirmations such as a notification retry or a queue move
-      - name: triggerVariant
-        type: "'outline' | 'default'"
-        required: false
-      - name: disabled
-        type: boolean
-        required: false
-        description: Disables the trigger until a required choice is made (for example a replacement time)
-    accessibility:
-      - Focus is trapped in the dialog and restored to the trigger
-      - Trigger has an accessible name that says what is affected
-      - Confirm button is disabled and aria-busy while submitting
-    responsive: Dialog is centered and constrained to the viewport
-    status: stable
-    dependencies:
-      - Dialog
-      - Button
-      - FormField
+    - id: confirm-action
+      name: ConfirmAction
+      category: component
+      path: resources/js/components/owner/confirm-action.tsx
+      description: >
+          Dialog that confirms a consequential state change (archive, unpublish,
+          decline a booking request) and then posts it to the server. An optional
+          reason field is posted as `reason` when `reasonLabel` is set.
+      props:
+          - name: label
+            type: string
+            required: true
+          - name: ariaLabel
+            type: string
+            required: true
+          - name: title
+            type: string
+            required: true
+          - name: description
+            type: string
+            required: true
+          - name: confirmLabel
+            type: string
+            required: true
+          - name: url
+            type: string
+            required: true
+          - name: reasonLabel
+            type: string
+            required: false
+            description: When set, shows an optional reason textarea (max 500) and posts it as `reason`
+          - name: dismissLabel
+            type: string
+            required: false
+            description: Dismiss button text, default "Cancel"; use a label distinct from confirmLabel (for example "Keep booking")
+          - name: confirmVariant
+            type: "'destructive' | 'default'"
+            required: false
+            description: Confirm button style; default destructive, use default for non-destructive confirmations such as a notification retry or a queue move
+          - name: triggerVariant
+            type: "'outline' | 'default'"
+            required: false
+          - name: disabled
+            type: boolean
+            required: false
+            description: Disables the trigger until a required choice is made (for example a replacement time)
+      accessibility:
+          - Focus is trapped in the dialog and restored to the trigger
+          - Trigger has an accessible name that says what is affected
+          - Confirm button is disabled and aria-busy while submitting
+      responsive: Dialog is centered and constrained to the viewport
+      status: stable
+      dependencies:
+          - Dialog
+          - Button
+          - FormField
 
-  - id: choice-card
-    name: ChoiceCard
-    category: component
-    path: resources/js/components/booking/choice-card.tsx
-    description: >
-      Selectable card around a native radio or checkbox, used for the vehicle,
-      service and add-on choices. The native control stays in the accessibility
-      tree (grouping, keyboard use and announcements come from the platform);
-      the card draws the checked and focus states.
-    variants:
-      - radio
-      - checkbox
-    props:
-      - name: type
-        type: "'radio' | 'checkbox'"
-        required: true
-      - name: children
-        type: ReactNode
-        required: true
-    accessibility:
-      - Native input is visually hidden but focusable (sr-only peer)
-      - Checked state is a ring plus the native checked state, never colour alone
-      - Focus-visible ring on the card
-      - Wrap related cards in a fieldset with a legend
-    responsive: Full width; the minimum height keeps a 44px touch target
-    status: stable
-    dependencies: []
+    - id: choice-card
+      name: ChoiceCard
+      category: component
+      path: resources/js/components/booking/choice-card.tsx
+      description: >
+          Selectable card around a native radio or checkbox, used for the vehicle,
+          service and add-on choices. The native control stays in the accessibility
+          tree (grouping, keyboard use and announcements come from the platform);
+          the card draws the checked and focus states.
+      variants:
+          - radio
+          - checkbox
+      props:
+          - name: type
+            type: "'radio' | 'checkbox'"
+            required: true
+          - name: children
+            type: ReactNode
+            required: true
+      accessibility:
+          - Native input is visually hidden but focusable (sr-only peer)
+          - Checked state is a ring plus the native checked state, never colour alone
+          - Focus-visible ring on the card
+          - Wrap related cards in a fieldset with a legend
+      responsive: Full width; the minimum height keeps a 44px touch target
+      status: stable
+      dependencies: []
 
-  - id: hold-countdown
-    name: HoldCountdown
-    category: component
-    path: resources/js/components/booking/hold-countdown.tsx
-    description: >
-      Visible countdown for a temporary checkout hold. A plain timer while time
-      remains (not announced every second); a single alert when it ends,
-      saying the time was released and offering Choose another time.
-    props:
-      - name: remaining
-        type: number
-        required: true
-        description: Whole seconds left (from useCountdown)
-      - name: expired
-        type: boolean
-        required: true
-      - name: chooseAnotherUrl
-        type: string
-        required: true
-    accessibility:
-      - role=timer with tabular figures
-      - Expiry uses role=alert with text, an icon and a link, not colour alone
-    responsive: Inline text; the alert wraps its action below the message
-    status: stable
-    dependencies:
-      - Alert
+    - id: hold-countdown
+      name: HoldCountdown
+      category: component
+      path: resources/js/components/booking/hold-countdown.tsx
+      description: >
+          Visible countdown for a temporary checkout hold. A plain timer while time
+          remains (not announced every second); a single alert when it ends,
+          saying the time was released and offering Choose another time.
+      props:
+          - name: remaining
+            type: number
+            required: true
+            description: Whole seconds left (from useCountdown)
+          - name: expired
+            type: boolean
+            required: true
+          - name: chooseAnotherUrl
+            type: string
+            required: true
+      accessibility:
+          - role=timer with tabular figures
+          - Expiry uses role=alert with text, an icon and a link, not colour alone
+      responsive: Inline text; the alert wraps its action below the message
+      status: stable
+      dependencies:
+          - Alert
 
-  - id: booking-live-status
-    name: BookingLiveStatus
-    category: component
-    path: resources/js/components/booking/booking-live-status.tsx
-    description: >
-      Live-status line of an open booking page, driven by useBookingLive. One
-      quiet line while connected, connecting or just updated; "Updating
-      booking" only after 300 ms of refreshing; a warning alert when the live
-      connection is lost (page may be out of date, Refresh now, with the refresh outcome shown); an error alert
-      when a reload fails (Try again). Realtime only nudges a refetch of the
-      server booking, it never supplies displayed data.
-    props:
-      - name: link
-        type: "'connecting' | 'connected' | 'disconnected'"
-        required: true
-      - name: refresh
-        type: "'idle' | 'refreshing' | 'updated' | 'failed'"
-        required: true
-      - name: onRefresh
-        type: () => void
-        required: true
-    accessibility:
-      - One persistent polite role=status region announces pause and refresh outcomes (silent while healthy); a persistent assertive region announces a failed reload; the visible alerts carry no live role
-      - Activating a recovery control moves focus to the status region
-      - Meaning carried by text and an icon, never colour alone
-      - Recovery buttons keep 44 px height on small screens
-    responsive: Inline text; alerts wrap the action below the message
-    status: stable
-    dependencies:
-      - Alert
-      - Button
-      - Spinner
+    - id: booking-live-status
+      name: BookingLiveStatus
+      category: component
+      path: resources/js/components/booking/booking-live-status.tsx
+      description: >
+          Live-status line of an open booking page, driven by useBookingLive. One
+          quiet line while connected, connecting or just updated; "Updating
+          booking" only after 300 ms of refreshing; a warning alert when the live
+          connection is lost (page may be out of date, Refresh now, with the refresh outcome shown); an error alert
+          when a reload fails (Try again). Realtime only nudges a refetch of the
+          server booking, it never supplies displayed data.
+      props:
+          - name: link
+            type: "'connecting' | 'connected' | 'disconnected'"
+            required: true
+          - name: refresh
+            type: "'idle' | 'refreshing' | 'updated' | 'failed'"
+            required: true
+          - name: onRefresh
+            type: () => void
+            required: true
+      accessibility:
+          - One persistent polite role=status region announces pause and refresh outcomes (silent while healthy); a persistent assertive region announces a failed reload; the visible alerts carry no live role
+          - Activating a recovery control moves focus to the status region
+          - Meaning carried by text and an icon, never colour alone
+          - Recovery buttons keep 44 px height on small screens
+      responsive: Inline text; alerts wrap the action below the message
+      status: stable
+      dependencies:
+          - Alert
+          - Button
+          - Spinner
 
-  - id: entitlement-banner
-    name: EntitlementBanner
-    category: component
-    path: resources/js/components/owner/entitlement-banner.tsx
-    description: >
-      Persistent notice at the top of every Owner and Staff page when the
-      organization is in its grace period, restricted, or explicitly closed.
-      It names what still works (existing bookings, check-in, completion and
-      customer cancellations) and what is paused (new bookings and
-      configuration), shows the exact date that applies, and offers renewal or
-      closure review as the one action. Silent for trial and paid
-      organizations. Restriction is explained as a state, not an outage, and
-      nothing is described as deleted.
-    props:
-      - name: entitlement
-        type: Entitlement
-        required: true
-        description: Server-derived state, dates and closure summary
-      - name: billingUrl
-        type: string
-        required: true
-      - name: onBilling
-        type: boolean
-        required: true
-        description: Hides the action on the billing page, where recovery is already in view
-      - name: timezone
-        type: string
-        required: true
-    accessibility:
-      - Alert with role=status, a title, an icon and text; meaning is never colour alone
-      - The action is a link with a 44 px touch target on small screens
-      - Dates use tabular figures
-    responsive: Full width above the page content; the action wraps below the message
-    status: stable
-    dependencies:
-      - Alert
-      - Button
+    - id: entitlement-banner
+      name: EntitlementBanner
+      category: component
+      path: resources/js/components/owner/entitlement-banner.tsx
+      description: >
+          Persistent notice at the top of every Owner and Staff page when the
+          organization is in its grace period, restricted, or explicitly closed.
+          It names what still works (existing bookings, check-in, completion and
+          customer cancellations) and what is paused (new bookings and
+          configuration), shows the exact date that applies, and offers renewal or
+          closure review as the one action. Silent for trial and paid
+          organizations. Restriction is explained as a state, not an outage, and
+          nothing is described as deleted.
+      props:
+          - name: entitlement
+            type: Entitlement
+            required: true
+            description: Server-derived state, dates and closure summary
+          - name: billingUrl
+            type: string
+            required: true
+          - name: onBilling
+            type: boolean
+            required: true
+            description: Hides the action on the billing page, where recovery is already in view
+          - name: timezone
+            type: string
+            required: true
+      accessibility:
+          - Alert with role=status, a title, an icon and text; meaning is never colour alone
+          - The action is a link with a 44 px touch target on small screens
+          - Dates use tabular figures
+      responsive: Full width above the page content; the action wraps below the message
+      status: stable
+      dependencies:
+          - Alert
+          - Button
 
-  - id: operation-stat-card
-    name: OperationStatCard
-    category: component
-    path: resources/js/components/operations/operation-stat-card.tsx
-    description: >
-      One operations counter from the staff dashboard (reference 03): a muted
-      label over a large tabular figure, with an optional one-line hint such as
-      "3 not arrived". The tone (info, warning, success, neutral) only
-      reinforces the label; the number and text carry the meaning.
-    reference_design: '03-staff-operations-dashboard.png'
-    props:
-      - name: label
-        type: string
-        required: true
-      - name: value
-        type: number
-        required: true
-      - name: tone
-        type: "'info' | 'warning' | 'success' | 'neutral'"
-        required: false
-      - name: hint
-        type: string
-        required: false
-    accessibility:
-      - Meaning is in the label, figure and hint text, never colour alone
-      - Callers place cards in a labelled list so the set reads as one group
-    responsive: Callers lay the cards out as four, two and one column
-    status: stable
-    dependencies:
-      - Card
+    - id: operation-stat-card
+      name: OperationStatCard
+      category: component
+      path: resources/js/components/operations/operation-stat-card.tsx
+      description: >
+          One operations counter from the staff dashboard (reference 03): a muted
+          label over a large tabular figure, with an optional one-line hint such as
+          "3 not arrived". The tone (info, warning, success, neutral) only
+          reinforces the label; the number and text carry the meaning.
+      reference_design: "03-staff-operations-dashboard.png"
+      props:
+          - name: label
+            type: string
+            required: true
+          - name: value
+            type: number
+            required: true
+          - name: tone
+            type: "'info' | 'warning' | 'success' | 'neutral'"
+            required: false
+          - name: hint
+            type: string
+            required: false
+      accessibility:
+          - Meaning is in the label, figure and hint text, never colour alone
+          - Callers place cards in a labelled list so the set reads as one group
+      responsive: Callers lay the cards out as four, two and one column
+      status: stable
+      dependencies:
+          - Card
 
-  - id: schedule-impact-dialog
-    name: ScheduleImpactDialog
-    category: component
-    path: resources/js/components/owner/schedule-impact-dialog.tsx
-    description: >
-      Review step for a scheduling change that would disrupt future bookings (a
-      resource block, capacity, hours, service-window or compatibility change).
-      The server has already planned the impact and written nothing; the dialog
-      names the exact count, separates bookings that stay at the same time on
-      another resource from conflicts needing staff, lists each booking, and on
-      "Apply changes" repeats the very same submission with the server-issued
-      confirmation token. A refreshed plan replaces a stale one and says so. It
-      is mounted once in OwnerShell, so every owner and operations form gets the
-      same review.
-    reference_design: '05-owner-scheduling-configuration.png'
-    accessibility:
-      - Radix dialog with focus trap, a title that states the count, and a description that says no time moves and no customer is contacted
-      - The outcome of each booking is text, never colour alone
-      - Keep current settings dismisses without applying anything
-      - The apply button is disabled with aria-busy while the request runs
-      - Buttons keep 44 px height on small screens
-    responsive: Scrolls inside the viewport on small screens; the booking list has its own bounded scroll
-    status: stable
-    dependencies:
-      - Dialog
-      - StatusChip
-      - Alert
-      - Button
+    - id: schedule-impact-dialog
+      name: ScheduleImpactDialog
+      category: component
+      path: resources/js/components/owner/schedule-impact-dialog.tsx
+      description: >
+          Review step for a scheduling change that would disrupt future bookings (a
+          resource block, capacity, hours, service-window or compatibility change).
+          The server has already planned the impact and written nothing; the dialog
+          names the exact count, separates bookings that stay at the same time on
+          another resource from conflicts needing staff, lists each booking, and on
+          "Apply changes" repeats the very same submission with the server-issued
+          confirmation token. A refreshed plan replaces a stale one and says so. It
+          is mounted once in OwnerShell, so every owner and operations form gets the
+          same review.
+      reference_design: "05-owner-scheduling-configuration.png"
+      accessibility:
+          - Radix dialog with focus trap, a title that states the count, and a description that says no time moves and no customer is contacted
+          - The outcome of each booking is text, never colour alone
+          - Keep current settings dismisses without applying anything
+          - The apply button is disabled with aria-busy while the request runs
+          - Buttons keep 44 px height on small screens
+      responsive: Scrolls inside the viewport on small screens; the booking list has its own bounded scroll
+      status: stable
+      dependencies:
+          - Dialog
+          - StatusChip
+          - Alert
+          - Button
 
 # ==============================================================================
 # COMPOSITIONS: Reusable multi-component patterns
 # ==============================================================================
 
 compositions:
-  - id: exact-start-time-selector
-    name: ExactStartTimeSelector
-    category: composition
-    path: resources/js/components/booking/exact-start-time-selector.tsx
-    description: >
-      Date strip over the booking horizon plus a grid of start-time chips
-      (reference 02). Unavailable times stay visible but disabled, named
-      "9:00 AM, unavailable" and struck through. A Next available action jumps
-      to the earliest start. Renders a specific message and recovery action for
-      loading (skeleton after 300 ms), closed day, no times left, nothing
-      available in the whole window, load error and offline. Customers only
-      receive a start time and a boolean: no capacity, units or resources.
-    reference_design: '02-booking-schedule.png'
-    uses:
-      - ToggleGroup
-      - Skeleton
-      - Spinner
-      - Alert
-      - Button
-    props:
-      - name: dates
-        type: array
-        required: true
-      - name: selectedDate
-        type: string
-        required: false
-      - name: availability
-        type: object
-        required: false
-      - name: selectedStart
-        type: string
-        required: false
-      - name: status
-        type: "'ready' | 'loading' | 'error' | 'offline'"
-        required: true
-      - name: nextAvailable
-        type: object
-        required: false
-    accessibility:
-      - Date and time chips are a radiogroup (ToggleGroup) with roving arrow-key focus
-      - Unavailable and closed options are disabled and say so in their accessible name
-      - Strikethrough and the word Closed back up the disabled colour
-      - Polite live region announces the selected time
-      - Skeleton and error states carry text and a Retry action
-    responsive: Date strip scrolls horizontally; the time grid auto-fills columns of at least 5.5rem
-    status: stable
-    notes: >
-      The reference shows a "40 min capacity" label; the project rule that
-      customers never see capacity wins, so the summary shows the service and
-      buffer minutes instead (recorded conflict).
+    - id: exact-start-time-selector
+      name: ExactStartTimeSelector
+      category: composition
+      path: resources/js/components/booking/exact-start-time-selector.tsx
+      description: >
+          Date strip over the booking horizon plus a grid of start-time chips
+          (reference 02). Unavailable times stay visible but disabled, named
+          "9:00 AM, unavailable" and struck through. A Next available action jumps
+          to the earliest start. Renders a specific message and recovery action for
+          loading (skeleton after 300 ms), closed day, no times left, nothing
+          available in the whole window, load error and offline. Customers only
+          receive a start time and a boolean: no capacity, units or resources.
+      reference_design: "02-booking-schedule.png"
+      uses:
+          - ToggleGroup
+          - Skeleton
+          - Spinner
+          - Alert
+          - Button
+      props:
+          - name: dates
+            type: array
+            required: true
+          - name: selectedDate
+            type: string
+            required: false
+          - name: availability
+            type: object
+            required: false
+          - name: selectedStart
+            type: string
+            required: false
+          - name: status
+            type: "'ready' | 'loading' | 'error' | 'offline'"
+            required: true
+          - name: nextAvailable
+            type: object
+            required: false
+      accessibility:
+          - Date and time chips are a radiogroup (ToggleGroup) with roving arrow-key focus
+          - Unavailable and closed options are disabled and say so in their accessible name
+          - Strikethrough and the word Closed back up the disabled colour
+          - Polite live region announces the selected time
+          - Skeleton and error states carry text and a Retry action
+      responsive: Date strip scrolls horizontally; the time grid auto-fills columns of at least 5.5rem
+      status: stable
+      notes: >
+          The reference shows a "40 min capacity" label; the project rule that
+          customers never see capacity wins, so the summary shows the service and
+          buffer minutes instead (recorded conflict).
 
-  - id: booking-summary-card
-    name: BookingSummaryCard
-    category: composition
-    path: resources/js/components/booking/booking-summary-card.tsx
-    description: >
-      Running summary of a booking: vehicle, service, add-ons, duration as
-      "service + buffer" minutes, the chosen time in Philippine time and the
-      total. Never shows capacity, units or resources.
-    reference_design: '02-booking-schedule.png'
-    uses:
-      - Card
-    props:
-      - name: totalCentavos
-        type: number
-        required: false
-      - name: startAt
-        type: string
-        required: false
-      - name: timezone
-        type: string
-        required: true
-    accessibility:
-      - Labelled region with a real heading
-      - Values are a description list (dt/dd)
-    responsive: Stacks under the step content on small screens and sticks beside it on lg and above
-    status: stable
+    - id: booking-summary-card
+      name: BookingSummaryCard
+      category: composition
+      path: resources/js/components/booking/booking-summary-card.tsx
+      description: >
+          Running summary of a booking: vehicle, service, add-ons, duration as
+          "service + buffer" minutes, the chosen time in Philippine time and the
+          total. Never shows capacity, units or resources.
+      reference_design: "02-booking-schedule.png"
+      uses:
+          - Card
+      props:
+          - name: totalCentavos
+            type: number
+            required: false
+          - name: startAt
+            type: string
+            required: false
+          - name: timezone
+            type: string
+            required: true
+      accessibility:
+          - Labelled region with a real heading
+          - Values are a description list (dt/dd)
+      responsive: Stacks under the step content on small screens and sticks beside it on lg and above
+      status: stable
 
-  - id: operation-queue-row
-    name: OperationQueueRow
-    category: composition
-    path: resources/js/components/operations/operation-queue-row.tsx
-    description: >
-      One entry of the staff operations queue (reference 03): appointment time,
-      customer and vehicle, a status chip with its text label (Booked, Checked
-      in, In service, Completed, No-show), the assigned resource, the projected
-      finish and lateness while in service, and the one routine next action
-      (Check in, Start, Complete). Consequential actions use ConfirmAction with a
-      required reason (no-show, move up the queue, free the bay now); assignment
-      opens a contextual sheet (bottom sheet on phones, side drawer from sm up).
-      The server supplies which actions exist and re-validates every one.
-    reference_design: '03-staff-operations-dashboard.png'
-    uses:
-      - Card
-      - StatusChip
-      - ConfirmAction
-      - Sheet
-      - FormField
-      - Button
-      - Spinner
-    props:
-      - name: row
-        type: QueueRowData
-        required: true
-      - name: baseUrl
-        type: string
-        required: true
-      - name: timezone
-        type: string
-        required: true
-      - name: resources
-        type: array
-        required: true
-      - name: moveBefore
-        type: QueueRowData | null
-        required: true
-    accessibility:
-      - Row actions have accessible names that include the customer
-      - Status is text in a chip, with the resource and ETA as text
-      - Pending actions are disabled with aria-busy and a named spinner label
-      - Dialog and sheet focus is managed by the Radix dialog primitive
-      - Action buttons keep 44 px height on small screens
-    responsive: Time, details and actions share one row from sm up and stack on phones
-    status: stable
+    - id: operation-queue-row
+      name: OperationQueueRow
+      category: composition
+      path: resources/js/components/operations/operation-queue-row.tsx
+      description: >
+          One entry of the staff operations queue (reference 03): appointment time,
+          customer and vehicle, a status chip with its text label (Booked, Checked
+          in, In service, Completed, No-show), the assigned resource, the projected
+          finish and lateness while in service, and the one routine next action
+          (Check in, Start, Complete). Consequential actions use ConfirmAction with a
+          required reason (no-show, move up the queue, free the bay now); assignment
+          opens a contextual sheet (bottom sheet on phones, side drawer from sm up).
+          The server supplies which actions exist and re-validates every one.
+      reference_design: "03-staff-operations-dashboard.png"
+      uses:
+          - Card
+          - StatusChip
+          - ConfirmAction
+          - Sheet
+          - FormField
+          - Button
+          - Spinner
+      props:
+          - name: row
+            type: QueueRowData
+            required: true
+          - name: baseUrl
+            type: string
+            required: true
+          - name: timezone
+            type: string
+            required: true
+          - name: resources
+            type: array
+            required: true
+          - name: moveBefore
+            type: QueueRowData | null
+            required: true
+      accessibility:
+          - Row actions have accessible names that include the customer
+          - Status is text in a chip, with the resource and ETA as text
+          - Pending actions are disabled with aria-busy and a named spinner label
+          - Dialog and sheet focus is managed by the Radix dialog primitive
+          - Action buttons keep 44 px height on small screens
+      responsive: Time, details and actions share one row from sm up and stack on phones
+      status: stable
 
-  - id: service-card
-    name: ShopServiceCard
-    category: composition
-    path: resources/js/components/shop/shop-service-card.tsx
-    description: >
-      Public storefront card showing a service with its description,
-      duration range, compatible vehicle types, a "From" price derived only
-      from complete, available variants and a Select action that opens the
-      booking wizard with the service preselected.
-    reference_design: '01-customer-shop-home.png'
-    uses:
-      - Card
-      - Button
-    props:
-      - name: service
-        type: object
-        required: true
-      - name: selectUrl
-        type: string
-        required: false
-        description: Omitted when the shop cannot take online bookings
-    accessibility:
-      - Semantic heading per service
-      - Decorative icon area is aria-hidden
-      - Select is a link whose accessible name includes the service name
-    responsive: Full width cards in a single column
-    status: stable
+    - id: service-card
+      name: ShopServiceCard
+      category: composition
+      path: resources/js/components/shop/shop-service-card.tsx
+      description: >
+          Public storefront card showing a service with its description,
+          duration range, compatible vehicle types, a "From" price derived only
+          from complete, available variants and a Select action that opens the
+          booking wizard with the service preselected.
+      reference_design: "01-customer-shop-home.png"
+      uses:
+          - Card
+          - Button
+      props:
+          - name: service
+            type: object
+            required: true
+          - name: selectUrl
+            type: string
+            required: false
+            description: Omitted when the shop cannot take online bookings
+      accessibility:
+          - Semantic heading per service
+          - Decorative icon area is aria-hidden
+          - Select is a link whose accessible name includes the service name
+      responsive: Full width cards in a single column
+      status: stable
 
-  - id: config-form
-    name: ConfigForm
-    category: composition
-    path: resources/js/components/owner/config-form.tsx
-    description: >
-      Small form driven by a field list (text, number, money, textarea, select,
-      checkbox, date, time). Owns submission state and shows server validation
-      errors beside their fields. Money fields are entered in pesos and
-      submitted as integer centavos.
-    uses:
-      - FormField
-      - Button
-      - Spinner
-    props:
-      - name: method
-        type: enum
-        required: true
-      - name: url
-        type: string
-        required: true
-      - name: fields
-        type: array
-        required: true
-      - name: initial
-        type: object
-        required: true
-      - name: submitLabel
-        type: string
-        required: true
-      - name: title
-        type: string
-        required: true
-    accessibility:
-      - Form has an accessible name
-      - Submit is disabled and aria-busy while processing
-      - Server errors are linked to their fields
-    responsive: Single column; the inline layout wraps fields in a responsive grid
-    status: stable
+    - id: config-form
+      name: ConfigForm
+      category: composition
+      path: resources/js/components/owner/config-form.tsx
+      description: >
+          Small form driven by a field list (text, number, money, textarea, select,
+          checkbox, date, time). Owns submission state and shows server validation
+          errors beside their fields. Money fields are entered in pesos and
+          submitted as integer centavos.
+      uses:
+          - FormField
+          - Button
+          - Spinner
+      props:
+          - name: method
+            type: enum
+            required: true
+          - name: url
+            type: string
+            required: true
+          - name: fields
+            type: array
+            required: true
+          - name: initial
+            type: object
+            required: true
+          - name: submitLabel
+            type: string
+            required: true
+          - name: title
+            type: string
+            required: true
+      accessibility:
+          - Form has an accessible name
+          - Submit is disabled and aria-busy while processing
+          - Server errors are linked to their fields
+      responsive: Single column; the inline layout wraps fields in a responsive grid
+      status: stable
 
-  - id: readiness-checklist
-    name: ReadinessChecklist
-    category: composition
-    path: resources/js/components/owner/readiness-checklist.tsx
-    description: >
-      Authoritative readiness checklist. Each item shows an icon and a
-      Passed or Needs attention badge, its detail text and, when failing, a
-      link to the tab that fixes it.
-    uses:
-      - Badge
-    props:
-      - name: items
-        type: array
-        required: true
-      - name: baseUrl
-        type: string
-        required: true
-    accessibility:
-      - Pass and fail are conveyed by text and icon, never color alone
-      - List has an accessible name
-    responsive: Full width list
-    status: stable
+    - id: readiness-checklist
+      name: ReadinessChecklist
+      category: composition
+      path: resources/js/components/owner/readiness-checklist.tsx
+      description: >
+          Authoritative readiness checklist. Each item shows an icon and a
+          Passed or Needs attention badge, its detail text and, when failing, a
+          link to the tab that fixes it.
+      uses:
+          - Badge
+      props:
+          - name: items
+            type: array
+            required: true
+          - name: baseUrl
+            type: string
+            required: true
+      accessibility:
+          - Pass and fail are conveyed by text and icon, never color alone
+          - List has an accessible name
+      responsive: Full width list
+      status: stable
 
-  - id: weekly-intervals-editor
-    name: WeeklyIntervalsEditor
-    category: composition
-    path: resources/js/components/owner/weekly-intervals-editor.tsx
-    description: >
-      Edits weekly local-time intervals (weekday, start, end) with several
-      intervals per day. Used for business hours and service windows.
-    uses:
-      - FormField
-      - Button
-    props:
-      - name: value
-        type: array
-        required: true
-      - name: onChange
-        type: callback
-        required: true
-      - name: errorPrefix
-        type: string
-        required: true
-    accessibility:
-      - Every control has a visible label naming its day
-      - Remove buttons are labelled with day and position
-      - Errors are announced with the field they belong to
-    responsive: Four-column row on sm and above, stacked on mobile
-    status: stable
+    - id: weekly-intervals-editor
+      name: WeeklyIntervalsEditor
+      category: composition
+      path: resources/js/components/owner/weekly-intervals-editor.tsx
+      description: >
+          Edits weekly local-time intervals (weekday, start, end) with several
+          intervals per day. Used for business hours and service windows.
+      uses:
+          - FormField
+          - Button
+      props:
+          - name: value
+            type: array
+            required: true
+          - name: onChange
+            type: callback
+            required: true
+          - name: errorPrefix
+            type: string
+            required: true
+      accessibility:
+          - Every control has a visible label naming its day
+          - Remove buttons are labelled with day and position
+          - Errors are announced with the field they belong to
+      responsive: Four-column row on sm and above, stacked on mobile
+      status: stable
 
-  - id: tenant-shop-shell
-    name: TenantShopShell
-    category: composition
-    path: resources/js/layouts/tenant-shop-shell.tsx
-    description: >
-      Public tenant-branded shell: Rinquo wordmark with the shop name
-      beneath it (and logo when present), an OPEN NOW or CLOSED NOW chip,
-      a quiet page background, and the tenant brand color exposed as one CSS
-      variable with a readable foreground computed from its luminance.
-    reference_design: '01-customer-shop-home.png'
-    uses:
-      - StatusChip
-    accessibility:
-      - Open/closed is text, not color alone
-      - Brand foreground is chosen for readable contrast
-    responsive: Content constrained to max-w-5xl with responsive gutters
-    status: stable
-    notes: >
-      The tenant brand color is tenant data, not a design token; everything
-      else uses canonical tokens. Unavailable shops render the neutral shell.
+    - id: tenant-shop-shell
+      name: TenantShopShell
+      category: composition
+      path: resources/js/layouts/tenant-shop-shell.tsx
+      description: >
+          Public tenant-branded shell: Rinquo wordmark with the shop name
+          beneath it (and logo when present), an OPEN NOW or CLOSED NOW chip,
+          a quiet page background, and the tenant brand color exposed as one CSS
+          variable with a readable foreground computed from its luminance.
+      reference_design: "01-customer-shop-home.png"
+      uses:
+          - StatusChip
+      accessibility:
+          - Open/closed is text, not color alone
+          - Brand foreground is chosen for readable contrast
+      responsive: Content constrained to max-w-5xl with responsive gutters
+      status: stable
+      notes: >
+          The tenant brand color is tenant data, not a design token; everything
+          else uses canonical tokens. Unavailable shops render the neutral shell.
 
-  - id: operations-stat-card
-    name: OperationsStatCard
-    category: composition
-    description: >
-      Card displaying a key metric for operations dashboard
-      (Appointments, Checked in, In service, Conflicts).
-      Simple card with large number and label.
-    reference_design: '03-staff-operations-dashboard.png'
-    uses:
-      - Card
-    props:
-      - name: label
-        type: string
-        required: true
-      - name: value
-        type: number
-        required: true
-      - name: color
-        type: enum
-        description: 'blue | orange | green | red'
-        required: false
-    accessibility: Semantic card with clear labels
-    responsive: Four-column grid on desktop, two on tablet, one on mobile
-    status: experimental
-    notes: >
-      Large number display with colored label.
-      Used in operations dashboard header.
-      Implement as part of dashboard feature.
+    - id: operations-stat-card
+      name: OperationsStatCard
+      category: composition
+      description: >
+          Card displaying a key metric for operations dashboard
+          (Appointments, Checked in, In service, Conflicts).
+          Simple card with large number and label.
+      reference_design: "03-staff-operations-dashboard.png"
+      uses:
+          - Card
+      props:
+          - name: label
+            type: string
+            required: true
+          - name: value
+            type: number
+            required: true
+          - name: color
+            type: enum
+            description: "blue | orange | green | red"
+            required: false
+      accessibility: Semantic card with clear labels
+      responsive: Four-column grid on desktop, two on tablet, one on mobile
+      status: experimental
+      notes: >
+          Large number display with colored label.
+          Used in operations dashboard header.
+          Implement as part of dashboard feature.
 
-  - id: conflict-queue-row
-    name: ConflictQueueRow
-    category: composition
-    path: resources/js/components/conflicts/conflict-queue-row.tsx
-    description: >
-      One scheduling conflict in the staff queue (reference 04): customer, the
-      protected original appointment time, service and cause in words, and the
-      conflict state as a text chip (Needs proposal, Awaiting reply, Declined or
-      Expired needing staff, Moved at the same time). The whole row is a link that
-      opens the conflict in the resolution pane and marks the current one with
-      aria-current.
-    reference_design: '04-scheduling-conflict-resolution.png'
-    uses:
-      - StatusChip
-    props:
-      - name: row
-        type: ConflictRowData
-        required: true
-      - name: href
-        type: string
-        required: true
-      - name: selected
-        type: boolean
-        required: true
-      - name: timezone
-        type: string
-        required: true
-    accessibility:
-      - The state is chip text, never colour alone
-      - The selected row exposes aria-current
-      - Visible focus ring and a 44 px minimum height on small screens
-    responsive: Stacks above the resolution pane on small screens and sits beside it from xl up
-    status: stable
+    - id: conflict-queue-row
+      name: ConflictQueueRow
+      category: composition
+      path: resources/js/components/conflicts/conflict-queue-row.tsx
+      description: >
+          One scheduling conflict in the staff queue (reference 04): customer, the
+          protected original appointment time, service and cause in words, and the
+          conflict state as a text chip (Needs proposal, Awaiting reply, Declined or
+          Expired needing staff, Moved at the same time). The whole row is a link that
+          opens the conflict in the resolution pane and marks the current one with
+          aria-current.
+      reference_design: "04-scheduling-conflict-resolution.png"
+      uses:
+          - StatusChip
+      props:
+          - name: row
+            type: ConflictRowData
+            required: true
+          - name: href
+            type: string
+            required: true
+          - name: selected
+            type: boolean
+            required: true
+          - name: timezone
+            type: string
+            required: true
+      accessibility:
+          - The state is chip text, never colour alone
+          - The selected row exposes aria-current
+          - Visible focus ring and a 44 px minimum height on small screens
+      responsive: Stacks above the resolution pane on small screens and sits beside it from xl up
+      status: stable
 
-  - id: reschedule-proposal-card
-    name: RescheduleProposalCard
-    category: composition
-    path: resources/js/components/booking/reschedule-proposal-card.tsx
-    description: >
-      The shop's replacement-time proposal on the customer's booking page. It
-      states that the original booking is still confirmed and reserved, shows the
-      proposed time and the response deadline, and offers Accept new time (behind
-      a confirmation that says the original time is released) and Keep my
-      original time. It never shows resources, capacity or the internal cause.
-    reference_design: '04-scheduling-conflict-resolution.png'
-    uses:
-      - Alert
-      - Button
-      - Dialog
-    props:
-      - name: proposal
-        type: ProposalForCustomer
-        required: true
-      - name: originalStartAt
-        type: string
-        required: true
-      - name: timezone
-        type: string
-        required: true
-      - name: acceptUrl
-        type: string
-        required: true
-      - name: declineUrl
-        type: string
-        required: true
-    accessibility:
-      - A labelled region whose heading says the shop proposed a new time
-      - Accepting needs an explicit dialog confirmation with focus management
-      - Pending answers disable both buttons and set aria-busy
-      - A failed or expired answer is announced in an alert
-    responsive: Single column; buttons are 44 px tall on small screens
-    status: stable
+    - id: reschedule-proposal-card
+      name: RescheduleProposalCard
+      category: composition
+      path: resources/js/components/booking/reschedule-proposal-card.tsx
+      description: >
+          The shop's replacement-time proposal on the customer's booking page. It
+          states that the original booking is still confirmed and reserved, shows the
+          proposed time and the response deadline, and offers Accept new time (behind
+          a confirmation that says the original time is released) and Keep my
+          original time. It never shows resources, capacity or the internal cause.
+      reference_design: "04-scheduling-conflict-resolution.png"
+      uses:
+          - Alert
+          - Button
+          - Dialog
+      props:
+          - name: proposal
+            type: ProposalForCustomer
+            required: true
+          - name: originalStartAt
+            type: string
+            required: true
+          - name: timezone
+            type: string
+            required: true
+          - name: acceptUrl
+            type: string
+            required: true
+          - name: declineUrl
+            type: string
+            required: true
+      accessibility:
+          - A labelled region whose heading says the shop proposed a new time
+          - Accepting needs an explicit dialog confirmation with focus management
+          - Pending answers disable both buttons and set aria-busy
+          - A failed or expired answer is announced in an alert
+      responsive: Single column; buttons are 44 px tall on small screens
+      status: stable
 
 # ==============================================================================
 # PATTERNS: Interaction and layout conventions
 # ==============================================================================
 
 patterns:
-  - id: step-indicator
-    name: Step Indicator
-    category: pattern
-    path: resources/js/components/booking/step-indicator.tsx
-    description: >
-      Progress through the booking journey: numbered circles joined by lines,
-      completed (check mark) and current steps filled with the primary token.
-      An ordered list inside a labelled nav; the current step has
-      aria-current="step" and completed steps are announced as completed.
-    reference_design: '02-booking-schedule.png'
-    use_cases:
-      - Booking flow: Vehicle, Service, Schedule, Details, Confirm
-    accessibility:
-      - nav landmark labelled "Booking progress" with an ordered list
-      - aria-current="step" on the current step
-      - Completed steps carry "(completed)" for screen readers
-      - Never colour alone: check mark, number and text
-    responsive: >
-      From sm up every label and connecting line shows; below sm only the
-      current label shows beside a "Step n of N" count.
-    status: stable
+    - id: step-indicator
+      name: Step Indicator
+      category: pattern
+      path: resources/js/components/booking/step-indicator.tsx
+      description: >
+          Progress through the booking journey: numbered circles joined by lines,
+          completed (check mark) and current steps filled with the primary token.
+          An ordered list inside a labelled nav; the current step has
+          aria-current="step" and completed steps are announced as completed.
+      reference_design: "02-booking-schedule.png"
+      use_cases:
+          - Booking flow: Vehicle, Service, Schedule, Details, Confirm
+      accessibility:
+          - nav landmark labelled "Booking progress" with an ordered list
+          - aria-current="step" on the current step
+          - Completed steps carry "(completed)" for screen readers
+          - Never colour alone: check mark, number and text
+      responsive: >
+          From sm up every label and connecting line shows; below sm only the
+          current label shows beside a "Step n of N" count.
+      status: stable
 
-  - id: exact-start-time-selection
-    name: Exact-start Time Selection
-    category: pattern
-    description: >
-      Booking pattern where the customer selects a specific start time rather
-      than a time range. Start times fall on the Owner's slot-interval grid,
-      unavailable times are visible but disabled, and the earliest start is one
-      action away. Feasibility is decided per physical resource on the server;
-      the customer sees only the time and whether it is available.
-    components:
-      - ExactStartTimeSelector
-    use_cases:
-      - Customer booking flow (Schedule step)
-    reference_design: '02-booking-schedule.png'
-    status: stable
+    - id: exact-start-time-selection
+      name: Exact-start Time Selection
+      category: pattern
+      description: >
+          Booking pattern where the customer selects a specific start time rather
+          than a time range. Start times fall on the Owner's slot-interval grid,
+          unavailable times are visible but disabled, and the earliest start is one
+          action away. Feasibility is decided per physical resource on the server;
+          the customer sees only the time and whether it is available.
+      components:
+          - ExactStartTimeSelector
+      use_cases:
+          - Customer booking flow (Schedule step)
+      reference_design: "02-booking-schedule.png"
+      status: stable
 
-  - id: responsive-sidebar-nav
-    name: Responsive Sidebar Navigation
+      - id: tenant-application-navigation
+    name: Tenant Application Navigation
     category: pattern
     description: >
-      Left sidebar navigation for staff and owner dashboards.
-      Dark navy background (#001f3f) with white text. Active item
-      highlighted in blue. Collapses to hamburger on mobile.
+      Shared role-aware application navigation for Owner and Staff tenant
+      surfaces. Desktop uses the canonical dark sidebar. Mobile uses a
+      native-style bottom navigation rather than collapsing the desktop
+      sidebar into a hamburger or drawer.
+    authority:
+      decisions:
+        - 46
+        - 47
+        - 206
+        - 208
+        - 210
+      references:
+        - '03-staff-operations-dashboard.png'
+        - '05-owner-scheduling-configuration.png'
+      notes: >
+        Existing reference UI establishes the desktop visual language.
+        Mobile behavior is explicitly defined by Locked Decisions and must
+        not be inferred from the desktop screenshots.
     components:
       - Sidebar
-      - Button (collapsible trigger on mobile)
+      - BottomNavigation
+      - MoreMenu
     use_cases:
-      - Staff operations dashboard
-      - Owner configuration pages
-    reference_design: '03-staff-operations-dashboard.png, 05-owner-scheduling-configuration.png'
+      - Staff operational surfaces
+      - Owner operational surfaces
+      - Owner Billing
+      - Owner Settings
+    desktop:
+      presentation: dark sidebar
+      owner_destinations:
+        - Operations
+        - Booking Requests
+        - Conflicts
+        - Billing
+        - Settings
+      staff_behavior: >
+        Show only operational destinations authorized for the authenticated
+        Staff member.
+    mobile:
+      presentation: bottom navigation
+      staff_primary_destinations:
+        - Dashboard
+        - Queue
+        - Bookings
+        - Walk-in
+        - More
+      owner_behavior: >
+        Owner uses the same native-style application navigation model.
+        Owner-only destinations such as Billing and Settings are reached
+        through More when they are not primary mobile tabs.
+      prohibited:
+        - hamburger as primary application navigation
+        - collapsible desktop sidebar as primary mobile navigation
+    accessibility:
+      - Use a nav landmark with an accessible label
+      - Use aria-current="page" for the active destination
+      - Navigation visibility never replaces server-side authorization
+      - Mobile interactive targets are at least 44px by 44px
     responsive: >
-      Full-width sidebar on desktop (md+), collapsible drawer on mobile
+      Desktop uses a persistent sidebar. Mobile uses bottom navigation.
+      Tablet behavior may interpolate between approved responsive patterns
+      without introducing an unapproved third navigation paradigm.
     status: stable
     notes: >
-      Menu items: Dashboard, Queue, Bookings, Walk-in, Conflicts,
-      Operational failures, Settings. Active item has blue background.
+      Decision 208 intentionally consolidates desktop day-to-day operations
+      under Operations instead of reproducing separate Dashboard, Queue,
+      Bookings, Walk-in and Operational failures sidebar routes. Billing is
+      Owner-only and is a primary desktop destination under Decision 210.
 
-  - id: capacity-aware-booking
-    name: Capacity-Aware Booking
-    category: pattern
-    description: >
-      Booking system prevents overbooking by showing resource capacity,
-      consumption per service, and available slots. Disables unavailable
-      times. Shows conflict warnings.
-    reference_design: '02-booking-schedule.png, 03-staff-operations-dashboard.png'
-    components:
-      - ExactStartTimeSelector (with capacity info)
-      - Capacity indicator (proposed CapacityBar)
-    constraints:
-      - Capacity is never intentionally overbooked
-      - A booking must fit in one compatible resource
-      - Capacity checks and holds are atomic
-    status: experimental
-    notes: >
-      Reference designs show capacity as "1/2", "2/2" in queue and
-      config pages. Shows visual bar indicator for utilization.
+    - id: capacity-aware-booking
+      name: Capacity-Aware Booking
+      category: pattern
+      description: >
+          Booking system prevents overbooking by showing resource capacity,
+          consumption per service, and available slots. Disables unavailable
+          times. Shows conflict warnings.
+      reference_design: "02-booking-schedule.png, 03-staff-operations-dashboard.png"
+      components:
+          - ExactStartTimeSelector (with capacity info)
+          - Capacity indicator (proposed CapacityBar)
+      constraints:
+          - Capacity is never intentionally overbooked
+          - A booking must fit in one compatible resource
+          - Capacity checks and holds are atomic
+      status: experimental
+      notes: >
+          Reference designs show capacity as "1/2", "2/2" in queue and
+          config pages. Shows visual bar indicator for utilization.
 
-  - id: status-driven-color
-    name: Status-Driven Color System
-    category: pattern
-    description: >
-      Consistent use of semantic colors to indicate status across
-      the application. Color + text used together (never color alone).
-    colors:
-      - 'Blue (#1e40af primary): Active, selected, action, next steps'
-      - 'Green (#047857 success): Checked in, available, completed'
-      - 'Amber (#b45309 warning): Waiting, pending, awaiting approval'
-      - 'Red (#dc2626 destructive): Conflict, error, failure, full capacity'
-      - 'Gray (#e5e7eb border): Disabled, unavailable, historical'
-    use_cases:
-      - Booking status badges
-      - Resource availability
-      - Alert backgrounds
-      - Capacity bars
-    implementation: >
-      Use CSS custom properties: --color-primary, --color-success,
-      --color-warning, --color-destructive. Tailwind utilities:
-      bg-primary, bg-success, bg-warning, bg-destructive, etc.
-    status: stable
-    notes: >
-      Reference designs demonstrate consistent color use across
-      all screens. Always pair with descriptive text.
-      See tokens.md for exact color values and contrast ratios.
+    - id: status-driven-color
+      name: Status-Driven Color System
+      category: pattern
+      description: >
+          Consistent use of semantic colors to indicate status across
+          the application. Color + text used together (never color alone).
+      colors:
+          - "Blue (#1e40af primary): Active, selected, action, next steps"
+          - "Green (#047857 success): Checked in, available, completed"
+          - "Amber (#b45309 warning): Waiting, pending, awaiting approval"
+          - "Red (#dc2626 destructive): Conflict, error, failure, full capacity"
+          - "Gray (#e5e7eb border): Disabled, unavailable, historical"
+      use_cases:
+          - Booking status badges
+          - Resource availability
+          - Alert backgrounds
+          - Capacity bars
+      implementation: >
+          Use CSS custom properties: --color-primary, --color-success,
+          --color-warning, --color-destructive. Tailwind utilities:
+          bg-primary, bg-success, bg-warning, bg-destructive, etc.
+      status: stable
+      notes: >
+          Reference designs demonstrate consistent color use across
+          all screens. Always pair with descriptive text.
+          See tokens.md for exact color values and contrast ratios.
 
-  - id: operational-failure-feedback
-    name: Operational Failure Feedback
-    category: pattern
-    description: >
-      When operations fail (e.g., email delivery), display in
-      "Attention" panel with clear error message and retry option.
-    reference_design: '03-staff-operations-dashboard.png'
-    components:
-      - Alert (with icon and error description)
-      - Button (Retry)
-    use_cases:
-      - Email delivery failures
-      - Resource assignment failures
-      - Payment processing failures
-    status: experimental
-    notes: >
-      "Attention" section shown in right panel. Orange text for
-      warning, red for error. "Retry available" link provided.
+    - id: operational-failure-feedback
+      name: Operational Failure Feedback
+      category: pattern
+      description: >
+          When operations fail (e.g., email delivery), display in
+          "Attention" panel with clear error message and retry option.
+      reference_design: "03-staff-operations-dashboard.png"
+      components:
+          - Alert (with icon and error description)
+          - Button (Retry)
+      use_cases:
+          - Email delivery failures
+          - Resource assignment failures
+          - Payment processing failures
+      status: experimental
+      notes: >
+          "Attention" section shown in right panel. Orange text for
+          warning, red for error. "Retry available" link provided.
 
-  - id: conflict-resolution
-    name: Conflict Resolution
-    category: pattern
-    description: >
-      Multi-step conflict resolution for scheduling conflicts.
-      Shows affected booking, conflict details, and resolution options
-      (same-time reassignment, propose new time, hold until customer response).
-    reference_design: '04-scheduling-conflict-resolution.png'
-    components:
-      - Alert (destructive, conflict summary)
-      - Card (affected booking details)
-      - ToggleGroup (resolution options)
-      - Button (send proposal)
-    use_cases:
-      - Conflict resolution page for staff
-    status: experimental
-    notes: >
-      Shows "Booking cannot be fulfilled" alert at top.
-      Affected booking in left card, resolution options in right panel.
-      Selected option highlighted in blue with blue dot indicator.
+    - id: conflict-resolution
+      name: Conflict Resolution
+      category: pattern
+      description: >
+          Multi-step conflict resolution for scheduling conflicts.
+          Shows affected booking, conflict details, and resolution options
+          (same-time reassignment, propose new time, hold until customer response).
+      reference_design: "04-scheduling-conflict-resolution.png"
+      components:
+          - Alert (destructive, conflict summary)
+          - Card (affected booking details)
+          - ToggleGroup (resolution options)
+          - Button (send proposal)
+      use_cases:
+          - Conflict resolution page for staff
+      status: experimental
+      notes: >
+          Shows "Booking cannot be fulfilled" alert at top.
+          Affected booking in left card, resolution options in right panel.
+          Selected option highlighted in blue with blue dot indicator.
 
-  - id: owner-configuration-tabs
-    name: Owner Configuration Tabs
+      - id: owner-settings-navigation
+    name: Owner Settings Section Navigation
     category: pattern
     path: resources/js/layouts/owner-shell.tsx
     description: >
-      Owner-only settings shell: dark sidebar (a compact top bar on small
-      screens) with the wordmark, organization and the Settings destination;
-      a page header with the title, branch chip and Draft/Published chip;
-      and, in the content area, pill tabs (one link per configuration tab)
-      beside an OWNER ONLY chip, plus a status region.
-      Tabs: Profile, Business hours, Services, Resources, Booking policy,
-      Readiness. The sidebar also links Booking requests (any member), which
-      hides the Owner-only tabs.
-    reference_design: '05-owner-scheduling-configuration.png'
-    components:
-      - StatusChip
-      - Alert
-      - Button
+      Secondary navigation inside the Owner Settings area. Each destination
+      is a separate page represented by a normal navigation link. The active
+      destination uses primary-colored text and a visible primary underline.
+      Settings navigation is subordinate to the tenant application navigation.
+    authority:
+      decisions:
+        - 206
+        - 207
+        - 209
+        - 211
+      references:
+        - '05-owner-scheduling-configuration.png'
+      notes: >
+        Where the older reference conflicts with Decisions 206, 207 or 209,
+        the Locked Decisions take precedence until replacement Owner Settings
+        references are approved.
+    destinations:
+      - Profile
+      - Hours
+      - Services
+      - Resources
+      - Booking Policy
+      - Readiness
+      - Directory
+    desktop:
+      presentation: horizontal text navigation
+      active_state:
+        - primary-colored text
+        - primary-colored underline
+      inactive_state:
+        - neutral text
+      prohibited:
+        - solid-filled active pill as the canonical pattern
+        - secondary Settings sidebar
+    mobile:
+      presentation: horizontally scrollable secondary navigation
+      requirements:
+        - preserve active underline
+        - minimum 44px touch targets
+        - avoid uncontrolled multi-row wrapping
+        - do not replace the application bottom navigation
     accessibility:
-      - nav landmark labelled "Main" for the sidebar and "Settings" for the tabs
-      - aria-current="page" on the active tab
-      - Tabs that fail readiness show an icon with the label "Needs attention"
-      - Success messages announced through role=status
-    use_cases:
-      - Owner settings and configuration pages
+      - Use a nav landmark labelled "Settings"
+      - Use aria-current="page" on the active destination
+      - Preserve visible keyboard focus
+      - Warning or readiness state must not rely on color alone
+      - Use navigation links rather than ARIA tabs
+    page_heading:
+      ownership: page
+      rule: >
+        Each Settings page owns its own meaningful h1 according to
+        Decision 209. The shared shell must not hardcode one generic
+        Scheduling configuration heading for all Settings pages.
     status: stable
     notes: >
-      Navigation links rather than ARIA tabs, because each tab is its own
-      page. The shell only presents: the server policy decides access.
-      Booking policy (approval mode and time rules) is implemented as a tab.
+      OWNER ONLY and publication/readiness indicators are contextual status,
+      not part of the Settings navigation itself.
 
-  - id: multi-option-selection
-    name: Multi-Option Selection (Dialog or Inline)
-    category: pattern
-    description: >
-      For selecting from multiple options (date, time, resource),
-      use toggles in grid layout. Selected option highlighted in blue,
-      unavailable options grayed out.
-    components:
-      - Toggle
-      - ToggleGroup
-      - Dialog (if in modal context)
-    use_cases:
-      - Time slot selection
-      - Date selection
-      - Resource assignment
-    reference_design: '02-booking-schedule.png, 04-scheduling-conflict-resolution.png'
-    status: experimental
-    notes: >
-      Implemented for date and time selection in ExactStartTimeSelector
-      (ToggleGroup radiogroup). Reference design 04 (reschedule option
-      selection) is still to come, so this stays experimental.
+    - id: multi-option-selection
+      name: Multi-Option Selection (Dialog or Inline)
+      category: pattern
+      description: >
+          For selecting from multiple options (date, time, resource),
+          use toggles in grid layout. Selected option highlighted in blue,
+          unavailable options grayed out.
+      components:
+          - Toggle
+          - ToggleGroup
+          - Dialog (if in modal context)
+      use_cases:
+          - Time slot selection
+          - Date selection
+          - Resource assignment
+      reference_design: "02-booking-schedule.png, 04-scheduling-conflict-resolution.png"
+      status: experimental
+      notes: >
+          Implemented for date and time selection in ExactStartTimeSelector
+          (ToggleGroup radiogroup). Reference design 04 (reschedule option
+          selection) is still to come, so this stays experimental.
 
 # ==============================================================================
 # STATUS & METADATA
 # ==============================================================================
 
 status_definitions:
-  active: >
-    Component or pattern is implemented and canonical.
-    Should be used for all new UI implementing that feature.
-  proposed: >
-    Pattern identified in reference designs but not yet implemented.
-    Add to roadmap and implement when the feature is built.
-  deprecated: >
-    Component is no longer recommended. A successor exists or the pattern
-    is no longer used. Update consuming pages within one sprint.
+    active: >
+        Component or pattern is implemented and canonical.
+        Should be used for all new UI implementing that feature.
+    proposed: >
+        Pattern identified in reference designs but not yet implemented.
+        Add to roadmap and implement when the feature is built.
+    deprecated: >
+        Component is no longer recommended. A successor exists or the pattern
+        is no longer used. Update consuming pages within one sprint.
 
 deprecation_rules: >
-  When a component becomes deprecated:
-  1. Mark it as deprecated in the registry with a successor field
-  2. Update existing consumers within one sprint
-  3. Keep the registry entry for historical reference
+    When a component becomes deprecated:
+    1. Mark it as deprecated in the registry with a successor field
+    2. Update existing consumers within one sprint
+    3. Keep the registry entry for historical reference
 
 quality_checklist:
-  - Registered in this file
-  - TypeScript props fully typed (if implemented)
-  - At least one test case (if implemented)
-  - Accessibility validated (keyboard, focus, screen reader)
-  - Responsive behavior documented
-  - Placed in correct layer (primitive, component, composition, pattern)
-  - Follows semantic color and naming conventions
-  - JSDoc comments on complex behavior
+    - Registered in this file
+    - TypeScript props fully typed (if implemented)
+    - At least one test case (if implemented)
+    - Accessibility validated (keyboard, focus, screen reader)
+    - Responsive behavior documented
+    - Placed in correct layer (primitive, component, composition, pattern)
+    - Follows semantic color and naming conventions
+    - JSDoc comments on complex behavior
