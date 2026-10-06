@@ -6,7 +6,11 @@ import {
     BOOKING_STEPS,
     StepIndicator,
 } from '@/components/booking/step-indicator';
-import { TextareaField, TextField } from '@/components/owner/form-field';
+import {
+    SelectField,
+    TextareaField,
+    TextField,
+} from '@/components/owner/form-field';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -26,6 +30,7 @@ export default function Details({
     summary,
     signedIn,
     contact,
+    savedVehicles,
     verification,
     urls,
 }: DetailsPageProps) {
@@ -60,6 +65,7 @@ export default function Details({
                         ) : (
                             <DetailsForm
                                 contact={contact}
+                                savedVehicles={savedVehicles}
                                 signedIn={signedIn}
                                 expired={expired}
                                 urls={urls}
@@ -89,11 +95,13 @@ export default function Details({
 
 function DetailsForm({
     contact,
+    savedVehicles,
     signedIn,
     expired,
     urls,
 }: {
     contact: DetailsPageProps['contact'];
+    savedVehicles: DetailsPageProps['savedVehicles'];
     signedIn: boolean;
     expired: boolean;
     urls: DetailsPageProps['urls'];
@@ -102,6 +110,7 @@ function DetailsForm({
         contact_name: contact.name,
         contact_phone: contact.phone,
         vehicle_plate: contact.plate,
+        customer_vehicle_id: null as number | null,
         customer_notes: contact.notes,
         email: '',
     });
@@ -114,6 +123,7 @@ function DetailsForm({
                       contact_name: data.contact_name,
                       contact_phone: data.contact_phone,
                       vehicle_plate: data.vehicle_plate,
+                      customer_vehicle_id: data.customer_vehicle_id,
                       customer_notes: data.customer_notes,
                   }
                 : data,
@@ -179,6 +189,30 @@ function DetailsForm({
                 }
                 error={form.errors.contact_phone}
             />
+            {signedIn && savedVehicles.length > 0 ? (
+                <SelectField
+                    label="Saved vehicle (optional)"
+                    name="customer_vehicle_id"
+                    value={form.data.customer_vehicle_id ?? ''}
+                    onChange={(event) =>
+                        form.setData(
+                            'customer_vehicle_id',
+                            event.target.value === ''
+                                ? null
+                                : Number(event.target.value),
+                        )
+                    }
+                    options={savedVehicles.map((vehicle) => ({
+                        value: String(vehicle.id),
+                        label: vehicle.label
+                            ? `${vehicle.plate} — ${vehicle.label}`
+                            : vehicle.plate,
+                    }))}
+                    placeholder="Enter a plate manually instead"
+                    hint="Selecting one uses its saved plate for this booking."
+                    error={form.errors.customer_vehicle_id}
+                />
+            ) : null}
             <TextField
                 label="Plate number or vehicle note (optional)"
                 name="vehicle_plate"

@@ -107,6 +107,7 @@ export const detailsProps: DetailsPageProps = {
     signedIn: false,
     urls: holdUrls,
     contact: { name: '', phone: '', plate: '', notes: '' },
+    savedVehicles: [],
     verification: {
         step: 'details',
         email: null,

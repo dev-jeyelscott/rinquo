@@ -2,6 +2,7 @@
 
 use App\Modules\Booking\Models\Booking;
 use App\Modules\Booking\Models\Hold;
+use App\Modules\Customer\Models\CustomerVehicle;
 use App\Modules\Identity\Mail\LoginCodeMail;
 use App\Modules\Identity\Models\OwnerLoginChallenge;
 use App\Modules\Identity\Models\User;
@@ -184,6 +185,40 @@ test('a signed-in customer skips the code step and may not type another email', 
     Journey::saveDetails($shop, $hold)->assertRedirect(route('bookings.holds.confirm.show', ['shine', $hold->public_id]));
 
     expect(Mail::sent(LoginCodeMail::class)->count())->toBe(0);
+});
+
+test('a signed-in customer can use only their saved vehicle and its plate is snapshotted', function () {
+    $customer = Tenant::user('known@example.test');
+    $vehicle = CustomerVehicle::query()->create(['user_id' => $customer->id, 'plate' => 'RIN-007', 'label' => 'Daily driver']);
+    $shop = Shop::make();
+    $this->actingAs($customer);
+    $hold = Journey::hold($shop);
+
+    $this->put(route('bookings.holds.details.save', ['shine', $hold->public_id]), [
+        'contact_name' => 'Ana Cruz',
+        'customer_vehicle_id' => $vehicle->id,
+        'vehicle_plate' => 'UNTRUSTED',
+    ])->assertRedirect(route('bookings.holds.confirm.show', ['shine', $hold->public_id]));
+
+    expect($hold->fresh()->vehicle_plate)->toBe('RIN-007');
+    $vehicle->forceFill(['plate' => 'RIN-008'])->save();
+    expect($hold->fresh()->vehicle_plate)->toBe('RIN-007');
+});
+
+test('a customer cannot use another customer\'s saved vehicle', function () {
+    $customer = Tenant::user('known@example.test');
+    $other = Tenant::user('other@example.test');
+    $vehicle = CustomerVehicle::query()->create(['user_id' => $other->id, 'plate' => 'OTHER-1']);
+    $shop = Shop::make();
+    $this->actingAs($customer);
+    $hold = Journey::hold($shop);
+
+    $this->put(route('bookings.holds.details.save', ['shine', $hold->public_id]), [
+        'contact_name' => 'Ana Cruz',
+        'customer_vehicle_id' => $vehicle->id,
+    ])->assertNotFound();
+
+    expect($hold->fresh()->vehicle_plate)->toBeNull();
 });
 
 test('details are validated', function () {

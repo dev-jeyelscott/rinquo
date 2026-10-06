@@ -13,6 +13,7 @@ use App\Modules\Booking\Http\ResolvesShop;
 use App\Modules\Booking\Models\Hold;
 use App\Modules\Booking\Support\BookingSession;
 use App\Modules\Booking\Support\HoldSummary;
+use App\Modules\Customer\Models\CustomerVehicle;
 use App\Modules\Identity\Actions\RequestLoginCode;
 use App\Modules\Identity\Actions\VerifyLoginCode;
 use App\Modules\Identity\Http\Requests\VerifyLoginCodeRequest;
@@ -73,6 +74,17 @@ class HoldController extends Controller
                 'plate' => $record->vehicle_plate ?? '',
                 'notes' => $record->customer_notes ?? '',
             ],
+            'savedVehicles' => $request->user() === null ? [] : CustomerVehicle::query()
+                ->where('user_id', $request->user()->id)
+                ->whereNull('archived_at')
+                ->orderBy('id')
+                ->get()
+                ->map(fn (CustomerVehicle $vehicle): array => [
+                    'id' => $vehicle->id,
+                    'plate' => $vehicle->plate,
+                    'label' => $vehicle->label,
+                ])
+                ->values(),
             'verification' => (new BookingSession($request->session()))->verificationState($request->user() !== null),
         ]);
     }
@@ -91,7 +103,21 @@ class HoldController extends Controller
             return $redirect;
         }
 
-        $save->handle($record, $request->details());
+        $details = $request->details();
+        $vehicleId = $request->validated('customer_vehicle_id');
+
+        if ($vehicleId !== null) {
+            // Never trust a vehicle id submitted by the browser. A missing
+            // ownership match deliberately looks like an unknown resource.
+            $vehicle = CustomerVehicle::query()
+                ->whereKey($vehicleId)
+                ->where('user_id', $request->user()->id)
+                ->whereNull('archived_at')
+                ->firstOrFail();
+            $details['vehicle_plate'] = $vehicle->plate;
+        }
+
+        $save->handle($record, $details);
 
         if ($request->user() !== null) {
             return to_route('bookings.holds.confirm.show', [$slug, $record->public_id]);

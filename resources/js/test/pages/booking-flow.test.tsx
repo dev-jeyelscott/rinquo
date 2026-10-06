@@ -84,8 +84,31 @@ describe('Details step', () => {
             contact_name: 'Ana',
             contact_phone: '',
             vehicle_plate: '',
+            customer_vehicle_id: null,
             customer_notes: '',
         });
+    });
+
+    it('lets a signed-in customer select a saved vehicle while keeping manual entry available', () => {
+        render(
+            <Details
+                {...detailsProps}
+                signedIn
+                savedVehicles={[
+                    { id: 7, plate: 'RIN-007', label: 'Daily driver' },
+                ]}
+            />,
+        );
+
+        fireEvent.change(screen.getByLabelText(/Saved vehicle/), {
+            target: { value: '7' },
+        });
+
+        expect(
+            screen.getByLabelText(/Plate number or vehicle note/),
+        ).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+        expect(inertia.calls[0].data).toMatchObject({ customer_vehicle_id: 7 });
     });
 
     it('verifies the code and waits out the resend cooldown', () => {

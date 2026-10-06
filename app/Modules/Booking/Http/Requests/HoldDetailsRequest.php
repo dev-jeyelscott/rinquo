@@ -18,6 +18,9 @@ class HoldDetailsRequest extends FormRequest
             'contact_name' => ['required', 'string', 'min:1', 'max:120'],
             'contact_phone' => ['nullable', 'string', 'max:40', 'regex:/^[+0-9 ()\-]*$/'],
             'vehicle_plate' => ['nullable', 'string', 'max:20'],
+            // Only an authenticated customer may name a platform vehicle. The
+            // controller still resolves it through that customer's user id.
+            'customer_vehicle_id' => [$this->user() === null ? 'prohibited' : 'nullable', 'integer'],
             'customer_notes' => ['nullable', 'string', 'max:500'],
             // A signed-in customer's verified email is used; others verify the one typed here.
             'email' => [$this->user() === null ? 'required' : 'prohibited', 'string', 'email:rfc', 'max:254'],

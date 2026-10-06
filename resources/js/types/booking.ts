@@ -112,6 +112,7 @@ export type VerificationState = {
 
 export type DetailsPageProps = HoldPageProps & {
     contact: ContactDetails;
+    savedVehicles: { id: number; plate: string; label: string | null }[];
     verification: VerificationState;
 };
 
