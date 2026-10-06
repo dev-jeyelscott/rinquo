@@ -14,6 +14,8 @@ use App\Modules\Scheduling\Http\Controllers\CatalogController;
 use App\Modules\Scheduling\Http\Controllers\HoursController;
 use App\Modules\Scheduling\Http\Controllers\RecordController;
 use App\Modules\Scheduling\Http\Controllers\ResourcesController;
+use App\Modules\Subscription\Http\Controllers\BillingController;
+use App\Modules\Tenancy\Http\Controllers\ClosureController;
 use App\Modules\Tenancy\Http\Controllers\DirectoryPreferenceController;
 use App\Modules\Tenancy\Http\Controllers\OnboardingController;
 use App\Modules\Tenancy\Http\Controllers\OwnerHomeController;
@@ -92,6 +94,12 @@ Route::prefix('owner')->name('owner.')->group(function (): void {
                 Route::post('unpublish', [PublicationController::class, 'unpublish'])->name('unpublish');
                 Route::get('directory', [DirectoryPreferenceController::class, 'show'])->name('directory');
                 Route::put('directory', [DirectoryPreferenceController::class, 'update'])->name('directory.update');
+
+                // Billing and closure stay reachable while restricted or closed: they are how an Owner recovers.
+                Route::get('billing', [BillingController::class, 'show'])->name('billing');
+                Route::post('billing/renewal', [BillingController::class, 'renew'])->middleware('throttle:billing-renewal')->name('billing.renewal');
+                Route::post('closure', [ClosureController::class, 'store'])->name('closure.store');
+                Route::post('closure/recover', [ClosureController::class, 'recover'])->name('closure.recover');
             });
 
         // Any active member (Owner or Staff) decides booking requests.

@@ -30,6 +30,7 @@ vertical slice that owns it begins. Do not add empty or speculative modules.
 | `Identity`   | Verified email identities and Owner email-code sign-in (challenges, rate limits, the sign-in mail).                                                                                           |
 | `Tenancy`    | Organization, its one branch, memberships and the Owner policy, tenant media, audit events, publish/unpublish, storefront.                                                                    |
 | `Scheduling` | Booking-feasibility configuration: hours, catalog, resources, capacity consumption, the Owner booking policy and the shared readiness evaluator.                                              |
+| `Subscription` | One subscription per organization (trial, paid-through and grace instants), PayMongo QR Ph payment requests, signed-webhook receipts, confirmed payments, reminder deliveries and the centralized access projection. |
 | `Booking`    | Availability search, temporary checkout holds, bookings and their immutable snapshots, the customer wizard, approval of pending requests, booking email and the expiry and reminder sweepers. |
 
 Boundaries:
@@ -77,3 +78,17 @@ Boundaries:
   everything else becomes a conflict. Detection never notifies the customer; only
   a durably sent proposal does. Customer acceptance is the only path that
   confirms a replacement booking.
+- Subscription (slice 07) entitlement is derived from `subscriptions`
+  instants (`trial_ends_at`, `paid_until`, `grace_ends_at`); there is no
+  stored restricted flag. `Subscription\Access\AccessResolver` is the only
+  projection of capabilities: new bookings and configuration writes stop at the
+  exact grace end, while existing booking operations and customer cancellation
+  never stop. `BookingIntake`, `CreateStaffBooking` and `ChangeOrganization`
+  enforce it under the organization lock. Only `ApplyPaidPayment` extends
+  entitlement, from a stored, signature-verified `payment.paid` receipt, once
+  per payment request (unique ids). Billing never touches publication.
+- Owner closure is a separate lifecycle in `Tenancy` (`organization_closures`):
+  only an explicit Owner request starts the 90-day recovery window. Billing
+  code never reads or writes it; the access projection only reads it. After the
+  window the closure is marked deletion-eligible; destructive retention belongs
+  to the later Platform Operations slice.

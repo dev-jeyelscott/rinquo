@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ReadinessController;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Modules\Subscription\Http\Controllers\PayMongoWebhookController;
 use App\Support\Logging\AssignRequestId;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -21,9 +22,17 @@ return Application::configure(basePath: dirname(__DIR__))
             // session, cookie or CSRF middleware (Redis-backed sessions) runs
             // before the checks, so an outage is reported as 503, not 500.
             Route::get('/ready', ReadinessController::class)->name('ready');
+
+            // The PayMongo webhook is server-to-server and authenticated by its signature, so it
+            // has no session, cookie or CSRF middleware either.
+            Route::post('/webhooks/paymongo', PayMongoWebhookController::class)->middleware('throttle:paymongo-webhook')->name('webhooks.paymongo');
         },
     )
-    ->withCommands([__DIR__.'/../app/Modules/Booking/Console'])
+    ->withCommands([
+        __DIR__.'/../app/Modules/Booking/Console',
+        __DIR__.'/../app/Modules/Subscription/Console',
+        __DIR__.'/../app/Modules/Tenancy/Console',
+    ])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->prepend(AssignRequestId::class);
 

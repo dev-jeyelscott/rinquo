@@ -131,6 +131,44 @@ ignored).
 | `RESEND_API_KEY`    | Resend key; staging uses a separate, staging-only key | staging, production | `re_...` |
 | `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` | Sender (a domain verified in Resend) | staging, production | `bookings@rinquo.example` |
 
+### Subscription payments (PayMongo QR Ph) and plan terms
+
+Renewal uses PayMongo dynamic QR Ph. Billing **fails closed**: while the secret
+key or webhook secret is empty, the Owner billing page stays readable but cannot
+create a renewal request, and existing access and bookings are unchanged. Use
+**test** keys and a separate webhook registration in every environment except
+production; test and live signatures are never interchangeable.
+
+| Variable                      | Purpose                                                                 | Req. | Safe example |
+| ----------------------------- | ----------------------------------------------------------------------- | ---- | ------------ |
+| `PAYMONGO_MODE`               | `test` or `live`; must match the keys and the webhook registration      | -    | `test` |
+| `PAYMONGO_SECRET_KEY`         | Server-side API key (never sent to the browser)                         | staging, production (to bill) | `<secret>` |
+| `PAYMONGO_PUBLIC_KEY`         | Public key (reserved; no browser SDK is used yet)                       | -    | `<public key>` |
+| `PAYMONGO_WEBHOOK_SECRET`     | Signing secret of the webhook registered for this environment           | staging, production (to bill) | `<secret>` |
+| `PAYMONGO_BASE_URL`           | API base URL                                                            | -    | `https://api.paymongo.com/v1` |
+| `PAYMONGO_CONNECT_TIMEOUT`, `PAYMONGO_TIMEOUT` | Finite connect and request timeouts in seconds         | -    | `3`, `10` |
+| `RINQUO_PLAN_AMOUNT_CENTAVOS` | Global monthly plan price in centavos (snapshotted on every request)    | -    | `99900` |
+| `RINQUO_TRIAL_DAYS`, `RINQUO_GRACE_DAYS` | Trial length for new organizations and the grace term     | -    | `14`, `7` |
+| `RINQUO_QR_LIFETIME_SECONDS`  | Lifetime of one provider QR, 60 to 9000                                 | -    | `1800` |
+| `RINQUO_WEBHOOK_TOLERANCE_SECONDS` | Largest accepted webhook timestamp skew                            | -    | `300` |
+
+One-time webhook registration (per environment, never per payment): register
+`https://<APP_URL host>/webhooks/paymongo` for the `payment.paid` event in the
+PayMongo dashboard (or API) using that environment's keys, then store the
+returned signing secret as `PAYMONGO_WEBHOOK_SECRET`. The endpoint verifies the
+`Paymongo-Signature` HMAC over the raw body, rejects stale timestamps, stores
+each event id once, and only then acknowledges. QR Ph must be enabled on the
+PayMongo account. Before promoting to production, run a staging check with test
+credentials: create a renewal QR, complete a test-mode payment, and confirm the
+Owner sees the new paid-through date exactly once.
+
+The Rinquo renewal request lives 24 hours but one provider QR lives at most
+`RINQUO_QR_LIFETIME_SECONDS`, so the app refreshes the QR against the same
+request. `subscriptions:send-reminders` and `organizations:mark-deletion-eligible`
+run hourly from the scheduler; both are idempotent. Deletion eligibility only
+marks an Owner-closed organization after its 90-day recovery window; no
+automatic deletion exists.
+
 ### Realtime (Reverb)
 
 | Variable               | Purpose                                                   | Req. | Safe example |

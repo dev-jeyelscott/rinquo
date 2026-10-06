@@ -41,6 +41,32 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Subscription plan terms
+    |--------------------------------------------------------------------------
+    |
+    | One global plan, deployment-managed until the Platform Admin slice moves it
+    | behind a UI. Read only through Subscription\Support\PlanTerms, which
+    | validates them. Requests and payments snapshot the amount, so changing it
+    | never rewrites history or a current entitlement period.
+    */
+    'subscription' => [
+        'currency' => 'PHP',
+        'amount_centavos' => (int) env('RINQUO_PLAN_AMOUNT_CENTAVOS', 99900),
+        'trial_days' => (int) env('RINQUO_TRIAL_DAYS', 14),
+        'grace_days' => (int) env('RINQUO_GRACE_DAYS', 7),
+        // A Rinquo renewal request stays payable this long.
+        'request_lifetime_hours' => 24,
+        // One provider QR lives at most this long (PayMongo allows 60 to 9000 seconds).
+        'qr_lifetime_seconds' => (int) env('RINQUO_QR_LIFETIME_SECONDS', 1800),
+        'reminder_offsets_days' => [7, 3, 1],
+        // Webhook timestamps older (or newer) than this are rejected.
+        'signature_tolerance_seconds' => (int) env('RINQUO_WEBHOOK_TOLERANCE_SECONDS', 300),
+        // Owner closure keeps the organization recoverable for this long.
+        'closure_recovery_days' => 90,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Tenant media
     |--------------------------------------------------------------------------
     |

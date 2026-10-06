@@ -5,6 +5,8 @@ namespace App\Providers;
 use App\Modules\Booking\Conflicts\ScheduleImpactGate;
 use App\Modules\Booking\TestingShopFixture;
 use App\Modules\Identity\TestingOtpPeek;
+use App\Modules\Subscription\PayMongo\PayMongoGateway;
+use App\Modules\Subscription\PayMongo\PayMongoHttpGateway;
 use App\Modules\Tenancy\Contracts\ChangeImpact;
 use App\Support\Environment\RequiredEnvironment;
 use Carbon\CarbonImmutable;
@@ -25,6 +27,8 @@ class AppServiceProvider extends ServiceProvider
     {
         // Scheduling changes settle their impact on future bookings through the Booking module.
         $this->app->bind(ChangeImpact::class, ScheduleImpactGate::class);
+        // The outbound PayMongo boundary; tests and the browser fixture replace it with a fake.
+        $this->app->bind(PayMongoGateway::class, PayMongoHttpGateway::class);
     }
 
     /**
@@ -40,6 +44,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureTrustedProxies();
 
         $this->configureBookingRateLimits();
+        $this->configureBillingRateLimits();
 
         TestingOtpPeek::register();
         TestingShopFixture::register();
@@ -86,5 +91,12 @@ class AppServiceProvider extends ServiceProvider
             (int) config('rinquo.booking.confirm_decay_minutes'),
             (int) config('rinquo.booking.confirm_per_ip'),
         )->by($request->ip()));
+    }
+
+    /** Renewal creates provider objects, and the webhook is public: both are throttled. */
+    protected function configureBillingRateLimits(): void
+    {
+        RateLimiter::for('billing-renewal', fn (Request $request) => Limit::perMinute(10)->by((string) ($request->user()->id ?? $request->ip())));
+        RateLimiter::for('paymongo-webhook', fn (Request $request) => Limit::perMinute(300)->by($request->ip()));
     }
 }

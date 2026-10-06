@@ -9,6 +9,7 @@ use App\Modules\Scheduling\Models\ResourceType;
 use App\Modules\Scheduling\Models\Service;
 use App\Modules\Scheduling\Models\ServiceVehicleVariant;
 use App\Modules\Scheduling\Models\VehicleType;
+use App\Modules\Subscription\Models\Subscription;
 use App\Modules\Tenancy\Policies\OrganizationPolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
@@ -32,6 +33,15 @@ class Organization extends Model
 {
     protected $fillable = ['name', 'slug', 'tagline', 'description', 'brand_color', 'directory_opted_in'];
 
+    protected static function booted(): void
+    {
+        // Every organization starts a trial in the same transaction that creates it, so no
+        // tenant exists without an entitlement snapshot (a missing row fails closed).
+        static::created(function (Organization $organization): void {
+            Subscription::startTrial($organization);
+        });
+    }
+
     protected function casts(): array
     {
         return ['published_at' => 'immutable_datetime', 'directory_opted_in' => 'boolean'];
@@ -40,6 +50,18 @@ class Organization extends Model
     public function isPublished(): bool
     {
         return $this->published_at !== null;
+    }
+
+    /** @return HasOne<Subscription, $this> */
+    public function subscription(): HasOne
+    {
+        return $this->hasOne(Subscription::class);
+    }
+
+    /** @return HasMany<OrganizationClosure, $this> */
+    public function closures(): HasMany
+    {
+        return $this->hasMany(OrganizationClosure::class);
     }
 
     /** @return HasOne<Branch, $this> */

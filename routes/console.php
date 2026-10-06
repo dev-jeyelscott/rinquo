@@ -10,3 +10,8 @@ Schedule::command('horizon:snapshot')->everyFiveMinutes();
 Schedule::command('bookings:expire')->everyMinute()->withoutOverlapping();
 Schedule::command('bookings:send-reminders')->everyMinute()->withoutOverlapping();
 Schedule::command('conflicts:expire-proposals')->everyMinute()->withoutOverlapping();
+
+// Subscription reminders and closure eligibility are idempotent and catch up after a missed run.
+// Neither toggles a stored restriction flag: restriction is derived from entitlement instants.
+Schedule::command('subscriptions:send-reminders')->hourly()->withoutOverlapping();
+Schedule::command('organizations:mark-deletion-eligible')->hourly()->withoutOverlapping();
