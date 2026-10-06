@@ -2,6 +2,14 @@
 
 Canonical UI design system for Rinquo, established from approved reference designs.
 
+## Authority
+
+The design system is third in the authority order: **locked decisions → approved reference UI → design system/tokens/registry → reusable components → page implementation/tests** (see `docs/planning-decisions.md` → Authority order). Tokens, primitives, the registry, and showcase conform upward to locked decisions and approved reference UI. Never change a token, registry entry, component, or documented pattern merely to match existing page code; a locked contract changes only after explicit approval at the higher level, then propagates downward.
+
+### Explicitly unlocked composition
+
+The Owner mobile settings shell is not yet visually locked (Decisions 44 and 46; no approved Owner-mobile reference). The current `owner-shell.tsx` and its registry entry may be documented as current behavior but are not canonical or locked visual authority for mobile. Retain this unresolved status until a new approved Owner-mobile reference exists (see `docs/reference-ui/README.md`).
+
 ## Source of Truth
 
 - **Design Tokens**: CSS custom properties in `resources/css/app.css` (Tailwind CSS theme configuration)
@@ -222,3 +230,4 @@ When the design system needs an update:
 2. If the change affects multiple components or introduces new tokens, file a task under the Design System epic
 3. Use the `design-system` skill to update the canonical system and registry
 4. Do not make design changes in page code without first updating the system
+5. Do not change the system, registry, or a reference to match existing code; escalate any locked-contract change for explicit approval first

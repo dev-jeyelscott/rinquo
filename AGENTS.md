@@ -18,6 +18,8 @@ Rinquo is a Philippines-focused, multi-tenant booking platform implemented as on
 - Treat `docs/roadmaps/mvp/specs/` as scoped acceptance criteria, not proof that a feature is implemented. Inspect the code and migrations.
 - For deployment, environment, migration, and recovery behavior, use `docs/operations/environments.md` and `docs/operations/deployment.md`.
 - For UI work, use `resources/css/app.css`, `resources/js/components/ui/`, `docs/design-system/ui-registry.yaml`, and `docs/reference-ui/` as the canonical design sources.
+- Design authority is ordered: **locked decisions → approved reference UI → design system/tokens/registry → reusable components → page implementation/tests**. The locked decisions are Decisions 1–200 in `docs/decision.md` (plus the additions in `docs/planning-decisions.md`). A conflict is resolved by changing the lower level to comply with the higher one. Existing code, a test assertion, convenience, or an implementation limitation never justifies rewriting a locked decision, approved reference, token/registry rule, or reusable pattern; obtain and record explicit approval at the higher level first, then propagate it downward. See `docs/planning-decisions.md` → Authority order.
+- The Owner mobile settings shell is not yet visually locked (Decisions 44 and 46; no approved Owner-mobile reference). Do not treat `owner-shell.tsx` or reference 05 as approval of it; see `docs/reference-ui/README.md`.
 
 ## Layout
 
