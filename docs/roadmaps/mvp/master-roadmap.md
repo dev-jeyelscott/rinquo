@@ -81,6 +81,44 @@ The bootstrap slice must not introduce bookings, scheduling, organizations, subs
 
 ## Approved UI baseline
 
-Use the five screens in `docs/reference-ui/` as the visual and interaction reference for tenant booking, scheduling, staff operations, conflict resolution, and Owner scheduling configuration.
+UI implementation follows the authority hierarchy defined by Decision 211:
 
-Slice `00` does not require a dedicated business UI reference. It only needs a minimal application shell and health/smoke verification required to prove the foundation is operational.
+`Locked Decisions → Approved Reference UI → Design System → Reusable Components → Page Implementation → Tests`
+
+Reference UI approval follows Decision 212.
+
+Only references explicitly marked `Approved` in:
+
+`docs/reference-ui/README.md`
+
+are authoritative visual contracts.
+
+Approved references apply only to the surfaces, states, patterns, and viewports they explicitly represent.
+
+Do not infer an uncovered responsive composition and describe it as approved.
+
+When an Approved Reference UI conflicts with a later Locked Decision, the Locked Decision takes precedence.
+
+Reference `05-owner-scheduling-configuration.png` remains partially authoritative for unaffected Owner desktop visual language, but Decisions 206–210 supersede conflicting navigation, Settings navigation, Billing placement, and page-heading behavior.
+
+Material UI work must:
+
+1. Read applicable Locked Decisions.
+2. Check the Reference UI manifest.
+3. Reuse applicable approved design-system patterns.
+4. Treat uncovered visual behavior as implementation choice rather than a locked contract.
+5. Obtain approval before promoting a material new pattern into the canonical design system.
+
+The Owner Settings redesign requires approved desktop and mobile references for:
+
+- Profile
+- Hours
+- Services
+- Resources
+- Booking Policy
+- Readiness
+- Directory
+
+Draft references must not be treated as implementation authority.
+
+Slice `00` does not require a dedicated business UI reference. It only requires the minimum application shell and health/smoke verification necessary to prove the foundation is operational.
