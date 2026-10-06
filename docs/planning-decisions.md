@@ -2,46 +2,74 @@
 
 ## Authority
 
-The approved `decision.md` Decisions 1–200 remain authoritative. This document records only the final material additions and the resulting planning boundary.
+`docs/decision.md` is the authoritative locked decision register for Rinquo.
 
-### Authority order
+It contains the approved product, architecture, navigation, UX, lifecycle, and governance decisions for the MVP.
 
-This is the canonical authority statement; `AGENTS.md`, `docs/README.md`, `docs/design-system/README.md`, and `docs/reference-ui/README.md` refer to it.
+The current approved decision range is:
 
-**locked decisions → approved reference UI → design system/tokens/registry → reusable components → page implementation/tests**
+`Decision 1 → Decision 212`
 
-- **Locked decisions**: Decisions 1–200 in `docs/decision.md` and the additions in this document.
-- **Approved reference UI**: the approved files enumerated in `docs/reference-ui/README.md`.
-- **Design system**: `resources/css/app.css`, `docs/design-system/ui-registry.yaml`, and the documented canonical primitives and components.
+This file is not a second decision register and must not duplicate or redefine locked decisions.
 
-Rules:
+When this document, an ADR, a roadmap, a reference UI, the design system, implementation code, or tests conflict with a Locked Decision, follow the authority precedence defined in Decision 211.
 
-- A conflict is resolved by changing the lower level to comply with the higher one. Implementation conforms upward.
-- Existing code, a test assertion, convenience, or an implementation limitation is never sufficient reason to revise a locked decision, approved reference, token or registry rule, or reusable pattern.
-- A locked contract changes only through an explicit approval recorded at the appropriate higher level, after which the change propagates downward. Until then the difference is an escalated design-contract change, not something to reconcile silently in pages, tests, components, tokens, or the registry.
-- Roadmaps and specs are acceptance criteria and planning documents are not proof of implementation; inspect the code for what is implemented.
+## Decision authority
 
-### Visual lock status
+The authority hierarchy is:
 
-The Owner mobile settings shell is not yet visually locked. Decision 44 requires a native-feeling responsive PWA and Decision 46 requires staff desktop sidebar plus mobile bottom navigation, but no approved Owner-mobile reference resolves the Owner composition. See `docs/reference-ui/README.md`.
+`Locked Decisions → Approved Reference UI → Design System → Reusable Components → Page Implementation → Tests`
 
-## Additional approved decisions
+The repository remains the source of truth for what is currently implemented.
 
-### Decision 201. Staff authorization boundary
-Staff is operational-only. Staff may manage bookings, walk-ins, queue, check-in, service lifecycle, cancellations, conflicts, and operational failures. Owner retains configuration, pricing, resources, profile, staff, billing, and audit responsibilities.
+`docs/decision.md` remains the source of truth for what has been approved.
 
-### Decision 202. Identity for staff-created bookings and walk-ins
-Walk-ins may use name only, with email optional. Staff-created future appointments require a contact email. A booking is not attached to a platform customer account until that email is customer-verified.
+A difference between approved behavior and current implementation is an implementation gap, not permission to rewrite the approved decision.
 
-### Decision 203. Platform customer app vs tenant branding
-Use a neutral platform shell for directory, cross-shop bookings, vehicles, and profile. Use tenant branding on shop pages and tenant-specific booking flows.
+## Reference UI
 
-### Decision 204. Subscription period anchoring
-Early renewal extends from the existing `paid_until`. If expired, the paid period starts from confirmed payment. Payment during a trial starts the paid month when the trial ends.
+Reference UI approval and locking follows Decision 212.
 
-### Decision 205. Cancellation vs non-renewal
-Non-renewal follows expiry → grace → restricted state and does not automatically start deletion. The 90-day recovery/deletion timer starts only when the Owner explicitly requests organization closure.
+A design artifact becomes authoritative only when it is explicitly registered as `Approved` in:
 
-## Decision discovery status
+`docs/reference-ui/README.md`
 
-Complete. No material unresolved decision remains that is expected to change MVP scope, UX, architecture, security, cost, data integrity, or implementation.
+File presence alone does not constitute approval.
+
+Desktop and mobile references are separate visual contracts where responsive composition materially differs.
+
+## Architecture decisions
+
+Accepted ADRs remain authoritative for the architectural decisions they explicitly record, provided they do not conflict with a later Locked Decision.
+
+Architecture changes that materially alter an approved boundary require either:
+
+- A new Locked Decision
+- A new or superseding ADR
+- Both when the change affects product and architecture boundaries
+
+## Planning boundary
+
+Decision discovery for the current MVP scope is complete through Decision 212.
+
+Decisions 206–210 clarify the tenant navigation and Owner application structure.
+
+Decision 211 defines authority precedence.
+
+Decision 212 defines Reference UI approval and locking.
+
+Future implementation work must not introduce material product, navigation, architecture, or canonical design changes without first resolving them through the applicable authority layer.
+
+## Change rule
+
+Do not modify Locked Decisions solely to match existing implementation.
+
+When an approved decision intentionally changes:
+
+1. Update `docs/decision.md`.
+2. Update affected Reference UI when applicable.
+3. Update affected design-system documentation and registry entries.
+4. Update implementation.
+5. Update tests.
+
+Documentation and implementation must flow from the approved contract, not the reverse.

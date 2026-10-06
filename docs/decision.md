@@ -1259,7 +1259,735 @@ Payment during a trial starts the paid month when the trial ends.
 
 Non-renewal does not automatically start deletion.
 
-## The 90-day recovery/deletion timer starts only when the Owner explicitly requests organization closure.
+#### The 90-day recovery/deletion timer starts only when the Owner explicitly requests organization closure.
+
+### Decision 206 — Owner and Staff navigation model
+
+**Decision:** Use one shared tenant application shell with role-aware navigation.
+
+#### Desktop
+
+Owner and Staff use the same dark sidebar navigation pattern.
+
+Navigation items are shown according to the authenticated user's authorization.
+
+Staff sees only operational destinations they are permitted to access.
+
+Owner may access operational destinations plus Owner-only areas such as Settings.
+
+#### Mobile
+
+Use native-style bottom navigation as the primary tenant application navigation.
+
+Staff retains the previously approved mobile navigation:
+
+- Dashboard
+- Queue
+- Bookings
+- Walk-in
+- More
+
+Owner uses the same primary mobile navigation model rather than introducing a separate hamburger-based application shell.
+
+Owner-only destinations, including **Settings**, are accessed through **More**.
+
+Additional secondary destinations such as conflicts, booking requests, account actions, and future Owner-only areas may also be exposed through More when appropriate.
+
+#### Settings navigation
+
+Settings uses secondary navigation inside the Settings area.
+
+Current Settings destinations are:
+
+- Profile
+- Hours
+- Services
+- Resources
+- Booking Policy
+- Readiness
+- Directory
+
+On desktop, Settings navigation is presented horizontally according to the approved Owner configuration design.
+
+On mobile, Settings navigation must remain compact, touch-friendly, horizontally scrollable or otherwise appropriately composed without replacing the application-level bottom navigation.
+
+#### Navigation hierarchy
+
+The hierarchy is:
+
+`Tenant application navigation → Settings → Settings section navigation`
+
+Application-level navigation and Settings section navigation are separate concerns.
+
+#### Constraints
+
+- Do not use a hamburger or collapsible sidebar as the primary tenant mobile navigation.
+- Do not create a separate Owner-only mobile navigation paradigm.
+- Do not replace the mobile bottom navigation when entering Settings.
+- Navigation must remain responsive, accessible, keyboard-operable where applicable, and suitable for an installable PWA.
+- Authorization remains server-controlled. Hiding a navigation item is not an authorization mechanism.
+
+### Decision 207 — Owner Settings section navigation
+
+**Decision:** Use horizontal text navigation with a primary-colored active underline for Owner Settings sections.
+
+Current Settings destinations are:
+
+- Profile
+- Hours
+- Services
+- Resources
+- Booking Policy
+- Readiness
+- Directory
+
+#### Desktop
+
+Settings navigation is displayed horizontally near the top of the Settings content area.
+
+The active section uses:
+
+- Primary-colored text
+- A visible primary-colored underline
+
+Inactive sections use neutral text.
+
+Do not render every Settings destination as a bordered pill or filled button.
+
+The `OWNER ONLY` indicator, publication state, readiness indicators, and other contextual status must remain visually separate from the navigation itself.
+
+A Settings item that needs attention may show a warning icon or badge in addition to its label.
+
+#### Mobile
+
+Settings navigation remains secondary navigation inside the Settings area.
+
+It must:
+
+- Stay horizontally oriented where practical
+- Be horizontally scrollable when all items do not fit
+- Preserve a clear active underline
+- Use touch-friendly targets
+- Avoid wrapping into an uncontrolled multi-row tab layout
+- Remain visually subordinate to the application-level bottom navigation
+
+Entering Settings must not replace or remove the tenant application bottom navigation defined in Decision 206.
+
+#### Accessibility
+
+Each Settings destination is a normal navigation link because each section is a separate page.
+
+Requirements:
+
+- Use a navigation landmark with an accessible label such as `Settings`
+- Use `aria-current="page"` on the active destination
+- Preserve visible keyboard focus
+- Do not rely on color alone for readiness or warning states
+
+#### Constraints
+
+- Do not use solid-filled active pills as the canonical Settings navigation.
+- Do not introduce a secondary Settings sidebar for MVP.
+- Do not allow implementation code to redefine this navigation pattern without an approved decision and corresponding reference UI update.
+
+### Decision 208 — Desktop tenant navigation structure
+
+**Decision:** Keep one consolidated operational workspace instead of splitting day-to-day operations into multiple desktop pages.
+
+#### Desktop navigation
+
+The primary tenant desktop sidebar uses these destinations:
+
+- Operations
+- Booking Requests
+- Conflicts
+- Settings
+
+`Operations` is the primary day-to-day workspace.
+
+It contains or provides access to:
+
+- Today / operational summary
+- Queue
+- Scheduled bookings
+- Walk-ins
+- Check-in
+- Service lifecycle actions
+- Physical resource assignment
+- Resource blocks
+- Operational failures
+- Retry or recovery actions related to operations
+
+These capabilities do not require separate desktop routes solely to reproduce an earlier reference UI navigation structure.
+
+#### Mobile navigation
+
+Mobile navigation continues to follow Decisions 46, 47, and 206.
+
+Primary Staff mobile destinations remain:
+
+- Dashboard
+- Queue
+- Bookings
+- Walk-in
+- More
+
+These mobile destinations may represent focused views, filters, or entry points into the consolidated operational domain.
+
+They do not require the desktop application to expose an identical one-route-per-tab navigation structure.
+
+Owner uses the same tenant mobile navigation model with role-aware access as defined in Decision 206.
+
+#### Booking Requests
+
+Booking Requests remains a separate destination because pending approval requests require a distinct decision workflow.
+
+It may be available to Owner and Staff according to authorization policy.
+
+#### Conflicts
+
+Scheduling Conflicts remains a separate destination because unresolved scheduling conflicts require a dedicated resolution workflow.
+
+#### Settings
+
+Settings remains an Owner-only primary destination and contains the secondary Settings navigation defined in Decision 207.
+
+#### Reference UI interpretation
+
+Approved reference UI remains authoritative for:
+
+- Visual hierarchy
+- Navigation styling
+- Spacing
+- Status communication
+- Interaction patterns
+- Responsive quality
+
+The exact route or page boundaries shown in an older reference UI are not authoritative when a later locked decision explicitly defines a different information architecture.
+
+Decision 208 supersedes the earlier reference UI only for the exact desktop sidebar destination structure.
+
+#### Constraints
+
+- Do not create separate desktop Dashboard, Queue, Bookings, Walk-in, or Operational Failures pages only to match an older mockup.
+- Do not duplicate the same operational workflow across multiple desktop navigation destinations without a clear product reason.
+- Do not remove Booking Requests, Conflicts, or Settings from the primary desktop navigation.
+- Navigation visibility must remain role-aware.
+- Server-side authorization remains authoritative regardless of navigation visibility.
+
+### Decision 209 — Owner Settings page heading model
+
+**Decision:** Each Owner Settings section owns its own visible page heading and supporting description.
+
+The shared Owner shell must not use one generic Settings heading such as `Scheduling configuration` for every Settings page.
+
+#### Settings page titles
+
+Use section-specific page titles:
+
+- `Settings · Profile`
+- `Settings · Hours`
+- `Settings · Services`
+- `Settings · Resources`
+- `Settings · Booking Policy`
+- `Settings · Readiness`
+- `Settings · Directory`
+
+Each Settings page may include one concise supporting description explaining the purpose of that section.
+
+#### Shared shell responsibilities
+
+The shared Owner shell owns:
+
+- Application-level navigation
+- Organization identity
+- Branch context
+- Publication or readiness status
+- Settings secondary navigation
+- Shared status, entitlement, or access messaging
+
+The shared shell does not own the page-specific `h1`.
+
+#### Page responsibilities
+
+Each Settings page owns:
+
+- Its `h1`
+- Supporting description
+- Page-specific actions
+- Page-specific status or summary information
+- Domain content and forms
+
+The page heading should appear before the primary page content and establish the current editing context clearly.
+
+#### Desktop
+
+Desktop pages should provide a clear hierarchy:
+
+`Application shell → Settings navigation → Page heading → Page content`
+
+The page heading may share its row with page-specific actions when appropriate.
+
+#### Mobile
+
+The section-specific page heading must remain visible and concise on mobile.
+
+Avoid duplicating generic headings that consume vertical space without adding context.
+
+The mobile hierarchy remains:
+
+`Application navigation → Settings navigation → Current Settings page → Content`
+
+#### Accessibility
+
+- Each Settings page must expose one meaningful primary `h1`.
+- The `h1` must identify the current Settings section.
+- Do not rely only on the active Settings navigation state to communicate the current page.
+- Heading levels below the page title must follow a logical hierarchy.
+
+#### Constraints
+
+- Do not hardcode `Scheduling configuration` as the `h1` for every Settings page.
+- Do not render both a generic `Settings` `h1` and a second section-level heading solely for visual hierarchy.
+- Do not move page-specific titles into the shared shell unless a future approved decision explicitly changes the ownership model.
+- Changes to the shared Owner shell must not override page-specific heading semantics.
+
+### Decision 210 — Owner Billing navigation and lifecycle placement
+
+**Decision:** Billing is an Owner-only primary application destination, separate from the Owner Settings section navigation.
+
+#### Desktop navigation
+
+The Owner desktop primary navigation includes:
+
+- Operations
+- Booking Requests
+- Conflicts
+- Billing
+- Settings
+
+Billing is treated as a primary Owner destination because it governs subscription entitlement, renewal, recovery, and organization lifecycle actions.
+
+Decision 210 amends Decision 208 only by adding `Billing` to the Owner desktop primary navigation.
+
+#### Staff navigation
+
+Staff does not have access to Billing.
+
+Billing visibility is Owner-only and must follow server-side authorization.
+
+#### Mobile navigation
+
+Billing does not receive its own permanent bottom-navigation item.
+
+Owner accesses Billing through:
+
+`More → Billing`
+
+The primary mobile bottom navigation continues to follow Decisions 46, 47, and 206.
+
+#### Relationship to Settings
+
+Billing is not part of the Settings secondary navigation.
+
+The Settings secondary navigation remains:
+
+- Profile
+- Hours
+- Services
+- Resources
+- Booking Policy
+- Readiness
+- Directory
+
+Billing must not be added as an eighth Settings tab.
+
+#### Billing responsibilities
+
+Billing may contain:
+
+- Current subscription or trial status
+- Paid-through or entitlement information
+- Renewal actions
+- Payment request status
+- Grace or restricted-state information
+- Subscription recovery actions
+- Organization closure
+- Organization recovery during the allowed recovery period
+
+Organization closure must remain clearly separated from ordinary renewal actions because closure starts the independent organization recovery and deletion lifecycle.
+
+#### Restricted and closed states
+
+Billing must remain accessible to an authorized Owner when the organization is:
+
+- In grace
+- Restricted
+- Pending recovery after explicit closure
+
+This access is required so the Owner can renew, recover, or manage the organization lifecycle.
+
+Normal configuration restrictions must not accidentally block Billing recovery workflows.
+
+#### Routing and implementation
+
+Billing is conceptually an application-level Owner destination even if an existing route or frontend file currently lives under a `settings` namespace.
+
+Route paths and source-code folder structure do not determine the product navigation hierarchy.
+
+A future refactor may move Billing to a clearer application-level route or page location without changing the behavior defined by this decision.
+
+#### Accessibility and security
+
+- Billing navigation must expose a clear accessible label.
+- The active Billing destination must use `aria-current="page"`.
+- Hiding Billing from Staff navigation is not an authorization mechanism.
+- Server-side authorization remains authoritative.
+- Subscription and organization lifecycle mutations must continue to enforce authorization and existing billing invariants.
+
+#### Constraints
+
+- Do not add Billing to the Settings tab navigation.
+- Do not expose Billing to Staff.
+- Do not hide Billing behind Settings on desktop.
+- Do not assign Billing a permanent mobile bottom-navigation slot for MVP.
+- Do not make Billing unreachable because the organization is restricted or explicitly closed.
+- Do not combine subscription non-renewal with organization closure or deletion.
+
+### Decision 211 — Authority precedence for product, UI, and implementation
+
+**Decision:** Rinquo uses an explicit authority hierarchy so implementation cannot redefine approved product or design decisions.
+
+#### Authority order
+
+When two sources disagree, use the following precedence:
+
+1. Locked Decisions
+2. Approved Reference UI
+3. Design System
+    - Design tokens
+    - UI registry
+    - Documented reusable patterns
+4. Reusable UI and domain components
+5. Page implementation
+6. Tests
+
+Higher-authority sources override lower-authority sources.
+
+#### Locked Decisions
+
+Locked Decisions are the highest product and design authority.
+
+They define approved behavior, scope, navigation, architecture boundaries, product rules, and explicitly locked UI decisions.
+
+A later locked decision may explicitly supersede:
+
+- An earlier locked decision
+- An older reference UI
+- A design-system pattern
+- Existing implementation behavior
+
+When a decision supersedes an older source, the affected documentation and implementation must be updated to reflect the newer decision.
+
+#### Approved Reference UI
+
+Approved Reference UI is the visual implementation baseline when no higher locked decision explicitly says otherwise.
+
+Reference UI may define:
+
+- Visual hierarchy
+- Layout composition
+- Navigation presentation
+- Spacing
+- Responsive composition
+- Interaction patterns
+- Status presentation
+- Component relationships
+
+Existing implementation must not override an approved reference simply because the implementation already differs from it.
+
+A reference design is authoritative only for the patterns, states, pages, and viewports it actually represents.
+
+Do not infer unsupported behavior from a reference image when the design does not show that behavior.
+
+#### Design System
+
+The design system must conform to:
+
+1. Locked Decisions
+2. Approved Reference UI
+
+The design system includes:
+
+- `resources/css/app.css`
+- `resources/js/components/ui/`
+- `docs/design-system/ui-registry.yaml`
+- Documented reusable UI patterns
+
+The design system standardizes approved patterns. It does not have authority to silently change an approved product or visual decision.
+
+Do not update the UI registry merely to describe implementation drift.
+
+When implementation conflicts with an approved decision or reference, fix the implementation or explicitly resolve the conflict before updating the registry.
+
+#### Reusable components
+
+Reusable components implement the design system.
+
+Existing reusable components are not product authority.
+
+If a component conflicts with a higher-authority source, the component must be corrected, replaced, or intentionally deprecated.
+
+Do not preserve an incorrect component solely because multiple pages already depend on it.
+
+#### Page implementation
+
+Page implementation must follow all applicable higher-authority sources.
+
+Existing page code represents current implemented behavior, not approval of that behavior.
+
+Implementation must not become canonical solely because it was shipped first.
+
+#### Tests
+
+Tests verify the approved contract.
+
+Tests do not define product or design authority.
+
+A passing test does not legitimize behavior that conflicts with a higher-authority source.
+
+When an approved contract changes:
+
+1. Update the authoritative documentation first.
+2. Update the design system when affected.
+3. Update implementation.
+4. Update tests to verify the approved result.
+
+Do not change authoritative documentation solely to make an existing test pass.
+
+#### Unspecified UI behavior
+
+If a page, viewport, state, or interaction is not covered by a Locked Decision or approved Reference UI:
+
+1. Reuse an existing approved design-system pattern when one clearly applies.
+2. Preserve established accessibility and responsive requirements.
+3. Do not contradict an existing Locked Decision.
+4. Treat the resulting implementation as an implementation choice, not automatically as a new locked design decision.
+
+A material new pattern that is expected to become canonical must be reviewed and approved before being promoted into the design system.
+
+#### Same-level conflicts
+
+If two sources at the same authority level materially conflict:
+
+- Do not choose the version that happens to match current code.
+- Do not silently merge incompatible interpretations.
+- Stop and resolve the conflict explicitly.
+- Record the resulting decision when it affects product behavior, architecture, navigation, or a canonical UI pattern.
+
+#### Repository source-of-truth distinction
+
+The repository remains the source of truth for what is currently implemented.
+
+The repository's implementation is not automatically the source of truth for what is approved.
+
+These are separate questions:
+
+- **What should Rinquo do?** Follow the authority hierarchy defined by this decision.
+- **What does Rinquo currently do?** Inspect the current repository implementation.
+
+Differences between the two are implementation gaps and must be treated as such.
+
+#### Constraints
+
+- Do not modify Locked Decisions to legitimize implementation drift.
+- Do not modify approved Reference UI solely to match existing code.
+- Do not update the design-system registry solely to describe an unapproved implementation.
+- Do not treat component reuse as evidence that a pattern is approved.
+- Do not treat passing tests as evidence that a conflicting implementation is correct.
+- Do not promote an inferred or page-local pattern into the canonical design system without approval.
+
+### Decision 212 — Reference UI approval and locking
+**Decision:** Canonical Reference UI must use an explicit approval manifest. A design file is not authoritative merely because it exists under `docs/reference-ui/`.
+
+#### Reference UI states
+
+Every Reference UI entry must have one of these statuses:
+
+- `Draft`
+- `Approved`
+- `Superseded`
+
+Only `Approved` references participate in the authority hierarchy defined by Decision 211.
+
+A `Draft` reference may be used for review and iteration but must not be treated as an implementation contract.
+
+A `Superseded` reference remains available for historical context but must not be used as the current implementation baseline.
+
+#### Reference manifest
+
+`docs/reference-ui/README.md` acts as the Reference UI manifest.
+
+Every canonical reference must record:
+
+- Reference file
+- Product surface or route
+- Viewport or responsive target
+- Approval status
+- Applicable Locked Decisions
+- What the reference locks
+- Approval date
+- Supersedes, when applicable
+- Superseded by, when applicable
+- Relevant implementation or design-system notes when necessary
+
+Example:
+
+```text
+Reference: 06-owner-settings-profile-desktop.png
+Surface: Owner Settings / Profile
+Route: /settings/profile
+Viewport: Desktop
+Status: Approved
+Decisions: 206, 207, 209, 211, 212
+Locks: page hierarchy, application shell, settings navigation,
+       content composition, spacing, action placement
+Approved: 2026-10-06
+Supersedes: none
+Superseded by: none
+```
+
+#### File presence does not equal approval
+
+A PNG, image, prototype, mockup, screenshot, or other design artifact committed under `docs/reference-ui/` is not automatically authoritative.
+
+The artifact becomes authoritative only when its manifest entry is explicitly marked:
+
+`Status: Approved`
+
+This prevents:
+
+- Experimental designs from becoming canonical
+- Implementation screenshots from becoming design authority
+- Unreviewed AI-generated designs from becoming locked references
+- Old designs from remaining active after replacement
+
+#### Approval scope
+
+A Reference UI is authoritative only for what it visibly and explicitly represents.
+
+A reference may lock areas such as:
+
+- Page hierarchy
+- Navigation placement
+- Layout composition
+- Component relationships
+- Visual hierarchy
+- Spacing
+- Status presentation
+- Action placement
+- Responsive composition
+- Empty, loading, error, disabled, or other represented states
+
+Do not infer behavior that is not represented by the reference or defined by a Locked Decision.
+
+#### Responsive approval
+
+Desktop and mobile are separate visual contracts.
+
+When a product surface materially changes between desktop and mobile, both variants must be approved before the responsive pattern is considered fully locked.
+
+For significant Owner, Staff, Customer, and booking surfaces, the expected reference pair is:
+
+```text
+<reference-name>-desktop.png
+<reference-name>-mobile.png
+```
+
+An approved desktop reference does not automatically define the mobile composition.
+
+An approved mobile reference does not automatically define the desktop composition.
+
+When only one viewport is approved, uncovered viewports must follow existing Locked Decisions and approved design-system patterns without claiming that the inferred composition is itself locked.
+
+#### Material responsive surfaces
+
+For material application surfaces, approval should normally cover at least:
+
+- Desktop
+- Mobile
+
+Tablet behavior may be derived responsively from the approved desktop and mobile contracts unless a materially different tablet composition requires its own reference.
+
+#### Superseding a reference
+
+When an approved design is intentionally replaced:
+
+1. Create the replacement reference.
+2. Review it against applicable Locked Decisions.
+3. Mark the replacement `Approved`.
+4. Mark the old reference `Superseded`.
+5. Record the relationship in both manifest entries.
+6. Update affected design-system documentation.
+7. Update implementation.
+8. Update applicable tests.
+
+Do not delete the old reference merely to hide historical divergence.
+
+#### Relationship to Locked Decisions
+
+Reference UI must conform to Locked Decisions.
+
+When a later Locked Decision intentionally changes something represented in an approved reference:
+
+- The Locked Decision takes precedence.
+- The affected reference must be considered partially stale until replaced or updated.
+- The manifest must record the conflict or supersession.
+- Implementation must follow the newer Locked Decision.
+
+Do not continue treating a visibly conflicting reference as fully current.
+
+#### Relationship to the Design System
+
+An approved Reference UI may introduce or demonstrate a reusable pattern.
+
+That pattern becomes canonical across the product only after the affected design-system documentation or registry is updated.
+
+The workflow is:
+
+`Locked Decision → Approved Reference UI → Design System → Implementation → Tests`
+
+Do not reverse this workflow by implementing a pattern first and then changing the reference or registry solely to match the implementation.
+
+#### Review requirements
+
+Before marking a Reference UI `Approved`, verify:
+
+- It does not conflict with applicable Locked Decisions.
+- Desktop and mobile behavior are accounted for where required.
+- Navigation follows the approved information architecture.
+- Accessibility requirements are representable by the proposed design.
+- Existing design tokens and canonical components are reused where appropriate.
+- New reusable patterns are clearly identified.
+- Critical loading, empty, error, disabled, restricted, destructive, or recovery states are considered when relevant.
+
+#### Generated designs
+
+AI-generated or automatically produced design references are considered `Draft` by default.
+
+Generation alone does not constitute approval.
+
+They must go through the same review and manifest approval process as manually created designs.
+
+#### Constraints
+
+- Do not treat file presence as approval.
+- Do not treat an implementation screenshot as an approved design without explicit review.
+- Do not mark a design `Approved` solely because implementation already matches it.
+- Do not infer mobile layout from desktop and call it locked.
+- Do not silently overwrite or replace an approved reference.
+- Do not leave superseded references marked `Approved`.
+- Do not promote a new reusable visual pattern into the design system before its authoritative basis is established.
 
 # Current Core Architecture Summary
 

@@ -13,13 +13,103 @@ Rinquo is a Philippines-focused, multi-tenant booking platform implemented as on
 
 ## Sources of truth
 
-- Read `README.md` for supported local setup and the command overview.
-- Read `docs/adr/` and `docs/planning-decisions.md` before changing architecture or domain boundaries. Accepted ADRs require a Laravel modular monolith, shared-schema tenant data, physical-resource feasibility, platform-wide customer identity, and a subscription lifecycle separate from organization closure.
-- Treat `docs/roadmaps/mvp/specs/` as scoped acceptance criteria, not proof that a feature is implemented. Inspect the code and migrations.
-- For deployment, environment, migration, and recovery behavior, use `docs/operations/environments.md` and `docs/operations/deployment.md`.
-- For UI work, use `resources/css/app.css`, `resources/js/components/ui/`, `docs/design-system/ui-registry.yaml`, and `docs/reference-ui/` as the canonical design sources.
-- Design authority is ordered: **locked decisions → approved reference UI → design system/tokens/registry → reusable components → page implementation/tests**. The locked decisions are Decisions 1–200 in `docs/decision.md` (plus the additions in `docs/planning-decisions.md`). A conflict is resolved by changing the lower level to comply with the higher one. Existing code, a test assertion, convenience, or an implementation limitation never justifies rewriting a locked decision, approved reference, token/registry rule, or reusable pattern; obtain and record explicit approval at the higher level first, then propagate it downward. See `docs/planning-decisions.md` → Authority order.
-- The Owner mobile settings shell is not yet visually locked (Decisions 44 and 46; no approved Owner-mobile reference). Do not treat `owner-shell.tsx` or reference 05 as approval of it; see `docs/reference-ui/README.md`.
+Rinquo separates approved behavior from currently implemented behavior.
+
+### Approved behavior
+
+`docs/decision.md` is the highest authority for approved product, UX, navigation, lifecycle, and governance decisions.
+
+Before making a material product, architecture, navigation, or UI change:
+
+1. Read `docs/decision.md`.
+2. Read `docs/planning-decisions.md`.
+3. Read applicable ADRs under `docs/adr/`.
+4. Read applicable approved Reference UI under `docs/reference-ui/`.
+5. Read applicable design-system documentation and registry entries.
+6. Inspect the current implementation.
+
+Authority precedence follows Decision 211:
+
+`Locked Decisions → Approved Reference UI → Design System → Reusable Components → Page Implementation → Tests`
+
+A lower-authority source must not silently override a higher-authority source.
+
+If two sources at the same authority level materially conflict, stop and resolve the conflict explicitly instead of choosing whichever version matches current code.
+
+### Current implementation
+
+The current repository is the source of truth for what Rinquo currently implements.
+
+Current implementation is not automatically evidence of what has been approved.
+
+When repository behavior conflicts with a higher-authority approved source, treat the difference as an implementation gap.
+
+Do not rewrite authoritative documentation solely to legitimize implementation drift.
+
+### Reference UI
+
+Reference UI approval follows Decision 212.
+
+Only design artifacts explicitly marked `Approved` in:
+
+`docs/reference-ui/README.md`
+
+are authoritative Reference UI.
+
+File presence alone does not constitute approval.
+
+An approved reference is authoritative only for the pages, patterns, states, and viewports it actually represents.
+
+Do not infer unsupported mobile, desktop, responsive, or interaction behavior and describe it as locked.
+
+### Design system
+
+For UI implementation, use:
+
+- `resources/css/app.css`
+- `resources/js/components/ui/`
+- `docs/design-system/README.md`
+- `docs/design-system/tokens.md`
+- `docs/design-system/ui-registry.yaml`
+
+The design system must conform to Locked Decisions and Approved Reference UI.
+
+Do not update the design system or UI registry merely to describe existing implementation when that implementation conflicts with a higher-authority source.
+
+### Architecture and domain boundaries
+
+Read applicable ADRs under `docs/adr/` before changing architecture or domain boundaries.
+
+Accepted ADRs currently establish:
+
+- Laravel modular monolith
+- Shared-schema tenant data
+- Physical-resource scheduling feasibility
+- Platform-wide customer identity
+- Subscription lifecycle separate from organization closure
+
+A later Locked Decision takes precedence when it explicitly changes an earlier ADR boundary.
+
+### Roadmaps and specifications
+
+Treat `docs/roadmaps/mvp/specs/` as scoped acceptance criteria and implementation guidance.
+
+They are not proof that a feature is implemented.
+
+Inspect current routes, migrations, backend modules, frontend pages, and tests before describing implementation state.
+
+### Operations
+
+For deployment, environment, migration, rollback, and recovery behavior, use:
+
+- `docs/operations/environments.md`
+- `docs/operations/deployment.md`
+
+### Local setup and commands
+
+Read `README.md` for supported local setup and the command overview.
+
+`make help` remains the authoritative command list.
 
 ## Layout
 
@@ -83,4 +173,10 @@ Docker Compose is the supported development environment; do not assume host PHP 
 - Do not expose Horizon outside local development until repository authorization explicitly supports it.
 - Do not mix unrelated refactors with a scoped change. Preserve uncommitted user work and inspect the working tree before editing.
 - Do not commit or push unless the user explicitly authorizes it.
-
+- Read `docs/decision.md` before making material product, navigation, UX, or architecture changes.
+- Follow the authority precedence defined by Decision 211.
+- Do not change Locked Decisions, Approved Reference UI, or design-system contracts solely to match existing implementation.
+- Do not promote implementation-specific UI into the canonical design system without an approved authoritative basis.
+- Only Reference UI marked `Approved` in `docs/reference-ui/README.md` is authoritative.
+- Treat implementation that conflicts with a higher-authority source as an implementation gap.
+- When a requested change conflicts with a Locked Decision, identify the conflict before implementing it.
