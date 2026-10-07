@@ -48,6 +48,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Require the source-map upload token
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: '[[ -n "$SENTRY_AUTH_TOKEN" ]] || { echo "SENTRY_AUTH_TOKEN is not configured for the staging environment; a release without source maps is refused."; exit 1; }'
+
       - name: Build and push the production image
         id: build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
@@ -56,6 +61,14 @@ jobs:
           target: production
           push: true
           tags: ${{ env.IMAGE }}:${{ env.SHA }}
+          # One immutable release id (the commit SHA) for backend reports, browser reports and the
+          # uploaded source maps. The token is a BuildKit secret: never an ARG, ENV or image layer.
+          build-args: |
+            SENTRY_RELEASE=${{ env.SHA }}
+            SENTRY_ORG=${{ vars.SENTRY_ORG }}
+            SENTRY_BROWSER_PROJECT=${{ vars.SENTRY_BROWSER_PROJECT }}
+          secrets: |
+            sentry_auth_token=${{ secrets.SENTRY_AUTH_TOKEN }}
           labels: |
             org.opencontainers.image.revision=${{ env.SHA }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
@@ -68,6 +81,14 @@ jobs:
         run: |
           [[ "$DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "unexpected digest: $DIGEST"; exit 1; }
           echo "IMAGE_REF=${IMAGE}@${DIGEST}" >> "$GITHUB_ENV"
+
+      - name: Verify no source maps ship in the image
+        run: |
+          docker pull --quiet "$IMAGE_REF" > /dev/null
+          maps="$(docker run --rm --entrypoint sh "$IMAGE_REF" -c "find /app/public/build -name '*.map' | wc -l")"
+          [[ "$maps" == "0" ]] || { echo "the image contains ${maps} source map file(s)"; exit 1; }
+          release="$(docker run --rm --entrypoint sh "$IMAGE_REF" -c 'printf %s "$SENTRY_RELEASE"')"
+          [[ "$release" == "$SHA" ]] || { echo "the image release id does not match the commit"; exit 1; }
 
       - name: Deploy to staging
         uses: ./.github/actions/deploy-over-ssh

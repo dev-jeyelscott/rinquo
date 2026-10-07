@@ -64,8 +64,19 @@ RUN composer install --no-dev --no-interaction --no-progress --prefer-dist --no-
 # ---------------------------------------------------------------------------
 # assets: Vite production build (no build-time environment values are baked
 # in; realtime settings are shared at runtime)
+#
+# Release builds (SENTRY_RELEASE set and a sentry_auth_token BuildKit secret
+# present) build hidden source maps, inject debug ids, upload the maps to the
+# browser Sentry project for this release, and delete every .map file before
+# the stage ends. The token exists only in the RUN's secret mount: it is never
+# an ARG, ENV or layer, and the public bundle and the final image contain no maps.
 # ---------------------------------------------------------------------------
 FROM ${NODE_IMAGE} AS assets
+
+ARG SENTRY_CLI_VERSION=3.8.0
+ARG SENTRY_RELEASE=""
+ARG SENTRY_ORG=""
+ARG SENTRY_BROWSER_PROJECT=""
 
 WORKDIR /app
 COPY package.json package-lock.json .npmrc ./
@@ -73,7 +84,20 @@ RUN npm ci --no-audit --no-fund
 COPY vite.config.ts tsconfig.json ./
 COPY resources ./resources
 COPY public ./public
-RUN npm run build
+RUN --mount=type=secret,id=sentry_auth_token,required=false \
+    set -eu; \
+    if [ -n "${SENTRY_RELEASE}" ] && [ -s /run/secrets/sentry_auth_token ]; then \
+        SOURCEMAP=hidden npm run build; \
+        export SENTRY_AUTH_TOKEN="$(cat /run/secrets/sentry_auth_token)"; \
+        npx --yes "@sentry/cli@${SENTRY_CLI_VERSION}" sourcemaps inject public/build; \
+        npx --yes "@sentry/cli@${SENTRY_CLI_VERSION}" sourcemaps upload \
+            --org "${SENTRY_ORG}" --project "${SENTRY_BROWSER_PROJECT}" --release "${SENTRY_RELEASE}" public/build; \
+        find public/build -name '*.map' -delete; \
+        unset SENTRY_AUTH_TOKEN; \
+    else \
+        npm run build; \
+    fi; \
+    ! find public/build -name '*.map' | grep -q .
 
 # ---------------------------------------------------------------------------
 # production: immutable, non-root release image
@@ -94,6 +118,11 @@ RUN composer dump-autoload --no-dev --optimize --classmap-authoritative --no-scr
     && mkdir -p storage/app/private storage/framework/cache/data storage/framework/sessions \
         storage/framework/views storage/logs bootstrap/cache \
     && chown -R app:app storage bootstrap/cache
+
+# The one immutable release id (the commit SHA) shared by backend reports, browser reports and
+# the uploaded source maps. Empty for local and pull-request builds.
+ARG SENTRY_RELEASE=""
+ENV SENTRY_RELEASE=${SENTRY_RELEASE}
 
 ENV APP_CACHE_ON_START=1
 

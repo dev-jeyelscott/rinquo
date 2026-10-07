@@ -30,6 +30,11 @@ export default defineConfig({
         }),
         tailwindcss(),
     ]),
+    build: {
+        // Hidden maps exist only during the release image build (see Dockerfile "assets"):
+        // they are uploaded to Sentry and deleted before the bundle ships. Default builds have none.
+        sourcemap: process.env.SOURCEMAP === 'hidden' ? 'hidden' : false,
+    },
     server: {
         host: '0.0.0.0',
         port: devServerPort,

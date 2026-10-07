@@ -4,6 +4,9 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="application-name" content="{{ config('app.name') }}">
+        @if (config('rinquo.telemetry.browser_dsn'))
+            <meta name="telemetry-config" content="{{ json_encode(['dsn' => config('rinquo.telemetry.browser_dsn'), 'environment' => config('sentry.environment'), 'release' => config('sentry.release')]) }}">
+        @endif
 
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
