@@ -2,7 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Modules\Platform\Models\PlatformAdmin;
+use App\Modules\Platform\Support\SupportContext;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -46,6 +49,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user() === null ? null : ['email' => $request->user()->email],
             ],
+            'platform' => fn () => $this->platform($request),
             'flash' => [
                 'status' => fn () => $request->session()->get('status'),
                 'schedulingImpact' => fn () => $request->session()->get('scheduling_impact'),
@@ -55,6 +59,35 @@ class HandleInertiaRequests extends Middleware
                 'host' => (string) config('broadcasting.connections.reverb.browser.host'),
                 'port' => (int) config('broadcasting.connections.reverb.browser.port'),
                 'scheme' => config('broadcasting.connections.reverb.browser.scheme') === 'http' ? 'http' : 'https',
+            ],
+        ];
+    }
+
+    /**
+     * Platform-only shared props: the signed-in administrator and, during a support view, the
+     * read-only context the banner must show. Null everywhere else.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function platform(Request $request): ?array
+    {
+        if (! $request->routeIs('platform.*')) {
+            return null;
+        }
+
+        $admin = Auth::guard('platform')->user();
+        $support = app()->bound(SupportContext::class) ? app(SupportContext::class) : null;
+
+        return [
+            'admin' => $admin instanceof PlatformAdmin ? ['name' => $admin->name, 'email' => $admin->email] : null,
+            'support' => $support === null ? null : [
+                'id' => $support->session->id,
+                'organizationName' => $support->organization->name,
+                'targetEmail' => $support->target->email,
+                'targetRole' => $support->role,
+                'reference' => $support->session->reference,
+                'expiresAt' => $support->session->expires_at->toIso8601String(),
+                'exitUrl' => route('platform.support.exit', $support->session->id, absolute: false),
             ],
         ];
     }

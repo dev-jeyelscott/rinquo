@@ -11,8 +11,10 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
      * Register the Horizon gate.
      *
      * Horizon itself allows the dashboard in the "local" environment. Everywhere
-     * else it is denied until platform administration (with 2FA) exists; use
-     * `php artisan horizon:status` and `php artisan queue:failed` meanwhile.
+     * else it is denied: its routes run in the tenant `web` group (a different session
+     * and guard from /platform) and its generic retry controls cannot enforce the
+     * platform allowlist, step-up and audit. Use `/platform/failed-jobs`,
+     * `php artisan horizon:status` and `php artisan queue:failed` instead.
      */
     protected function gate(): void
     {

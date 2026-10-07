@@ -1,5 +1,7 @@
 <?php
 
+use App\Modules\Subscription\Jobs\ProcessWebhookEvent;
+
 return [
 
     /*
@@ -44,16 +46,18 @@ return [
     | Subscription plan terms
     |--------------------------------------------------------------------------
     |
-    | One global plan, deployment-managed until the Platform Admin slice moves it
-    | behind a UI. Read only through Subscription\Support\PlanTerms, which
+    | One global plan. amount, trial and grace are the deployment defaults used until
+    | a Platform Admin publishes a plan_term_versions row; the latest effective
+    | version then wins. Read only through Subscription\Support\PlanTerms, which
     | validates them. Requests and payments snapshot the amount, so changing it
-    | never rewrites history or a current entitlement period.
+    | never rewrites history or a current entitlement period. Locked default grace
+    | is 3 days (Decision 105).
     */
     'subscription' => [
         'currency' => 'PHP',
         'amount_centavos' => (int) env('RINQUO_PLAN_AMOUNT_CENTAVOS', 99900),
         'trial_days' => (int) env('RINQUO_TRIAL_DAYS', 14),
-        'grace_days' => (int) env('RINQUO_GRACE_DAYS', 7),
+        'grace_days' => (int) env('RINQUO_GRACE_DAYS', 3),
         // A Rinquo renewal request stays payable this long.
         'request_lifetime_hours' => 24,
         // One provider QR lives at most this long (PayMongo allows 60 to 9000 seconds).
@@ -63,6 +67,42 @@ return [
         'signature_tolerance_seconds' => (int) env('RINQUO_WEBHOOK_TOLERANCE_SECONDS', 300),
         // Owner closure keeps the organization recoverable for this long.
         'closure_recovery_days' => 90,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Platform administration
+    |--------------------------------------------------------------------------
+    */
+    'platform' => [
+        // Absolute and inactivity limits for a platform session.
+        'session_absolute_minutes' => 720,
+        'session_idle_minutes' => 30,
+        // The password step of sign-in stays valid this long while the second factor is entered.
+        'pending_factor_minutes' => 10,
+        'invitation_hours' => 72,
+        'cookie' => 'rinquo-platform-session',
+        'recovery_code_count' => 10,
+        // A support session is read-only, one organization and at most 30 minutes (a database CHECK also enforces it).
+        'support_minutes' => 30,
+        // Failed jobs that are proven safe to run again. Everything else stays visible but cannot be retried.
+        'retryable_jobs' => [
+            ProcessWebhookEvent::class => 'Settles a stored webhook event; a settled event is a no-op.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Browser error tracking
+    |--------------------------------------------------------------------------
+    |
+    | The browser Sentry project's DSN (a public identifier, separate from the backend
+    | project). Read at runtime so the same image serves staging and production; absent
+    | everywhere else, which disables browser reporting. The release is the backend's
+    | SENTRY_RELEASE so server and browser reports share one build id.
+    */
+    'telemetry' => [
+        'browser_dsn' => env('SENTRY_BROWSER_DSN') ?: null,
     ],
 
     /*

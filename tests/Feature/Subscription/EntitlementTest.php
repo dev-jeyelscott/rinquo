@@ -16,13 +16,15 @@ function manila(string $local): CarbonImmutable
 }
 
 test('a new organization starts a trial snapshot with its first grace end', function () {
+    // The locked defaults (Decision 105): a 14-day trial and a 3-day grace, whatever a developer's .env sets.
+    config(['rinquo.subscription.trial_days' => 14, 'rinquo.subscription.grace_days' => 3]);
     $this->travelTo(manila('2026-10-05 08:00'));
     [, $organization] = Tenant::organization();
 
     $subscription = Subscription::query()->where('organization_id', $organization->id)->sole();
 
     expect($subscription->trial_ends_at->equalTo(manila('2026-10-19 08:00')))->toBeTrue()
-        ->and($subscription->grace_ends_at->equalTo(manila('2026-10-26 08:00')))->toBeTrue()
+        ->and($subscription->grace_ends_at->equalTo(manila('2026-10-22 08:00')))->toBeTrue()
         ->and($subscription->paid_until)->toBeNull();
 });
 

@@ -15,6 +15,8 @@ use Tests\Support\Billing;
 use Tests\Support\Tenant;
 
 beforeEach(function () {
+    // The locked default grace (Decision 105), whatever a developer's .env sets.
+    config(['rinquo.subscription.grace_days' => 3]);
     Mail::fake();
     $this->travelTo(CarbonImmutable::parse('2026-10-05 08:00', 'Asia/Manila'));
     $this->gateway = Billing::fake();
@@ -42,7 +44,7 @@ test('a valid signed paid event during the trial extends one month from trial en
 
     $subscription = subscription();
     expect($subscription->paid_until->equalTo($trialEnds->setTimezone('Asia/Manila')->addMonthNoOverflow()->utc()))->toBeTrue()
-        ->and($subscription->grace_ends_at->equalTo($subscription->paid_until->addDays(7)))->toBeTrue()
+        ->and($subscription->grace_ends_at->equalTo($subscription->paid_until->addDays(3)))->toBeTrue()
         ->and($this->request->fresh()->status)->toBe(PaymentRequest::PAID)
         ->and($this->request->fresh()->qr_image)->toBeNull()
         ->and(Payment::query()->count())->toBe(1)

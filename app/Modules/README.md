@@ -25,13 +25,14 @@ vertical slice that owns it begins. Do not add empty or speculative modules.
 
 ## Current modules
 
-| Module       | Owns                                                                                                                                                                                          |
-| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Identity`   | Verified email identities and Owner email-code sign-in (challenges, rate limits, the sign-in mail).                                                                                           |
-| `Tenancy`    | Organization, its one branch, memberships and the Owner policy, tenant media, audit events, publish/unpublish, storefront.                                                                    |
-| `Scheduling` | Booking-feasibility configuration: hours, catalog, resources, capacity consumption, the Owner booking policy and the shared readiness evaluator.                                              |
+| Module         | Owns                                                                                                                                                                                                                 |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Identity`     | Verified email identities and Owner email-code sign-in (challenges, rate limits, the sign-in mail).                                                                                                                  |
+| `Tenancy`      | Organization, its one branch, memberships and the Owner policy, tenant media, audit events, publish/unpublish, storefront.                                                                                           |
+| `Scheduling`   | Booking-feasibility configuration: hours, catalog, resources, capacity consumption, the Owner booking policy and the shared readiness evaluator.                                                                     |
 | `Subscription` | One subscription per organization (trial, paid-through and grace instants), PayMongo QR Ph payment requests, signed-webhook receipts, confirmed payments, reminder deliveries and the centralized access projection. |
-| `Booking`    | Availability search, temporary checkout holds, bookings and their immutable snapshots, the customer wizard, approval of pending requests, booking email and the expiry and reminder sweepers. |
+| `Booking`      | Availability search, temporary checkout holds, bookings and their immutable snapshots, the customer wizard, approval of pending requests, booking email and the expiry and reminder sweepers.                        |
+| `Platform`     | Platform administrators (a separate identity, guard and session), invitations, TOTP and recovery codes, the append-only platform audit, read-only support sessions, versioned plan terms and failed-job operations.  |
 
 Boundaries:
 
