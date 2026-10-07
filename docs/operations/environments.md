@@ -73,7 +73,8 @@ also returned in the `X-Request-Id` response header.
 | `DB_HOST`, `DB_PORT` | Server                                          | all (host) | `db.internal`, `5432` |
 | `DB_DATABASE`        | Database name                                   | all  | `rinquo` |
 | `DB_USERNAME`, `DB_PASSWORD` | Least-privilege application role (owns the schema; no superuser) | all | `rinquo_app`, `<secret>` |
-| `DB_SSLMODE`         | Use `require` (or stricter) for managed databases | -  | `require` |
+| `DB_SSLMODE`         | Production uses `verify-full` (provider CA and hostname); staging should match | production | `verify-full` |
+| `DB_SSLROOTCERT`     | Path inside the container to the provider CA file; mount it with `deploy/compose.db-ca.yaml` | production | `/etc/rinquo/db-ca.crt` |
 | `DB_CONNECT_TIMEOUT` | Connect timeout in seconds                      | -    | `2` |
 | `DB_URL`             | Optional DSN; if used, still set `DB_HOST`, `DB_DATABASE` and `DB_USERNAME` for the startup check | - | - |
 
@@ -148,7 +149,7 @@ production; test and live signatures are never interchangeable.
 | `PAYMONGO_BASE_URL`           | API base URL                                                            | -    | `https://api.paymongo.com/v1` |
 | `PAYMONGO_CONNECT_TIMEOUT`, `PAYMONGO_TIMEOUT` | Finite connect and request timeouts in seconds         | -    | `3`, `10` |
 | `RINQUO_PLAN_AMOUNT_CENTAVOS` | Global monthly plan price in centavos (snapshotted on every request)    | -    | `99900` |
-| `RINQUO_TRIAL_DAYS`, `RINQUO_GRACE_DAYS` | Trial length for new organizations and the grace term     | -    | `14`, `7` |
+| `RINQUO_TRIAL_DAYS`, `RINQUO_GRACE_DAYS` | Trial length for new organizations and the grace term     | -    | `14`, `3` |
 | `RINQUO_QR_LIFETIME_SECONDS`  | Lifetime of one provider QR, 60 to 9000                                 | -    | `1800` |
 | `RINQUO_WEBHOOK_TOLERANCE_SECONDS` | Largest accepted webhook timestamp skew                            | -    | `300` |
 
@@ -168,6 +169,40 @@ request. `subscriptions:send-reminders` and `organizations:mark-deletion-eligibl
 run hourly from the scheduler; both are idempotent. Deletion eligibility only
 marks an Owner-closed organization after its 90-day recovery window; no
 automatic deletion exists.
+
+### Error tracking (Sentry Cloud)
+
+Staging and production only. Absent variables disable the SDKs. Details, retention
+and verification are in [monitoring.md](monitoring.md).
+
+| Variable             | Purpose                                                          | Req. | Safe example |
+| -------------------- | ---------------------------------------------------------------- | ---- | ------------ |
+| `SENTRY_LARAVEL_DSN` | DSN of the **backend** Sentry project for this environment       | staging, production | `https://<key>@<org>.ingest.sentry.io/<id>` |
+| `SENTRY_BROWSER_DSN` | DSN of the **browser** Sentry project (a public identifier, shared with the browser) | staging, production | `https://<key>@<org>.ingest.sentry.io/<id>` |
+| `SENTRY_ENVIRONMENT` | Tag on every event (defaults to `APP_ENV`)                       | -    | `staging` |
+| `SENTRY_RELEASE`     | **Do not set.** Baked into the image at build time as the commit SHA | -  | - |
+
+The source-map upload token is **not** a runtime variable: it is the GitHub secret
+`SENTRY_AUTH_TOKEN` used only as a BuildKit secret (see GitHub configuration).
+
+### Platform administration
+
+No variables. The first administrator is created with `php artisan platform:bootstrap-admin`
+(see [platform-administration.md](platform-administration.md)). Plan terms published in
+`/platform/plan-terms` take precedence over the `RINQUO_PLAN_AMOUNT_CENTAVOS`, `RINQUO_TRIAL_DAYS` and
+`RINQUO_GRACE_DAYS` defaults, which remain the values in force until the first publication.
+
+### Independent database backups (the VPS backup host only)
+
+Not application variables. `deploy/ops/backup-dump.sh` reads a root-only `/etc/rinquo/backup.env`
+(and `/etc/rinquo/prune.env` for the separate-credential retention job): the read-only backup role
+(`PGHOST`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`, `PGSSLMODE=verify-full`, `PGSSLROOTCERT`), the backup
+public key fingerprint (`RINQUO_BACKUP_GPG_RECIPIENT`), the destination
+(`RINQUO_BACKUP_BUCKET`, `RINQUO_BACKUP_ENDPOINT`, `RINQUO_BACKUP_PREFIX`), write-scoped
+`AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` for a **separate** account, and the optional
+`RINQUO_BACKUP_HEARTBEAT_URL`. Restore drills use `RINQUO_DRILL_*` and `RINQUO_PRODUCTION_PGHOST` on
+an operator's workstation. See [backup-and-recovery.md](backup-and-recovery.md). None of these belong
+in `app.env`, and the backup private key never leaves Operations.
 
 ### Realtime (Reverb)
 
@@ -213,6 +248,9 @@ Create two GitHub Environments, `staging` and `production`.
 | `SSH_KNOWN_HOSTS`  | secret   | Output of `ssh-keyscan <host>`, verified out of band       |
 | `GHCR_PULL_TOKEN`  | secret   | Optional: read-only `read:packages` token if the image is private |
 | `GHCR_PULL_USER`   | variable | Optional: user for `GHCR_PULL_TOKEN`                       |
+| `SENTRY_AUTH_TOKEN` | secret  | `staging` only: Sentry token that can upload source maps to the browser project; used as a BuildKit secret, never a build argument |
+| `SENTRY_ORG`       | variable | `staging` only: Sentry organization slug                   |
+| `SENTRY_BROWSER_PROJECT` | variable | `staging` only: browser project slug                 |
 | `APP_URL`          | variable | Public base URL (used for the readiness check)             |
 | `DEPLOY_PATH`      | variable | Deploy directory on the server (default `/opt/rinquo`)     |
 
@@ -226,13 +264,15 @@ Per environment (staging and production are separate):
 - One VPS with Docker Engine and Docker Compose >= 2.30, ports 80 and 443
   (TCP, plus UDP 443 for HTTP/3) open, and DNS for the app hostname pointing
   at it.
-- Managed PostgreSQL 17 (production with point-in-time recovery), reachable
-  only from the VPS.
+- Managed PostgreSQL 17 (production: DigitalOcean SGP1 with a standby node, daily backups and
+  7-day PITR), reachable only from the VPS over TLS (`verify-full`). See
+  [backup-and-recovery.md](backup-and-recovery.md).
 - Managed Redis.
 - A private S3-compatible bucket and a key limited to it.
 - A Resend account with a verified sending domain (staging uses a separate key).
-- An external uptime monitor and, before production go-live, an error-tracking
-  provider (see [deployment.md](deployment.md#observability)).
+- An external uptime monitor and Sentry Cloud projects (backend and browser) for staging and
+  production (see [monitoring.md](monitoring.md)).
+- A separate S3-compatible account for the independent encrypted database dumps.
 
 The application does not interfere with database backups or PITR: it only
 runs forward migrations and never touches backup configuration.

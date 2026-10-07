@@ -26,9 +26,17 @@ Runs on every pull request and on every push to `main`. Jobs:
 | `e2e`      | Builds the Compose stack (with `compose.ci.yaml`: prebuilt assets, no Vite server), migrates, runs `php artisan foundation:smoke`, then `npm run test:e2e` |
 | `image`    | Builds the production image                                                  |
 
+The `backend` job also runs `deploy/ops/tests/ops-test.sh`: executable checks
+of the backup, retention and restore-drill tooling (a real restore into a
+throwaway TLS PostgreSQL is available locally with `OPS_TEST_INTEGRATION=1`).
+
 Branch protection is configured in GitHub, not in code: in the repository
 settings, protect `main` and mark `backend`, `frontend`, `e2e` and `image` as
-required status checks.
+required status checks. YAML cannot prove these settings, so keep dated
+evidence (a screenshot or `gh api repos/<owner>/<repo>/branches/main/protection`
+output) with its operator in the ticket tracker, re-checked after any workflow
+rename. Staging deploys only from `main`; production has required reviewers and
+promotes only a digest that a successful staging run recorded.
 
 ## Server setup (once per environment)
 
@@ -51,7 +59,11 @@ Triggered only when the `CI` workflow completes successfully for a push to
 `main`. It:
 
 1. checks out the commit CI validated;
-2. builds the production image and pushes `ghcr.io/<owner>/<repo>:<sha>`;
+2. builds the production image and pushes `ghcr.io/<owner>/<repo>:<sha>`. The
+   release build uploads the browser source maps to Sentry (token as a BuildKit
+   secret) and deletes them from the image; the workflow then verifies the
+   pushed image contains no `.map` file and that its `SENTRY_RELEASE` equals the
+   commit, and refuses to build without `SENTRY_AUTH_TOKEN`;
 3. copies `deploy/compose.production.yaml` and `deploy/deploy.sh` to the server;
 4. runs `deploy.sh <image@digest>` over SSH (see below);
 5. uploads a `release-<sha>` artifact containing the deployed digest
@@ -129,7 +141,9 @@ Migrations already applied stay applied (see above).
 3. Fix the migration in a new commit and let it flow through CI and staging
    again. Do not edit migrations that already ran in production.
 4. If data was damaged, restore with the managed provider's point-in-time
-   recovery to a new instance, verify it, then point `DB_HOST` at it.
+   recovery (or the independent dump) to a **new** cluster, validate it, then
+   cut over with the incident commander and a second approver. Follow
+   [backup-and-recovery.md](backup-and-recovery.md).
 
 ## Staging recovery
 
@@ -137,9 +151,11 @@ Migrations already applied stay applied (see above).
   (above).
 - Check processes: `RINQUO_IMAGE=$(cat .current-image) docker compose -f compose.production.yaml ps`
   and `... logs --tail 200 <service>`.
-- Failed jobs: `docker compose ... exec horizon php artisan queue:failed`,
-  retry with `queue:retry <id>`. (The Horizon dashboard is disabled outside
-  local until platform administration exists.)
+- Failed jobs: review them at `/platform/failed-jobs`, or
+  `docker compose ... exec horizon php artisan queue:failed` for ids. Retry
+  only through the platform page for allowlisted job classes (see
+  [runbooks.md](runbooks.md#queue-incident-horizon-redis-failed-jobs)). The
+  Horizon dashboard stays disabled outside local development.
 - Full health check: `docker compose ... exec web php artisan foundation:smoke`
   (`--mail-to=` only with a Resend test address).
 - Database: restore staging from a managed backup or re-create it empty and
@@ -176,15 +192,21 @@ service name would otherwise also resolve to the dev Reverb container.
   id is reused only if it matches `^[A-Za-z0-9._-]{1,64}$`), recorded as
   `extra.request_id` on every log entry and carried into queued jobs. Request
   bodies, tokens, OTPs and environment values are never logged.
-- **Error tracking.** Not yet chosen. Integration point:
-  `->withExceptions()` in `bootstrap/app.php` (add the provider's
-  `$exceptions->report(...)` or its Laravel integration there) plus its DSN as
-  an environment variable. Until then, reported exceptions appear in the JSON
-  log stream. Choose a provider before production go-live.
+- **Error tracking.** Sentry Cloud (separate backend and browser projects,
+  staging and production), scrubbed to an allowlist. See
+  [monitoring.md](monitoring.md) for setup, retention, alert ownership and the
+  staging verification that must pass before production.
 - **Uptime monitoring.** Point the external monitor at
   `https://<host>/up` (liveness: the app boots) and `https://<host>/ready`
   (readiness: `200` with `{"status":"ok",...}`, or `503` when PostgreSQL or
   Redis is unavailable). Responses never include hosts, credentials or
   exception details. Alert on `/ready` failures and on certificate expiry.
 - **Queues.** Horizon metrics snapshots are scheduled every five minutes.
-  Failed jobs stay in the `failed_jobs` table (`queue:failed`).
+  Failed jobs stay in the `failed_jobs` table (`queue:failed`) and are visible,
+  redacted, at `/platform/failed-jobs`. The Horizon dashboard stays disabled
+  outside local development.
+- **Platform administration.** See [platform-administration.md](platform-administration.md).
+- **Incident response and recovery.** [runbooks.md](runbooks.md) per incident
+  type; [backup-and-recovery.md](backup-and-recovery.md) for database recovery
+  drills; [templates/staging-smoke-checklist.md](templates/staging-smoke-checklist.md)
+  after every staging deploy.
