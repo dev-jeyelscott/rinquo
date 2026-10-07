@@ -99,6 +99,8 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            // Provider CA bundle for sslmode=verify-full (managed PostgreSQL in staging and production).
+            'sslrootcert' => env('DB_SSLROOTCERT'),
             'timezone' => 'UTC',
             // pdo_pgsql maps ATTR_TIMEOUT to libpq's connect_timeout (seconds).
             'options' => [

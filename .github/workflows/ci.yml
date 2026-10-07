@@ -73,6 +73,11 @@ jobs:
       - name: Tests (Pest, migrations from an empty database)
         run: composer test
 
+      - name: Operations script checks (backup, retention, restore-drill guards)
+        run: |
+          bash -n deploy/ops/*.sh deploy/ops/tests/*.sh
+          deploy/ops/tests/ops-test.sh
+
   frontend:
     name: frontend
     runs-on: ubuntu-24.04

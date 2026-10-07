@@ -1,0 +1,25 @@
+# Optional override for managed PostgreSQL with sslmode=verify-full: mounts the
+# provider's CA certificate into every application container, read-only.
+#
+#   RINQUO_COMPOSE_EXTRA_FILE=compose.db-ca.yaml ./deploy.sh <image@digest>
+#
+# Put the provider CA file at ./db-ca.crt in the deploy directory (copy it from
+# the managed database's connection details), then set in app.env:
+#   DB_SSLMODE=verify-full
+#   DB_SSLROOTCERT=/etc/rinquo/db-ca.crt
+# The bind mount does not create a missing host path, so a deploy without the
+# file fails before any service changes.
+x-db-ca: &db-ca
+    volumes:
+        - type: bind
+          source: ./db-ca.crt
+          target: /etc/rinquo/db-ca.crt
+          read_only: true
+          bind:
+              create_host_path: false
+
+services:
+    web: *db-ca
+    horizon: *db-ca
+    scheduler: *db-ca
+    reverb: *db-ca
