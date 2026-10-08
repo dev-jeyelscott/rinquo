@@ -42,6 +42,8 @@ All colors are defined as CSS custom properties in `resources/css/app.css` and e
 | `--success-foreground` / `text-success-foreground` | `#ffffff` | Text on success | 5.48:1 on success |
 | `--warning` / `bg-warning` | `#b45309` | Waiting, pending, attention needed | 5.02:1 vs white |
 | `--warning-foreground` / `text-warning-foreground` | `#ffffff` | Text on warning | 5.02:1 on warning |
+| `--success-text` / `text-success-text` | `#065f46` | Text on 10% success tints (StatusChip, status panels) | 6.67:1 on a success tint over white, 6.32:1 over the page tint |
+| `--warning-text` / `text-warning-text` | `#92400e` | Text on 10% warning tints | 6.19:1 on a warning tint over white, 5.86:1 over the page tint |
 | `--info` / `bg-info` | `#2563eb` | Informational alerts, status updates | 5.17:1 vs white |
 | `--info-foreground` / `text-info-foreground` | `#ffffff` | Text on info | 5.17:1 on info |
 

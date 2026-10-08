@@ -719,6 +719,7 @@ components:
             required: false
       accessibility:
           - Meaning is always in the text; tone only reinforces it
+          - Success and warning tones use the success-text and warning-text tokens so text reaches 4.5:1 on the tint
       responsive: Inline, never wraps
       status: stable
       dependencies:
@@ -1193,7 +1194,8 @@ compositions:
       path: resources/js/components/owner/weekly-intervals-editor.tsx
       description: >
           Edits weekly local-time intervals (weekday, start, end) with several
-          intervals per day. Used for business hours and service windows.
+          intervals per day as a flat list. Used for service windows. Business
+          hours use DayHoursEditor.
       uses:
           - FormField
           - Button
@@ -1212,6 +1214,105 @@ compositions:
           - Remove buttons are labelled with day and position
           - Errors are announced with the field they belong to
       responsive: Four-column row on sm and above, stacked on mobile
+      status: stable
+
+    - id: day-hours-editor
+      name: DayHoursEditor
+      category: composition
+      path: resources/js/components/owner/day-hours-editor.tsx
+      description: >
+          Weekly hours grouped by day for Owner Settings Hours: each of the seven
+          days has an Open/Closed switch and its own intervals with a per-day
+          "+ interval". The value stays the flat interval list the server
+          expects, so server error keys address the right row.
+      reference_design:
+          - "docs/reference-ui/owner-settings/desktop/hours-desktop.png"
+          - "docs/reference-ui/owner-settings/mobile/hours-mobile.png"
+      uses:
+          - Input
+          - Button
+      props:
+          - name: value
+            type: array
+            required: true
+          - name: onChange
+            type: callback
+            required: true
+          - name: errorPrefix
+            type: string
+            required: true
+      accessibility:
+          - Each day has a native checkbox with role switch with the stable name "<Day> open"; state is carried by checked, and the off track uses the muted-foreground token for 3:1 non-text contrast
+          - Time inputs and remove buttons carry day and position in their accessible names
+          - On small screens the summary is a button with aria-expanded and aria-controls
+          - A day with a server error is expanded so the error is visible
+          - Closed state is text, not color alone
+      responsive: >
+          From md up it is a Day / Status / Intervals list with every day's
+          intervals visible. Below md each day is a compact row with its summary
+          and switch; selecting the summary reveals that day's intervals.
+      status: stable
+      notes: >
+          Registers the reusable weekly editor, not the Hours page. Date overrides
+          remain page-local.
+
+    - id: owner-editor-panel
+      name: EditorPanel
+      category: composition
+      path: resources/js/components/owner/editor-panel.tsx
+      description: >
+          The editing region that opens beneath a list or table when a row's Edit
+          or Add action is used (Owner Settings Services and Resources).
+      uses:
+          - Button
+      props:
+          - name: title
+            type: string
+            required: true
+          - name: onClose
+            type: callback
+            required: true
+          - name: headingLevel
+            type: "'h2' | 'h3'"
+            required: false
+      accessibility:
+          - A labelled section whose heading receives focus when the panel opens or its subject changes
+          - Close returns focus to the control that opened the panel when it still exists
+          - Presentation only; saves are authorized by the server
+      responsive: Full width of its grid; fields wrap with the inline form layout
+      status: stable
+
+    - id: owner-record-table
+      name: RecordTable
+      category: composition
+      path: resources/js/components/owner/record-table.tsx
+      description: >
+          A columnar record list (named resources, service variants) exposed as an
+          ARIA table. From md up it reads as a table with a header row; below md
+          each row stacks into a card-like block.
+      reference_design:
+          - "docs/reference-ui/owner-settings/desktop/resources-desktop.png"
+          - "docs/reference-ui/owner-settings/mobile/resources-mobile.png"
+          - "docs/reference-ui/owner-settings/desktop/services-desktop.png"
+      props:
+          - name: label
+            type: string
+            required: true
+          - name: columns
+            type: array
+            required: true
+          - name: rows
+            type: array
+            required: true
+          - name: gridClassName
+            type: string
+            required: true
+      accessibility:
+          - Explicit table, row, columnheader and cell roles keep semantics through the responsive layout
+          - The header row is visually hidden but exposed below md
+          - Action columns keep a screen-reader-only header
+          - State is text in a chip, never color alone
+      responsive: Header and columns from md up; stacked rows below md
       status: stable
 
     - id: tenant-shop-shell
@@ -1441,12 +1542,11 @@ patterns:
           Desktop uses a persistent sidebar. Mobile uses bottom navigation.
           Tablet behavior may interpolate between approved responsive patterns
           without introducing an unapproved third navigation paradigm.
-      status: proposed
+      status: stable
       notes: >
-          The approved target is the reference above. owner-shell.tsx still
-          renders the older compact top bar on small screens; that is an
-          implementation gap tracked by the deprecated entry
-          owner-mobile-collapsible-shell. Decision 208 intentionally
+          Implemented in owner-shell.tsx and verified against the approved
+          reference above; the deprecated entry owner-mobile-collapsible-shell
+          records the superseded pattern. Decision 208 intentionally
           consolidates desktop day-to-day operations under Operations instead
           of reproducing separate Dashboard, Queue, Bookings, Walk-in and
           Operational failures sidebar routes. Billing is Owner-only and is a
@@ -1497,9 +1597,9 @@ patterns:
           - Navigation visibility never replaces server-side authorization
           - Visible keyboard focus
       responsive: Mobile only; desktop uses tenant-application-navigation.
-      status: proposed
+      status: stable
       notes: >
-          Approved reference target; not yet implemented for Owner. The generic
+          Implemented for Owner in owner-shell.tsx. The generic
           Sidebar primitive stays valid for contextual drawers and is not
           deprecated by this entry.
 
@@ -1666,10 +1766,10 @@ patterns:
               Each Settings page owns its own meaningful h1 (see
               owner-settings-page-heading). The shared shell must not hardcode
               one generic Scheduling configuration heading for all Settings pages.
-      status: proposed
+      status: stable
       notes: >
-          Approved reference target; owner-shell.tsx still renders filled pill
-          tabs, tracked by the deprecated entry owner-settings-filled-pill-navigation.
+          Implemented as text-and-underline navigation; the superseded filled pill
+          tabs are tracked by the deprecated entry owner-settings-filled-pill-navigation.
           The branch and publication indicators are contextual status, not part
           of the Settings navigation itself.
 
@@ -1708,9 +1808,9 @@ patterns:
       responsive: >
           Desktop heading carries the Settings prefix. Mobile heading is the
           short section name under the back link.
-      status: proposed
+      status: stable
       notes: >
-          Approved reference target. The shell must not hardcode a generic
+          Implemented per the approved reference. The shell must not hardcode a generic
           heading for all Settings pages.
 
     - id: owner-branch-publication-context
@@ -1742,7 +1842,7 @@ patterns:
       responsive: >
           Desktop places chips at the right of the page header. Mobile places the
           Published chip at the right of the shell header.
-      status: proposed
+      status: stable
       notes: >
           The branch chip is context, not a branch selector (one active branch
           in the MVP).
@@ -1784,6 +1884,9 @@ patterns:
       components:
           - SectionCard
           - StatusChip
+          - DayHoursEditor
+          - EditorPanel
+          - RecordTable
       use_cases:
           - Owner Settings Profile, Hours, Services, Resources, Booking Policy, Readiness and Directory pages
       accessibility:
@@ -1793,7 +1896,7 @@ patterns:
       responsive: >
           Tablet may interpolate between the two approved compositions without a
           third paradigm.
-      status: proposed
+      status: stable
       notes: >
           Registers the composition, not screen-local view code. Existing
           SectionCard and StatusChip are reused.
@@ -1816,8 +1919,7 @@ patterns:
               - 212
       notes: >
           Replaced by native-style bottom navigation with More. owner-shell.tsx
-          still renders the older compact top bar below lg; existing use requires
-          migration. Do not use for new work. The generic Sidebar primitive and
+          no longer renders this pattern. Do not use for new work. The generic Sidebar primitive and
           legitimate contextual drawers or sheets are not deprecated.
 
     - id: owner-settings-filled-pill-navigation
@@ -1836,8 +1938,8 @@ patterns:
               - 212
       notes: >
           Replaced by the underline desktop navigation and the mobile Settings
-          index with back link. owner-shell.tsx still renders filled pills;
-          existing use requires migration. Do not use for new work.
+          index with back link. owner-shell.tsx no longer renders filled pills.
+          Do not use for new work.
 
     - id: multi-option-selection
       name: Multi-Option Selection (Dialog or Inline)

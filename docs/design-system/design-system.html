@@ -1800,7 +1800,7 @@
                         <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">weekly-intervals-editor</div>
-                    <p class="registry-description">Edits weekly local-time intervals, several per day, for business hours and service windows.</p>
+                    <p class="registry-description">Edits weekly local-time intervals, several per day, as a flat list. Used for service windows; business hours use DayHoursEditor.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Path:</span>
@@ -1809,6 +1809,75 @@
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Uses:</span>
                             <span class="registry-meta-value">FormField, Button</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Composition</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="day-hours-editor" data-registry-id="day-hours-editor" data-status="stable" data-preview="none" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">DayHoursEditor</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">day-hours-editor</div>
+                    <p class="registry-description">Weekly hours grouped by day: an Open/Closed switch and per-day intervals with a per-day add. Desktop lists Day / Status / Intervals; mobile shows a compact summary row per day that reveals its intervals.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/owner/day-hours-editor.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">Input, Button</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Composition</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="owner-editor-panel" data-registry-id="owner-editor-panel" data-status="stable" data-preview="none" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">EditorPanel</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">owner-editor-panel</div>
+                    <p class="registry-description">The editing region that opens beneath a list or table for Edit and Add. Focus moves to its heading on open and returns to the opener on close.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/owner/editor-panel.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">Button</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Composition</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="owner-record-table" data-registry-id="owner-record-table" data-status="stable" data-preview="none" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">RecordTable</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">owner-record-table</div>
+                    <p class="registry-description">A columnar record list exposed as an ARIA table: header and columns from md up, stacked rows below md. Used for named resources and service variants.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/owner/record-table.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">StatusChip (in cells)</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Category:</span>
@@ -2038,13 +2107,13 @@
                     </div>
                 </article>
 
-                <article id="tenant-application-navigation" data-registry-id="tenant-application-navigation" data-status="proposed" class="registry-card">
+                <article id="tenant-application-navigation" data-registry-id="tenant-application-navigation" data-status="stable" class="registry-card">
                     <div class="registry-header">
                         <h3 class="registry-title">Tenant Application Navigation</h3>
-                        <span class="registry-status status-proposed">Proposed</span>
+                        <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">tenant-application-navigation</div>
-                    <p class="registry-description">Role-aware application navigation for Owner and Staff. Desktop uses the dark sidebar; mobile uses bottom navigation, never a hamburger or collapsed sidebar. Approved target; the Owner shell still renders the older compact top bar below lg.</p>
+                    <p class="registry-description">Role-aware application navigation for Owner and Staff. Desktop uses the dark sidebar; mobile uses bottom navigation, never a hamburger or collapsed sidebar.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">References:</span>
@@ -2065,13 +2134,13 @@
                     </div>
                 </article>
 
-                <article id="tenant-mobile-bottom-navigation" data-registry-id="tenant-mobile-bottom-navigation" data-status="proposed" class="registry-card">
+                <article id="tenant-mobile-bottom-navigation" data-registry-id="tenant-mobile-bottom-navigation" data-status="stable" class="registry-card">
                     <div class="registry-header">
                         <h3 class="registry-title">Tenant Mobile Bottom Navigation</h3>
-                        <span class="registry-status status-proposed">Proposed</span>
+                        <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">tenant-mobile-bottom-navigation</div>
-                    <p class="registry-description">Native-style bottom navigation: Dashboard, Queue, Bookings, Walk-in and More. Owner Settings and Billing are reached through More, which stays active inside Settings. Not yet implemented for Owner.</p>
+                    <p class="registry-description">Native-style bottom navigation: Dashboard, Queue, Bookings, Walk-in and More. Owner Settings and Billing are reached through More, which stays active inside Settings.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">References:</span>
@@ -2088,10 +2157,10 @@
                     </div>
                 </article>
 
-                <article id="owner-settings-navigation" data-registry-id="owner-settings-navigation" data-status="proposed" class="registry-card">
+                <article id="owner-settings-navigation" data-registry-id="owner-settings-navigation" data-status="stable" class="registry-card">
                     <div class="registry-header">
                         <h3 class="registry-title">Owner Settings Section Navigation</h3>
-                        <span class="registry-status status-proposed">Proposed</span>
+                        <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">owner-settings-navigation</div>
                     <p class="registry-description">Seven route-based Settings destinations. Desktop: horizontal text links with a primary underline on the active destination. Mobile: the Settings index plus a back link on each section page (approved reading of Decisions 206 and 207). Billing is not a Settings destination.</p>
@@ -2115,10 +2184,10 @@
                     </div>
                 </article>
 
-                <article id="owner-settings-page-heading" data-registry-id="owner-settings-page-heading" data-status="proposed" class="registry-card">
+                <article id="owner-settings-page-heading" data-registry-id="owner-settings-page-heading" data-status="stable" class="registry-card">
                     <div class="registry-header">
                         <h3 class="registry-title">Owner Settings Page Heading</h3>
-                        <span class="registry-status status-proposed">Proposed</span>
+                        <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">owner-settings-page-heading</div>
                     <p class="registry-description">Page-owned h1 and description. Desktop reads Settings &middot; Section. Mobile shows the literal short section name under the Settings back link; Decision 209 remains higher authority and requires Settings &middot; Section as the accessible page title.</p>
@@ -2138,10 +2207,10 @@
                     </div>
                 </article>
 
-                <article id="owner-branch-publication-context" data-registry-id="owner-branch-publication-context" data-status="proposed" class="registry-card">
+                <article id="owner-branch-publication-context" data-registry-id="owner-branch-publication-context" data-status="stable" class="registry-card">
                     <div class="registry-header">
                         <h3 class="registry-title">Owner Branch and Publication Context</h3>
-                        <span class="registry-status status-proposed">Proposed</span>
+                        <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">owner-branch-publication-context</div>
                     <p class="registry-description">Branch identity and Published or readiness status shown as context chips, not as Settings navigation. The branch chip is not a branch selector.</p>
@@ -2161,10 +2230,10 @@
                     </div>
                 </article>
 
-                <article id="owner-settings-responsive-composition" data-registry-id="owner-settings-responsive-composition" data-status="proposed" class="registry-card">
+                <article id="owner-settings-responsive-composition" data-registry-id="owner-settings-responsive-composition" data-status="stable" class="registry-card">
                     <div class="registry-header">
                         <h3 class="registry-title">Owner Settings Responsive Composition</h3>
-                        <span class="registry-status status-proposed">Proposed</span>
+                        <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">owner-settings-responsive-composition</div>
                     <p class="registry-description">Approved shell, Settings index and seven-page composition at 1600x1000 desktop and 390x844 mobile. Rendering artifacts in the images are non-authoritative; unrepresented states are not locked.</p>
