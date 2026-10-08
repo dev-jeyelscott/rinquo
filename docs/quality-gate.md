@@ -98,7 +98,7 @@ Authority order:
 - PASS: Approved references lock only the surfaces, viewports, states, and patterns they actually represent.
 - PASS: File presence under `docs/reference-ui/` does not constitute approval.
 - PASS: Desktop and mobile are treated as separate visual contracts where composition materially differs.
-- PASS: AI-generated or implementation-derived designs remain Draft until explicitly approved.
+- PASS: AI-generated or implementation-derived designs remain Draft until explicitly approved. The Owner Settings references were explicitly reviewed and approved on 2026-10-08.
 
 Current reference coverage is intentionally incomplete.
 
@@ -108,44 +108,10 @@ Known gaps include:
 - Booking schedule desktop
 - Staff operations mobile
 - Conflict resolution mobile
-- Owner Settings mobile
-- Complete current Owner Settings desktop references
 
-Reference `05-owner-scheduling-configuration.png` remains useful for unaffected Owner desktop visual language, but portions are superseded by Decisions 206–210.
+Owner Settings now has approved desktop and mobile references (shell, Settings index, and the seven pages), approved 2026-10-08 under Decision 212 and recorded in `docs/reference-ui/README.md`. Reference `05-owner-scheduling-configuration.png` is Superseded for Owner Settings and is retained as history and for the Owner configuration impact/review visual direction.
 
-The seven Owner Settings pages require reviewed desktop and mobile references before their redesigned visual contracts are considered fully locked:
-
-- Profile
-- Hours
-- Services
-- Resources
-- Booking Policy
-- Readiness
-- Directory
-
-Implementation must not convert inferred responsive behavior into a canonical design pattern without approval.
-
-## Accessibility
-
-- PASS: Responsive UI remains mobile-first.
-- PASS: Mobile interactive targets require at least 44px touch targets.
-- PASS: Navigation uses appropriate landmarks and accessible labels.
-- PASS: Current-page navigation state uses `aria-current="page"` where appropriate.
-- PASS: Status and warning communication must not rely on color alone.
-- PASS: Visible keyboard focus remains required.
-- PASS: Settings pages require a meaningful page-level `h1`.
-- PASS: Responsive composition must preserve accessible navigation and reading order.
-
-## Subscription and retention
-
-- PASS: Early renewal extends current entitlement.
-- PASS: Expired subscription payment begins from confirmed payment according to Decision 204.
-- PASS: Payment during trial anchors the paid period after the trial according to Decision 204.
-- PASS: Restriction blocks new bookings while preserving existing operations.
-- PASS: Customer cancellation remains allowed during restriction where approved.
-- PASS: Non-renewal does not initiate deletion.
-- PASS: Explicit organization closure begins the independent recovery/deletion lifecycle.
-- PASS: Billing remains accessible to an authorized Owner where required for renewal or recovery.
+The Owner Settings references lock the shell, navigation, headings, branch/publication context, and page composition at 1600×1000 desktop and 390×844 mobile. They do not lock loading, empty, error, validation, or success states, tablet composition, or the rendering artifacts recorded in the manifest.
 
 ## Testability
 
@@ -175,7 +141,7 @@ Implementation must not convert inferred responsive behavior into a canonical de
 
 Documentation should be considered stale whenever it:
 
-- references Decisions 1–205 as the complete approved range,
+- references any range short of Decisions 1–212 as the complete approved range,
 - describes hamburger navigation as canonical tenant-mobile navigation,
 - describes filled pill navigation as the canonical Owner Settings pattern,
 - treats `Scheduling configuration` as the universal Settings page heading,
@@ -193,9 +159,8 @@ The following are known implementation or visual-contract gaps, not unresolved p
 4. Move page-heading ownership from the shared shell to individual Settings pages.
 5. Ensure Billing is represented as an Owner primary destination.
 6. Remove the duplicate `OwnerShell` wrapping from the Directory page if still present.
-7. Produce and approve desktop/mobile Owner Settings Reference UI.
-8. Update affected design-system registry entries after authoritative references are approved.
-9. Add responsive structural and navigation regression coverage.
+7. Reconcile `owner-shell.tsx` and the seven Settings pages with the approved Owner Settings references (desktop and mobile) and move the registry patterns from `proposed` to `stable` when they conform. Completed documentation milestones: the references were approved and the registry reconciled on 2026-10-08.
+8. Add responsive structural and navigation regression coverage.
 
 ## Remaining engineering risks
 

@@ -239,6 +239,11 @@
             color: var(--warning-foreground);
         }
 
+        .status-proposed {
+            background-color: var(--warning);
+            color: var(--warning-foreground);
+        }
+
         .status-deprecated {
             background-color: var(--destructive);
             color: var(--destructive-foreground);
@@ -1734,7 +1739,7 @@
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Reference:</span>
-                            <span class="registry-meta-value">05-owner-scheduling-configuration.png</span>
+                            <span class="registry-meta-value">owner-settings/desktop/profile-desktop.png, owner-settings/mobile/profile-mobile.png</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Category:</span>
@@ -1757,7 +1762,7 @@
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Reference:</span>
-                            <span class="registry-meta-value">01-customer-shop-home.png, 05-owner-scheduling-configuration.png</span>
+                            <span class="registry-meta-value">01-customer-shop-home.png, owner-settings/desktop/owner-shell-desktop.png</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Category:</span>
@@ -1928,29 +1933,6 @@
                     </div>
                 </article>
 
-                <article id="responsive-sidebar-nav" data-registry-id="responsive-sidebar-nav" data-status="stable" class="registry-card">
-                    <div class="registry-header">
-                        <h3 class="registry-title">Responsive Sidebar Navigation</h3>
-                        <span class="registry-status status-stable">Stable</span>
-                    </div>
-                    <div class="registry-id">responsive-sidebar-nav</div>
-                    <p class="registry-description">Left sidebar navigation for staff and owner dashboards with dark navy background (#001f3f) and blue highlights. Collapses to hamburger on mobile.</p>
-                    <div class="registry-meta">
-                        <div class="registry-meta-row">
-                            <span class="registry-meta-label">References:</span>
-                            <span class="registry-meta-value">03-staff-operations-dashboard.png, 05-owner-scheduling-configuration.png</span>
-                        </div>
-                        <div class="registry-meta-row">
-                            <span class="registry-meta-label">Responsive:</span>
-                            <span class="registry-meta-value">Full sidebar on md+, collapsible on mobile</span>
-                        </div>
-                        <div class="registry-meta-row">
-                            <span class="registry-meta-label">Category:</span>
-                            <span class="registry-meta-value">Pattern</span>
-                        </div>
-                    </div>
-                </article>
-
                 <article id="capacity-aware-booking" data-registry-id="capacity-aware-booking" data-status="experimental" class="registry-card">
                     <div class="registry-header">
                         <h3 class="registry-title">Capacity-Aware Booking</h3>
@@ -2056,25 +2038,182 @@
                     </div>
                 </article>
 
-                                <article id="owner-configuration-tabs" data-registry-id="owner-configuration-tabs" data-status="stable" class="registry-card">
+                <article id="tenant-application-navigation" data-registry-id="tenant-application-navigation" data-status="proposed" class="registry-card">
                     <div class="registry-header">
-                        <h3 class="registry-title">Owner Configuration Tabs</h3>
-                        <span class="registry-status status-stable">Stable</span>
+                        <h3 class="registry-title">Tenant Application Navigation</h3>
+                        <span class="registry-status status-proposed">Proposed</span>
                     </div>
-                    <div class="registry-id">owner-configuration-tabs</div>
-                    <p class="registry-description">Owner-only settings shell: dark sidebar (top bar on small screens), page header with branch and Draft or Published chips, pill tabs with aria-current beside an OWNER ONLY chip, and a status region.</p>
+                    <div class="registry-id">tenant-application-navigation</div>
+                    <p class="registry-description">Role-aware application navigation for Owner and Staff. Desktop uses the dark sidebar; mobile uses bottom navigation, never a hamburger or collapsed sidebar. Approved target; the Owner shell still renders the older compact top bar below lg.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">References:</span>
+                            <span class="registry-meta-value">03-staff-operations-dashboard.png, owner-settings/desktop/owner-shell-desktop.png, owner-settings/mobile/owner-shell-mobile.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Decisions:</span>
+                            <span class="registry-meta-value">46, 47, 206, 208, 210, 211, 212</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Responsive:</span>
+                            <span class="registry-meta-value">Persistent sidebar on desktop; bottom navigation on mobile</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Pattern</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="tenant-mobile-bottom-navigation" data-registry-id="tenant-mobile-bottom-navigation" data-status="proposed" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Tenant Mobile Bottom Navigation</h3>
+                        <span class="registry-status status-proposed">Proposed</span>
+                    </div>
+                    <div class="registry-id">tenant-mobile-bottom-navigation</div>
+                    <p class="registry-description">Native-style bottom navigation: Dashboard, Queue, Bookings, Walk-in and More. Owner Settings and Billing are reached through More, which stays active inside Settings. Not yet implemented for Owner.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">References:</span>
+                            <span class="registry-meta-value">owner-settings/mobile/owner-shell-mobile.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Prohibited:</span>
+                            <span class="registry-meta-value">Hamburger, collapsible sidebar, or drawer as primary tenant navigation</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Pattern</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="owner-settings-navigation" data-registry-id="owner-settings-navigation" data-status="proposed" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Owner Settings Section Navigation</h3>
+                        <span class="registry-status status-proposed">Proposed</span>
+                    </div>
+                    <div class="registry-id">owner-settings-navigation</div>
+                    <p class="registry-description">Seven route-based Settings destinations. Desktop: horizontal text links with a primary underline on the active destination. Mobile: the Settings index plus a back link on each section page (approved reading of Decisions 206 and 207). Billing is not a Settings destination.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Path:</span>
                             <span class="registry-meta-value">resources/js/layouts/owner-shell.tsx</span>
                         </div>
                         <div class="registry-meta-row">
-                            <span class="registry-meta-label">Reference:</span>
-                            <span class="registry-meta-value">05-owner-scheduling-configuration.png</span>
+                            <span class="registry-meta-label">References:</span>
+                            <span class="registry-meta-value">owner-settings/desktop/owner-shell-desktop.png, owner-settings/mobile/owner-shell-mobile.png, profile-desktop.png, profile-mobile.png</span>
                         </div>
                         <div class="registry-meta-row">
-                            <span class="registry-meta-label">Tabs:</span>
-                            <span class="registry-meta-value">Profile, Business hours, Services, Resources, Booking policy, Readiness; sidebar also links Booking requests</span>
+                            <span class="registry-meta-label">Destinations:</span>
+                            <span class="registry-meta-value">Profile, Hours, Services, Resources, Booking Policy, Readiness, Directory</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Pattern</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="owner-settings-page-heading" data-registry-id="owner-settings-page-heading" data-status="proposed" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Owner Settings Page Heading</h3>
+                        <span class="registry-status status-proposed">Proposed</span>
+                    </div>
+                    <div class="registry-id">owner-settings-page-heading</div>
+                    <p class="registry-description">Page-owned h1 and description. Desktop reads Settings &middot; Section. Mobile shows the literal short section name under the Settings back link; Decision 209 remains higher authority and requires Settings &middot; Section as the accessible page title.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">References:</span>
+                            <span class="registry-meta-value">profile-desktop.png, services-desktop.png, profile-mobile.png, services-mobile.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Decisions:</span>
+                            <span class="registry-meta-value">207, 209, 211, 212</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Pattern</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="owner-branch-publication-context" data-registry-id="owner-branch-publication-context" data-status="proposed" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Owner Branch and Publication Context</h3>
+                        <span class="registry-status status-proposed">Proposed</span>
+                    </div>
+                    <div class="registry-id">owner-branch-publication-context</div>
+                    <p class="registry-description">Branch identity and Published or readiness status shown as context chips, not as Settings navigation. The branch chip is not a branch selector.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">References:</span>
+                            <span class="registry-meta-value">owner-settings/desktop/owner-shell-desktop.png, owner-settings/mobile/owner-shell-mobile.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">StatusChip</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Pattern</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="owner-settings-responsive-composition" data-registry-id="owner-settings-responsive-composition" data-status="proposed" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Owner Settings Responsive Composition</h3>
+                        <span class="registry-status status-proposed">Proposed</span>
+                    </div>
+                    <div class="registry-id">owner-settings-responsive-composition</div>
+                    <p class="registry-description">Approved shell, Settings index and seven-page composition at 1600x1000 desktop and 390x844 mobile. Rendering artifacts in the images are non-authoritative; unrepresented states are not locked.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">References:</span>
+                            <span class="registry-meta-value">All sixteen references under docs/reference-ui/owner-settings/</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">SectionCard, StatusChip</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Pattern</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="owner-mobile-collapsible-shell" data-registry-id="owner-mobile-collapsible-shell" data-status="deprecated" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Owner Mobile Collapsible Sidebar Shell</h3>
+                        <span class="registry-status status-deprecated">Deprecated</span>
+                    </div>
+                    <div class="registry-id">owner-mobile-collapsible-shell</div>
+                    <p class="registry-description">Compact top bar, hamburger or collapsed sidebar as the primary Owner mobile navigation. Existing use requires migration.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Successor:</span>
+                            <span class="registry-meta-value">tenant-mobile-bottom-navigation, tenant-application-navigation</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Pattern</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="owner-settings-filled-pill-navigation" data-registry-id="owner-settings-filled-pill-navigation" data-status="deprecated" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Owner Settings Filled-Pill Navigation</h3>
+                        <span class="registry-status status-deprecated">Deprecated</span>
+                    </div>
+                    <div class="registry-id">owner-settings-filled-pill-navigation</div>
+                    <p class="registry-description">Settings tabs as filled pills with an OWNER ONLY marker. Existing use requires migration.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Successor:</span>
+                            <span class="registry-meta-value">owner-settings-navigation</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Category:</span>

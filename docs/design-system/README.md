@@ -34,6 +34,14 @@ are authoritative.
 
 A reference is authoritative only for the surface, state, pattern, and viewport it actually represents.
 
+### Owner Settings visual baseline
+
+The sixteen Owner Settings references approved on 2026-10-08 (`docs/reference-ui/owner-settings/desktop/` and `docs/reference-ui/owner-settings/mobile/`) are the current visual baseline for the Owner shell, the Settings index, and the seven Settings pages at desktop (1600×1000) and mobile (390×844). They supersede the Owner Settings portions of `05-owner-scheduling-configuration.png`.
+
+The registry records the resulting patterns: `tenant-application-navigation`, `tenant-mobile-bottom-navigation`, `owner-settings-navigation`, `owner-settings-page-heading`, `owner-branch-publication-context`, and `owner-settings-responsive-composition`. The Owner mobile hamburger/collapsible-sidebar shell and the filled-pill Settings navigation are deprecated (`owner-mobile-collapsible-shell`, `owner-settings-filled-pill-navigation`). These patterns are `proposed` until the Owner shell implementation conforms to them.
+
+Rendering artifacts in the references (overlapping buttons, tofu glyphs, overflowing or clipped text, placeholder icons) and unrepresented states (loading, empty, error, validation, success) are not part of the baseline. Locked Decisions remain higher authority; see the manifest for the recorded interpretations of Decisions 206, 207, and 209.
+
 ### Design-system sources
 
 The implementation-level design system consists of:

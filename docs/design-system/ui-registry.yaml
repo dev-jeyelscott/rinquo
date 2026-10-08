@@ -677,10 +677,10 @@ components:
       category: component
       path: resources/js/components/owner/section-card.tsx
       description: >
-          Owner settings section from reference 05: a flat, rounded card with a
-          section title (h2 or h3), a muted one-line description and an optional
-          status chip beside the title.
-      reference_design: "05-owner-scheduling-configuration.png"
+          Owner settings section card from the approved Owner Settings references:
+          a flat, rounded card with a section title (h2 or h3), a muted one-line
+          description and an optional status chip beside the title.
+      reference_design: "docs/reference-ui/owner-settings/desktop/profile-desktop.png, docs/reference-ui/owner-settings/mobile/profile-mobile.png"
       props:
           - name: title
             type: string
@@ -709,7 +709,7 @@ components:
           Pill-shaped status chip from the reference screens (OWNER ONLY,
           OPEN NOW, "1 unit"). Tones info, success, warning and neutral use
           semantic tokens; an optional caps mode gives small tracked uppercase.
-      reference_design: "01-customer-shop-home.png, 05-owner-scheduling-configuration.png"
+      reference_design: "01-customer-shop-home.png, docs/reference-ui/owner-settings/desktop/owner-shell-desktop.png"
       props:
           - name: tone
             type: "'info' | 'success' | 'warning' | 'neutral'"
@@ -1380,78 +1380,128 @@ patterns:
       reference_design: "02-booking-schedule.png"
       status: stable
 
-      - id: tenant-application-navigation
-    name: Tenant Application Navigation
-    category: pattern
-    description: >
-      Shared role-aware application navigation for Owner and Staff tenant
-      surfaces. Desktop uses the canonical dark sidebar. Mobile uses a
-      native-style bottom navigation rather than collapsing the desktop
-      sidebar into a hamburger or drawer.
-    authority:
-      decisions:
-        - 46
-        - 47
-        - 206
-        - 208
-        - 210
-      references:
-        - '03-staff-operations-dashboard.png'
-        - '05-owner-scheduling-configuration.png'
+    - id: tenant-application-navigation
+      name: Tenant Application Navigation
+      category: pattern
+      description: >
+          Shared role-aware application navigation for Owner and Staff tenant
+          surfaces. Desktop uses the canonical dark sidebar. Mobile uses a
+          native-style bottom navigation (see tenant-mobile-bottom-navigation)
+          rather than collapsing the desktop sidebar into a hamburger or drawer.
+      authority:
+          decisions:
+              - 46
+              - 47
+              - 206
+              - 208
+              - 210
+              - 211
+              - 212
+          references:
+              - "docs/reference-ui/03-staff-operations-dashboard.png"
+              - "docs/reference-ui/owner-settings/desktop/owner-shell-desktop.png"
+          notes: >
+              Owner desktop treatment comes from the approved Owner Settings
+              desktop shell reference (2026-10-08), which supersedes the Owner
+              Settings portions of 05-owner-scheduling-configuration.png. Staff
+              desktop treatment comes from reference 03. Mobile behavior is
+              defined by Locked Decisions and the approved mobile references,
+              not inferred from desktop screenshots.
+      components:
+          - Sidebar
+      use_cases:
+          - Staff operational surfaces
+          - Owner operational surfaces
+          - Owner Billing
+          - Owner Settings
+      desktop:
+          presentation: dark sidebar
+          shows:
+              - wordmark
+              - business and branch identity with publication status chip
+              - role-aware destinations with a filled active destination
+              - account email and sign out
+          owner_destinations:
+              - Operations
+              - Booking Requests
+              - Conflicts
+              - Billing
+              - Settings
+          staff_behavior: >
+              Show only operational destinations authorized for the authenticated
+              Staff member.
+      mobile:
+          presentation: bottom navigation (see tenant-mobile-bottom-navigation)
+      accessibility:
+          - Use a nav landmark with an accessible label
+          - Use aria-current="page" for the active destination
+          - Navigation visibility never replaces server-side authorization
+          - Visible keyboard focus on every destination
+      responsive: >
+          Desktop uses a persistent sidebar. Mobile uses bottom navigation.
+          Tablet behavior may interpolate between approved responsive patterns
+          without introducing an unapproved third navigation paradigm.
+      status: proposed
       notes: >
-        Existing reference UI establishes the desktop visual language.
-        Mobile behavior is explicitly defined by Locked Decisions and must
-        not be inferred from the desktop screenshots.
-    components:
-      - Sidebar
-      - BottomNavigation
-      - MoreMenu
-    use_cases:
-      - Staff operational surfaces
-      - Owner operational surfaces
-      - Owner Billing
-      - Owner Settings
-    desktop:
-      presentation: dark sidebar
-      owner_destinations:
-        - Operations
-        - Booking Requests
-        - Conflicts
-        - Billing
-        - Settings
-      staff_behavior: >
-        Show only operational destinations authorized for the authenticated
-        Staff member.
-    mobile:
-      presentation: bottom navigation
-      staff_primary_destinations:
-        - Dashboard
-        - Queue
-        - Bookings
-        - Walk-in
-        - More
-      owner_behavior: >
-        Owner uses the same native-style application navigation model.
-        Owner-only destinations such as Billing and Settings are reached
-        through More when they are not primary mobile tabs.
-      prohibited:
-        - hamburger as primary application navigation
-        - collapsible desktop sidebar as primary mobile navigation
-    accessibility:
-      - Use a nav landmark with an accessible label
-      - Use aria-current="page" for the active destination
-      - Navigation visibility never replaces server-side authorization
-      - Mobile interactive targets are at least 44px by 44px
-    responsive: >
-      Desktop uses a persistent sidebar. Mobile uses bottom navigation.
-      Tablet behavior may interpolate between approved responsive patterns
-      without introducing an unapproved third navigation paradigm.
-    status: stable
-    notes: >
-      Decision 208 intentionally consolidates desktop day-to-day operations
-      under Operations instead of reproducing separate Dashboard, Queue,
-      Bookings, Walk-in and Operational failures sidebar routes. Billing is
-      Owner-only and is a primary desktop destination under Decision 210.
+          The approved target is the reference above. owner-shell.tsx still
+          renders the older compact top bar on small screens; that is an
+          implementation gap tracked by the deprecated entry
+          owner-mobile-collapsible-shell. Decision 208 intentionally
+          consolidates desktop day-to-day operations under Operations instead
+          of reproducing separate Dashboard, Queue, Bookings, Walk-in and
+          Operational failures sidebar routes. Billing is Owner-only and is a
+          primary desktop destination under Decision 210.
+
+    - id: tenant-mobile-bottom-navigation
+      name: Tenant Mobile Bottom Navigation
+      category: pattern
+      description: >
+          Native-style bottom navigation for Owner and Staff tenant surfaces on
+          mobile: Dashboard, Queue, Bookings, Walk-in and More. Owner-only
+          destinations (Settings and Billing) are reached through More. The bar
+          stays visible on the Settings index and on every Settings section page,
+          with More shown as the active destination.
+      authority:
+          decisions:
+              - 46
+              - 47
+              - 206
+              - 207
+              - 210
+              - 211
+              - 212
+          references:
+              - "docs/reference-ui/owner-settings/mobile/owner-shell-mobile.png"
+              - "docs/reference-ui/01-customer-shop-home.png"
+          notes: >
+              The Owner Settings mobile references show the bar with More active
+              on the index and every section page. The placeholder circle icons
+              in those images are rendering artifacts, not locked icon glyphs.
+      use_cases:
+          - Staff mobile operations
+          - Owner mobile access to Settings and Billing through More
+      mobile:
+          presentation: bottom navigation
+          requirements:
+              - minimum 44px by 44px touch targets
+              - safe-area aware
+              - More active while inside Owner Settings
+              - not replaced or removed when entering Settings
+          prohibited:
+              - hamburger as primary tenant navigation
+              - collapsible desktop sidebar as primary tenant navigation
+              - sidebar drawer or sheet as primary tenant navigation
+      accessibility:
+          - Use a nav landmark with an accessible label
+          - Use aria-current="page" for the active destination
+          - Navigation visibility never replaces server-side authorization
+          - Visible keyboard focus
+      responsive: Mobile only; desktop uses tenant-application-navigation.
+      status: proposed
+      notes: >
+          Approved reference target; not yet implemented for Owner. The generic
+          Sidebar primitive stays valid for contextual drawers and is not
+          deprecated by this entry.
 
     - id: capacity-aware-booking
       name: Capacity-Aware Booking
@@ -1540,68 +1590,254 @@ patterns:
           Affected booking in left card, resolution options in right panel.
           Selected option highlighted in blue with blue dot indicator.
 
-      - id: owner-settings-navigation
-    name: Owner Settings Section Navigation
-    category: pattern
-    path: resources/js/layouts/owner-shell.tsx
-    description: >
-      Secondary navigation inside the Owner Settings area. Each destination
-      is a separate page represented by a normal navigation link. The active
-      destination uses primary-colored text and a visible primary underline.
-      Settings navigation is subordinate to the tenant application navigation.
-    authority:
-      decisions:
-        - 206
-        - 207
-        - 209
-        - 211
-      references:
-        - '05-owner-scheduling-configuration.png'
+    - id: owner-settings-navigation
+      name: Owner Settings Section Navigation
+      category: pattern
+      path: resources/js/layouts/owner-shell.tsx
+      description: >
+          Navigation inside the Owner Settings area. Each destination is a
+          separate page represented by a normal navigation link. On desktop the
+          seven destinations are a horizontal text navigation whose active
+          destination uses primary-colored text and a visible primary underline.
+          On mobile the approved composition is the Settings index plus a
+          "Settings" back link on each section page. Settings navigation is
+          subordinate to the tenant application navigation.
+      authority:
+          decisions:
+              - 44
+              - 206
+              - 207
+              - 209
+              - 211
+              - 212
+          references:
+              - "docs/reference-ui/owner-settings/desktop/owner-shell-desktop.png"
+              - "docs/reference-ui/owner-settings/mobile/owner-shell-mobile.png"
+              - "docs/reference-ui/owner-settings/desktop/profile-desktop.png"
+              - "docs/reference-ui/owner-settings/mobile/profile-mobile.png"
+          notes: >
+              Supersedes the Settings navigation shown in
+              05-owner-scheduling-configuration.png. Locked Decisions remain
+              higher authority; the mobile composition is the approved reading
+              of Decisions 206 and 207 ("otherwise appropriately composed")
+              recorded in docs/reference-ui/README.md and the Decision 207
+              mobile amendment.
+      destinations:
+          - Profile
+          - Hours
+          - Services
+          - Resources
+          - Booking Policy
+          - Readiness
+          - Directory
+      desktop:
+          presentation: horizontal text navigation
+          active_state:
+              - primary-colored text
+              - primary-colored underline
+          inactive_state:
+              - neutral text
+          prohibited:
+              - solid-filled active pill as the canonical pattern
+              - secondary Settings sidebar
+              - Billing as a Settings destination
+      mobile:
+          presentation: Settings index plus back link
+          index:
+              - vertical list of the seven destinations
+              - each destination is a navigation link with a label, short description and chevron
+              - Readiness shows its derived status in addition to its label
+          section_pages:
+              - back link to the Settings index above the page heading
+          requirements:
+              - minimum 44px touch targets
+              - do not replace or remove the application bottom navigation
+          not_approved:
+              - horizontally scrollable underline navigation as the mobile composition
+      accessibility:
+          - Use a nav landmark labelled "Settings"
+          - Use aria-current="page" on the active destination
+          - Preserve visible keyboard focus
+          - Warning or readiness state must not rely on color alone
+          - Use navigation links rather than ARIA tabs
+      page_heading:
+          ownership: page
+          rule: >
+              Each Settings page owns its own meaningful h1 (see
+              owner-settings-page-heading). The shared shell must not hardcode
+              one generic Scheduling configuration heading for all Settings pages.
+      status: proposed
       notes: >
-        Where the older reference conflicts with Decisions 206, 207 or 209,
-        the Locked Decisions take precedence until replacement Owner Settings
-        references are approved.
-    destinations:
-      - Profile
-      - Hours
-      - Services
-      - Resources
-      - Booking Policy
-      - Readiness
-      - Directory
-    desktop:
-      presentation: horizontal text navigation
-      active_state:
-        - primary-colored text
-        - primary-colored underline
-      inactive_state:
-        - neutral text
-      prohibited:
-        - solid-filled active pill as the canonical pattern
-        - secondary Settings sidebar
-    mobile:
-      presentation: horizontally scrollable secondary navigation
-      requirements:
-        - preserve active underline
-        - minimum 44px touch targets
-        - avoid uncontrolled multi-row wrapping
-        - do not replace the application bottom navigation
-    accessibility:
-      - Use a nav landmark labelled "Settings"
-      - Use aria-current="page" on the active destination
-      - Preserve visible keyboard focus
-      - Warning or readiness state must not rely on color alone
-      - Use navigation links rather than ARIA tabs
-    page_heading:
-      ownership: page
-      rule: >
-        Each Settings page owns its own meaningful h1 according to
-        Decision 209. The shared shell must not hardcode one generic
-        Scheduling configuration heading for all Settings pages.
-    status: stable
-    notes: >
-      OWNER ONLY and publication/readiness indicators are contextual status,
-      not part of the Settings navigation itself.
+          Approved reference target; owner-shell.tsx still renders filled pill
+          tabs, tracked by the deprecated entry owner-settings-filled-pill-navigation.
+          The branch and publication indicators are contextual status, not part
+          of the Settings navigation itself.
+
+    - id: owner-settings-page-heading
+      name: Owner Settings Page Heading
+      category: pattern
+      description: >
+          Page-owned heading and supporting description for each Owner Settings
+          page. On desktop the h1 reads "Settings · <Section>" beneath a SETTINGS
+          eyebrow. On mobile the visible h1 is the literal short section name
+          (Profile, Hours, Services, Resources, Booking Policy, Readiness,
+          Directory) placed under the Settings back link with its description
+          beneath it. The Settings index owns a "Settings" h1.
+      authority:
+          decisions:
+              - 207
+              - 209
+              - 211
+              - 212
+          references:
+              - "docs/reference-ui/owner-settings/desktop/profile-desktop.png"
+              - "docs/reference-ui/owner-settings/desktop/services-desktop.png"
+              - "docs/reference-ui/owner-settings/mobile/profile-mobile.png"
+              - "docs/reference-ui/owner-settings/mobile/services-mobile.png"
+          notes: >
+              Decision 209 defines "Settings · <Section>" as the page title. The
+              approved mobile references lock the literal short heading as the
+              visible mobile h1; the Decision 209 mobile amendment permits the
+              visible mobile h1 to omit the "Settings ·" prefix while the
+              accessible page title stays "Settings · <Section>". This entry
+              records that interpretation and does not override Decision 209.
+      accessibility:
+          - Exactly one h1 per page, owned by the page and not by the shell
+          - Document title uses "Settings · <Section>"
+          - Heading hierarchy continues with section card headings as h2
+      responsive: >
+          Desktop heading carries the Settings prefix. Mobile heading is the
+          short section name under the back link.
+      status: proposed
+      notes: >
+          Approved reference target. The shell must not hardcode a generic
+          heading for all Settings pages.
+
+    - id: owner-branch-publication-context
+      name: Owner Branch and Publication Context
+      category: pattern
+      description: >
+          Branch identity and publication or readiness status shown as context,
+          not as navigation. Desktop shows the branch name and Published chips
+          in the page header and a Published chip under the branch name in the
+          sidebar. Mobile shows the business name, branch name and a Published
+          chip in the page header.
+      authority:
+          decisions:
+              - 44
+              - 206
+              - 208
+              - 211
+              - 212
+          references:
+              - "docs/reference-ui/owner-settings/desktop/owner-shell-desktop.png"
+              - "docs/reference-ui/owner-settings/mobile/owner-shell-mobile.png"
+      components:
+          - StatusChip
+      use_cases:
+          - Owner shell header on every Owner Settings page
+      accessibility:
+          - Status is text, never color alone
+          - Chips are not interactive and are not part of the Settings navigation
+      responsive: >
+          Desktop places chips at the right of the page header. Mobile places the
+          Published chip at the right of the shell header.
+      status: proposed
+      notes: >
+          The branch chip is context, not a branch selector (one active branch
+          in the MVP).
+
+    - id: owner-settings-responsive-composition
+      name: Owner Settings Responsive Composition
+      category: pattern
+      description: >
+          Approved shell, Settings index and Settings page composition at the two
+          represented viewports. Desktop (1600x1000) uses the dark sidebar, a
+          page header with heading and context chips, underline Settings
+          navigation and a content area of rounded section cards in one to three
+          columns with primary actions at the end of the card or form. Mobile
+          (390x844) uses a header, a Settings back link, a page heading with
+          description, a single column of section cards and the bottom
+          navigation with More active.
+      authority:
+          decisions:
+              - 44
+              - 46
+              - 47
+              - 201
+              - 206
+              - 207
+              - 208
+              - 209
+              - 210
+              - 211
+              - 212
+          references:
+              - "docs/reference-ui/owner-settings/desktop/ (all eight)"
+              - "docs/reference-ui/owner-settings/mobile/ (all eight)"
+          notes: >
+              Approved only for the shell, the Settings index and the seven pages
+              at the two viewports shown. Rendering artifacts in the images
+              (overlapping buttons, tofu glyphs, overflowing or clipped text,
+              placeholder icons) are non-authoritative. Loading, empty, error,
+              validation and success states are not represented.
+      components:
+          - SectionCard
+          - StatusChip
+      use_cases:
+          - Owner Settings Profile, Hours, Services, Resources, Booking Policy, Readiness and Directory pages
+      accessibility:
+          - Cards use real headings
+          - Form fields have associated labels
+          - Status and readiness use text in addition to color
+      responsive: >
+          Tablet may interpolate between the two approved compositions without a
+          third paradigm.
+      status: proposed
+      notes: >
+          Registers the composition, not screen-local view code. Existing
+          SectionCard and StatusChip are reused.
+
+    - id: owner-mobile-collapsible-shell
+      name: Owner Mobile Collapsible Sidebar Shell (deprecated)
+      category: pattern
+      description: >
+          The Owner shell collapsing the desktop sidebar into a compact top bar,
+          hamburger or mobile sidebar as the primary mobile navigation.
+      status: deprecated
+      successor:
+          - tenant-mobile-bottom-navigation
+          - tenant-application-navigation
+      authority:
+          decisions:
+              - 46
+              - 47
+              - 206
+              - 212
+      notes: >
+          Replaced by native-style bottom navigation with More. owner-shell.tsx
+          still renders the older compact top bar below lg; existing use requires
+          migration. Do not use for new work. The generic Sidebar primitive and
+          legitimate contextual drawers or sheets are not deprecated.
+
+    - id: owner-settings-filled-pill-navigation
+      name: Owner Settings Filled-Pill Navigation (deprecated)
+      category: pattern
+      description: >
+          Owner Settings tabs presented as filled pills (solid primary
+          background on the active destination) beside an OWNER ONLY marker.
+      status: deprecated
+      successor:
+          - owner-settings-navigation
+      authority:
+          decisions:
+              - 207
+              - 209
+              - 212
+      notes: >
+          Replaced by the underline desktop navigation and the mobile Settings
+          index with back link. owner-shell.tsx still renders filled pills;
+          existing use requires migration. Do not use for new work.
 
     - id: multi-option-selection
       name: Multi-Option Selection (Dialog or Inline)

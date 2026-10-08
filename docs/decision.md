@@ -6,13 +6,13 @@ Web/mobile-based SaaS booking and operations platform for car and motorcycle was
 
 ## Planning Status
 
-- Decisions captured: **1–200**
+- Decisions captured: **1–212**
 - Current project mode: **Fresh project**
 - Planning approach: **Decision-driven discovery, later accelerated to up to 5 questions per round**
 - Decision discovery status: **Effectively complete**
 - Next planning phase: **Planning documents → reference UI → vertical roadmap/specs → quality gate → final ZIP**
 - Important unresolved items: **None currently identified**
-- Last resolved decision: **Decision 200, customer actions during tenant restriction**
+- Last resolved decision: **Decision 212, Reference UI approval and locking**
 
 ---
 
@@ -1373,6 +1373,15 @@ It must:
 
 Entering Settings must not replace or remove the tenant application bottom navigation defined in Decision 206.
 
+##### Mobile amendment (2026-10-08)
+
+The approved Owner Settings mobile references (`docs/reference-ui/owner-settings/mobile/`) compose mobile Settings navigation as a Settings index page plus a back link, which is the approved appropriate composition for mobile:
+
+- Entering Settings from `More` shows the Settings index: a vertical list of the seven destinations, each a navigation link with a label, short description, and a chevron; a destination that reports status (for example `Ready`) shows that status in addition to its label.
+- Each Settings section page shows a `‹ Settings` back link above the page heading that returns to the Settings index.
+- The horizontally scrollable underline navigation remains the required desktop pattern and is permitted on mobile only where an approved reference shows it; it is not the approved mobile composition.
+- The tenant application bottom navigation stays visible on the index and on every section page, with `More` shown as the active destination.
+
 #### Accessibility
 
 Each Settings destination is a normal navigation link because each section is a separate page.
@@ -1534,9 +1543,13 @@ The section-specific page heading must remain visible and concise on mobile.
 
 Avoid duplicating generic headings that consume vertical space without adding context.
 
-The mobile hierarchy remains:
+The mobile hierarchy is:
 
-`Application navigation → Settings navigation → Current Settings page → Content`
+`Application navigation → Settings index or back link → Current Settings page → Content`
+
+##### Mobile amendment (2026-10-08)
+
+The approved mobile references show the section heading as the section name (for example `Services`) placed directly under the `‹ Settings` back link, with the supporting description beneath it. The `Settings · <Section>` form remains the required accessible page title and desktop heading; on mobile, the visible `h1` may omit the `Settings ·` prefix because the back link and the Settings index provide that context. The Settings index page itself owns a `Settings` `h1` with its supporting description.
 
 #### Accessibility
 

@@ -99,7 +99,7 @@ Do not infer an uncovered responsive composition and describe it as approved.
 
 When an Approved Reference UI conflicts with a later Locked Decision, the Locked Decision takes precedence.
 
-Reference `05-owner-scheduling-configuration.png` remains partially authoritative for unaffected Owner desktop visual language, but Decisions 206–210 supersede conflicting navigation, Settings navigation, Billing placement, and page-heading behavior.
+Reference `05-owner-scheduling-configuration.png` is Superseded for Owner Settings and is retained as history. The sixteen Owner Settings references under `docs/reference-ui/owner-settings/` were approved on 2026-10-08, and Decisions 206–210 remain higher authority for navigation, Settings navigation, Billing placement, and page-heading behavior.
 
 Material UI work must:
 
@@ -109,15 +109,7 @@ Material UI work must:
 4. Treat uncovered visual behavior as implementation choice rather than a locked contract.
 5. Obtain approval before promoting a material new pattern into the canonical design system.
 
-The Owner Settings redesign requires approved desktop and mobile references for:
-
-- Profile
-- Hours
-- Services
-- Resources
-- Booking Policy
-- Readiness
-- Directory
+Approved desktop and mobile references now exist for the Owner shell, the Settings index, and the seven Settings pages (Profile, Hours, Services, Resources, Booking Policy, Readiness, Directory). They establish the target visual contract; the Owner shell and Settings pages still need a separate implementation and verification task to conform.
 
 Draft references must not be treated as implementation authority.
 

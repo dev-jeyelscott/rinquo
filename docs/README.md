@@ -22,7 +22,7 @@ Status: Approved MVP planning baseline with documented visual-contract gaps.
 4. Vertical roadmap/specs: Complete
 5. Reference UI governance: Defined by Decision 212
 6. Existing representative Reference UI: Approved according to `reference-ui/README.md`
-7. Owner Settings desktop/mobile visual refresh: Pending approval
+7. Owner Settings desktop/mobile visual refresh: Approved (2026-10-08); implementation pending
 8. Final quality gate: Pass with documented visual gaps
 
 ## Authority
@@ -63,21 +63,13 @@ Do not modify planning or design authority solely to make it match existing code
 
 Existing approved references remain authoritative within the scope recorded in the Reference UI manifest.
 
-Reference `05-owner-scheduling-configuration.png` remains partially authoritative for the unaffected Owner desktop visual language.
+Reference `05-owner-scheduling-configuration.png` is Superseded for Owner Settings. It is kept as history and as the only reference for the Owner configuration impact/review visual direction.
 
-Its navigation, Settings navigation, Billing placement, and generic Settings heading are superseded where they conflict with Decisions 206–210.
+The sixteen Owner Settings references under `docs/reference-ui/owner-settings/` (shell, Profile, Hours, Services, Resources, Booking Policy, Readiness, and Directory, each at desktop and mobile) were approved on 2026-10-08 and are the visual contract for the Owner shell, Settings navigation, page headings, branch/publication context, and page composition at the viewports they represent.
 
-The seven Owner Settings pages still require approved desktop and mobile references:
+Locked Decisions remain higher authority. The manifest records the approved readings of Decisions 206, 207, and 209 for the mobile composition and headings, and lists rendering artifacts that are not locked. Customer desktop, booking desktop, staff mobile, and conflict mobile remain uncovered by Approved Reference UI.
 
-- Profile
-- Hours
-- Services
-- Resources
-- Booking Policy
-- Readiness
-- Directory
-
-Until those references are approved, generated redesigns remain Draft.
+The Owner shell and Settings pages must still be implemented and verified against these references; approval does not mean the current code conforms.
 
 ## Boundary
 

@@ -60,6 +60,8 @@ File presence alone does not constitute approval.
 
 An approved reference is authoritative only for the pages, patterns, states, and viewports it actually represents.
 
+The Owner shell, Settings index, and the seven Owner Settings pages have Approved desktop and mobile references (approved 2026-10-08) under `docs/reference-ui/owner-settings/`. They supersede the Owner Settings portions of reference `05`. Locked Decisions remain higher authority, and the manifest lists rendering artifacts that are not locked. Approval sets the target contract; verify the current implementation separately.
+
 Do not infer unsupported mobile, desktop, responsive, or interaction behavior and describe it as locked.
 
 ### Design system
