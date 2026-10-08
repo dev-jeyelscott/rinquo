@@ -125,16 +125,18 @@ export default function Operations({
                             Refresh
                         </Button>
                     </div>
-                    <WalkInSheet
-                        url={urls.create}
-                        catalog={catalog}
-                        timezone={day.timezone}
-                        unavailableReason={
-                            entitlement.acceptsNewBookings
-                                ? null
-                                : 'New walk-ins and bookings are paused. Existing bookings can still be worked.'
-                        }
-                    />
+                    <div id="walk-in" className="scroll-mt-4">
+                        <WalkInSheet
+                            url={urls.create}
+                            catalog={catalog}
+                            timezone={day.timezone}
+                            unavailableReason={
+                                entitlement.acceptsNewBookings
+                                    ? null
+                                    : 'New walk-ins and bookings are paused. Existing bookings can still be worked.'
+                            }
+                        />
+                    </div>
                 </div>
 
                 {message ? (

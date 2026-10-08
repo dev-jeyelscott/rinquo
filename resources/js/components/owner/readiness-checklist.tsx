@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { CheckCircle2Icon, CircleAlertIcon } from 'lucide-react';
 import { StatusChip } from '@/components/owner/status-chip';
+import { cn } from '@/lib/utils';
 import type { ReadinessItem } from '@/types/owner';
 
 type Props = {
@@ -21,7 +22,7 @@ export function ReadinessChecklist({ items, baseUrl }: Props) {
             {items.map((item) => (
                 <li
                     key={item.key}
-                    className="flex items-start gap-3 rounded-xl border bg-card p-3"
+                    className="flex items-start gap-3 rounded-xl border bg-card p-3 max-sm:items-center max-sm:py-2"
                 >
                     {item.passed ? (
                         <CheckCircle2Icon
@@ -36,7 +37,12 @@ export function ReadinessChecklist({ items, baseUrl }: Props) {
                     )}
                     <div className="grid min-w-0 flex-1 gap-0.5">
                         <span className="font-semibold">{item.label}</span>
-                        <p className="text-sm text-muted-foreground">
+                        <p
+                            className={cn(
+                                'text-sm text-muted-foreground',
+                                item.passed && 'max-sm:sr-only',
+                            )}
+                        >
                             {item.detail}
                         </p>
                         {item.passed ? null : (

@@ -48,6 +48,8 @@
     --color-success-foreground: var(--success-foreground);
     --color-warning: var(--warning);
     --color-warning-foreground: var(--warning-foreground);
+    --color-success-text: var(--success-text);
+    --color-warning-text: var(--warning-text);
     --color-info: var(--info);
     --color-info-foreground: var(--info-foreground);
 
@@ -106,6 +108,9 @@
     --success-foreground: #ffffff;
     --warning: #b45309;
     --warning-foreground: #ffffff;
+    /* Text on 10% status tints (chips, status panels): 4.5:1 or better on white and on secondary/60 */
+    --success-text: #065f46;
+    --warning-text: #92400e;
     --info: #2563eb;
     --info-foreground: #ffffff;
 
@@ -169,6 +174,8 @@
     --success-foreground: #001f3f;
     --warning: #fbbf24;
     --warning-foreground: #001f3f;
+    --success-text: #34d399;
+    --warning-text: #fbbf24;
     --info: #60a5fa;
     --info-foreground: #001f3f;
 
@@ -197,5 +204,18 @@
 
     body {
         @apply bg-background text-foreground;
+    }
+}
+
+/*
+ * A fixed bottom navigation bar must never hide the control that has keyboard
+ * focus (WCAG 2.2 SC 2.4.11). Focus scrolling stops this far above the viewport
+ * edge: bar height (3.5rem + 1px border) + the safe-area inset + a small gap.
+ */
+@media (max-width: 1023.98px) {
+    html:has([data-bottom-nav]) {
+        scroll-padding-bottom: calc(
+            3.5rem + 1px + 0.75rem + env(safe-area-inset-bottom)
+        );
     }
 }

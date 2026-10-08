@@ -22,6 +22,7 @@ use App\Modules\Tenancy\Http\Controllers\OwnerHomeController;
 use App\Modules\Tenancy\Http\Controllers\ProfileController;
 use App\Modules\Tenancy\Http\Controllers\PublicationController;
 use App\Modules\Tenancy\Http\Controllers\PublicShopController;
+use App\Modules\Tenancy\Http\Controllers\SettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -53,6 +54,8 @@ Route::prefix('owner')->name('owner.')->group(function (): void {
             ->middleware('can:manage,organization')
             ->scopeBindings()
             ->group(function (): void {
+                Route::get('/', SettingsController::class)->name('index');
+
                 Route::get('profile', [ProfileController::class, 'show'])->name('profile');
                 Route::patch('profile', [ProfileController::class, 'update'])->name('profile.update');
                 Route::post('media', [ProfileController::class, 'storeMedia'])->name('media.store');

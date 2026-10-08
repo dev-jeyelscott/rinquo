@@ -13,6 +13,7 @@ use Tests\Support\Tenant;
 function settingsRoutes(object $records, $organization): array
 {
     return array_map(fn (array $row): array => $row + [3 => []], [
+        ['get', 'owner.settings.index', []],
         ['get', 'owner.settings.profile', []],
         ['patch', 'owner.settings.profile.update', ['name' => 'Hacked']],
         ['post', 'owner.settings.media.store', []],
@@ -43,6 +44,8 @@ function settingsRoutes(object $records, $organization): array
         ['get', 'owner.settings.readiness', []],
         ['post', 'owner.settings.publish', []],
         ['post', 'owner.settings.unpublish', []],
+        ['get', 'owner.settings.directory', []],
+        ['put', 'owner.settings.directory.update', ['directory_opted_in' => true]],
     ]);
 }
 

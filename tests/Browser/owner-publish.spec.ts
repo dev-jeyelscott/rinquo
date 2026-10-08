@@ -146,9 +146,22 @@ test('an owner configures, publishes and unpublishes automatically a tenant shop
     await page.getByLabel('Shop address').fill(slug);
     await page.getByRole('button', { name: 'Create organization' }).click();
     await expect(
-        page.getByRole('heading', { name: 'Scheduling configuration' }),
+        page.getByRole('heading', { level: 1, name: 'Settings · Profile' }),
     ).toBeVisible();
     const settings = new URL(page.url()).pathname.replace(/\/profile$/, '');
+
+    // The Settings index is the entry point and links to every section.
+    await page.goto(settings);
+    await expect(
+        page.getByRole('heading', { level: 1, name: 'Settings' }),
+    ).toBeVisible();
+    await page
+        .getByRole('region', { name: 'Owner Settings' })
+        .getByRole('link', { name: /^Hours/ })
+        .click();
+    await expect(
+        page.getByRole('heading', { level: 1, name: 'Settings · Hours' }),
+    ).toBeVisible();
 
     // 2. Publishing is disabled and a forged request fails closed.
     await page.goto(`${settings}/readiness`);
@@ -161,7 +174,11 @@ test('an owner configures, publishes and unpublishes automatically a tenant shop
     });
     expect([302, 303, 422]).toContain(forged.status());
     await page.reload();
-    await expect(page.getByText('Draft', { exact: true })).toBeVisible();
+    await expect(
+        page
+            .getByRole('group', { name: 'Branch and publication' })
+            .getByText('Draft', { exact: true }),
+    ).toBeVisible();
     expect((await page.request.get(`/shops/${slug}`)).status()).toBe(404);
 
     // 3. Profile, branch and a logo.
@@ -185,32 +202,48 @@ test('an owner configures, publishes and unpublishes automatically a tenant shop
 
     // 4. Business hours.
     await page.goto(`${settings}/hours`);
-    await page.getByRole('button', { name: 'Add interval' }).click();
+    await page
+        .getByRole('switch', { name: 'Monday open' })
+        .check({ force: true });
     await page.getByRole('button', { name: 'Save business hours' }).click();
     await expect(page.getByText('Business hours saved.')).toBeVisible();
 
     // 5. Resources and capacity.
     await page.goto(`${settings}/resources`);
-    await page.getByLabel(/^New resource type/).fill('Wash bay');
-    await page.getByRole('button', { name: 'Add resource type' }).click();
+    await page
+        .getByRole('button', { name: 'Add resource type', exact: true })
+        .click();
+    const typeForm = page.getByRole('form', { name: 'Add a resource type' });
+    await typeForm.getByLabel(/^New resource type/).fill('Wash bay');
+    await typeForm.getByRole('button', { name: 'Add resource type' }).click();
     await expect(page.getByText('Resource type added.')).toBeVisible();
-    const bay = page.getByRole('group', { name: 'Wash bay' });
+    await page
+        .getByRole('button', { name: 'Add resource', exact: true })
+        .click();
+    const bay = page.getByRole('form', { name: 'Add a physical resource' });
+    await bay.getByLabel(/^Resource type/).selectOption({ label: 'Wash bay' });
     await bay.getByLabel(/^New resource name/).fill('Bay 1');
-    await bay
-        .getByLabel(/^Capacity/)
-        .last()
-        .fill('2');
+    await bay.getByLabel(/^Capacity/).fill('2');
     await bay.getByRole('button', { name: 'Add resource' }).click();
     await expect(page.getByText('Resource added.')).toBeVisible();
 
     // 6. Catalog: vehicle type, service, window, variant and consumption.
     await page.goto(`${settings}/services`);
-    await page.getByLabel(/^New vehicle type/).fill('Sedan');
-    await page.getByRole('button', { name: 'Add vehicle type' }).click();
+    await page
+        .getByRole('button', { name: 'Add vehicle type', exact: true })
+        .click();
+    const vehicleForm = page.getByRole('form', { name: 'Add a vehicle type' });
+    await vehicleForm.getByLabel(/^New vehicle type/).fill('Sedan');
+    await vehicleForm.getByRole('button', { name: 'Add vehicle type' }).click();
     await expect(page.getByText('Vehicle type added.')).toBeVisible();
-    await page.getByLabel(/^New service name/).fill('Full wash');
-    await page.getByRole('button', { name: 'Add service' }).click();
+    await page
+        .getByRole('button', { name: 'Add service', exact: true })
+        .click();
+    const serviceForm = page.getByRole('form', { name: 'Add a service' });
+    await serviceForm.getByLabel(/^New service name/).fill('Full wash');
+    await serviceForm.getByRole('button', { name: 'Add service' }).click();
     await expect(page.getByText('Service added.')).toBeVisible();
+    await page.getByRole('button', { name: 'Edit service Full wash' }).click();
 
     const service = page.getByRole('group', { name: 'Full wash' });
     await service.getByRole('button', { name: 'Add interval' }).click();
@@ -248,8 +281,12 @@ test('an owner configures, publishes and unpublishes automatically a tenant shop
     await expect(publish).toBeEnabled();
     await publish.click();
     await expect(page.getByText('Your shop is published.')).toBeVisible();
+    // The publication status renders once for small screens and once inside the
+    // Publish card; only the copy shown at this viewport counts.
     await expect(
-        page.getByText(/Published on .* \(Asia\/Manila\)/),
+        page
+            .getByText(/Published on .* \(Asia\/Manila\)/)
+            .locator('visible=true'),
     ).toBeVisible();
 
     // 8. A signed-out visitor sees the branded catalog and the booking entry points.
@@ -274,11 +311,16 @@ test('an owner configures, publishes and unpublishes automatically a tenant shop
 
     // 9. Removing the last capacity unpublishes the shop immediately.
     await page.goto(`${settings}/resources`);
+    await page.getByRole('button', { name: 'Edit resource Bay 1' }).click();
     const resource = page.getByRole('form', { name: 'Edit resource Bay 1' });
     await resource.getByLabel('Active').uncheck();
     await resource.getByRole('button', { name: 'Save resource' }).click();
     await expect(page.getByText('Resource saved.')).toBeVisible();
-    await expect(page.getByText('Draft', { exact: true })).toBeVisible();
+    await expect(
+        page
+            .getByRole('group', { name: 'Branch and publication' })
+            .getByText('Draft', { exact: true }),
+    ).toBeVisible();
 
     const gone = await shop.goto(`/shops/${slug}`);
     expect(gone?.status()).toBe(404);
@@ -303,6 +345,6 @@ test('an owner configures, publishes and unpublishes automatically a tenant shop
     await signIn(page, email);
     await expect(page).toHaveURL(/\/settings\/profile/);
     await expect(
-        page.getByRole('heading', { name: 'Scheduling configuration' }),
+        page.getByRole('heading', { level: 1, name: 'Settings · Profile' }),
     ).toBeVisible();
 });

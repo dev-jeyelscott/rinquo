@@ -1,6 +1,14 @@
 import { Link, usePage } from '@inertiajs/react';
-import { CheckCircle2Icon, CircleAlertIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
+import {
+    CalendarCheckIcon,
+    CheckCircle2Icon,
+    CircleAlertIcon,
+    EllipsisIcon,
+    LayoutDashboardIcon,
+    ListOrderedIcon,
+    UserPlusIcon,
+} from 'lucide-react';
+import type { ComponentType, ReactNode } from 'react';
 import { EntitlementBanner } from '@/components/owner/entitlement-banner';
 import { ScheduleImpactDialog } from '@/components/owner/schedule-impact-dialog';
 import { StatusChip } from '@/components/owner/status-chip';
@@ -10,30 +18,18 @@ import { ownerRoutes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import type { OwnerPageProps } from '@/types/owner';
 
-const TABS = [
-    { key: 'profile', label: 'Profile' },
-    { key: 'hours', label: 'Business hours' },
-    { key: 'services', label: 'Services' },
-    { key: 'resources', label: 'Resources' },
-    { key: 'booking-policy', label: 'Booking policy' },
-    { key: 'readiness', label: 'Readiness' },
-    { key: 'directory', label: 'Directory' },
-] as const;
-
 /**
- * Owner settings shell (reference screen 05). A dark navy sidebar holds the
- * wordmark, the organization and the destinations that exist today (Settings
- * and Booking requests); on small screens it becomes a compact top bar with the
- * destinations beneath it. The page header carries the title and branch chip,
- * and the configuration tabs sit in the content area as pills next to the OWNER
- * ONLY marker. The Booking requests page, which any member may open, hides the
- * Owner-only tabs. The shell only presents; the server policy decides who can
- * read or change anything.
+ * Shared tenant application shell for Owner pages (Decisions 46, 47, 206-210).
+ * Desktop: the dark sidebar with the five primary destinations. Mobile: a
+ * header with the business, branch and publication context plus the native-style
+ * bottom navigation; Settings is reached through More. Settings pages own their
+ * heading and Settings navigation (see SettingsPageHeader); non-Settings pages
+ * keep the shell-owned page heading. The shell only presents; the server policy
+ * decides who can read or change anything.
  */
 export default function OwnerShell({ children }: { children: ReactNode }) {
     const { props, url } = usePage<OwnerPageProps>();
-    const { appName, auth, flash, organization, readiness, entitlement } =
-        props;
+    const { appName, auth, flash, organization, entitlement } = props;
     const timezone = props.displayTimezone ?? 'Asia/Manila';
     const accessError = props.errors?.access;
     const onRequests = url.startsWith(organization.bookingRequestsUrl);
@@ -42,29 +38,42 @@ export default function OwnerShell({ children }: { children: ReactNode }) {
     const onBilling = url.startsWith(organization.billingUrl);
     const onSettings =
         !onRequests && !onOperations && !onConflicts && !onBilling;
-    const failing = new Set<string>(
-        readiness.items.filter((item) => !item.passed).map((i) => i.tab),
+    const context = (
+        <>
+            {organization.branchName ? (
+                <StatusChip tone="info">{organization.branchName}</StatusChip>
+            ) : null}
+            <StatusChip tone={organization.publishedAt ? 'success' : 'neutral'}>
+                {organization.publishedAt ? 'Published' : 'Draft'}
+            </StatusChip>
+        </>
     );
 
     return (
         <div className="min-h-screen bg-secondary/60 text-foreground lg:flex">
-            <aside className="bg-sidebar text-sidebar-foreground lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:shrink-0 lg:flex-col">
-                <div className="flex items-center justify-between gap-3 px-4 py-3 lg:block lg:px-6 lg:py-6">
-                    <div className="min-w-0">
-                        <p className="text-xl font-semibold tracking-tight">
-                            {appName}
-                        </p>
+            <aside className="hidden bg-sidebar text-sidebar-foreground lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:shrink-0 lg:flex-col">
+                <div className="grid gap-1 px-6 py-6">
+                    <p className="text-3xl font-semibold tracking-tight">
+                        {appName}
+                    </p>
+                    <p className="truncate font-semibold">
+                        {organization.name}
+                    </p>
+                    {organization.branchName ? (
                         <p className="truncate text-sm text-sidebar-foreground/70">
-                            {organization.name}
+                            {organization.branchName}
                         </p>
-                    </div>
-                    <div className="lg:hidden">
-                        <SignOut />
-                    </div>
+                    ) : null}
+                    <StatusChip
+                        tone={organization.publishedAt ? 'success' : 'neutral'}
+                        className="mt-2 w-fit bg-background text-success transition-none"
+                    >
+                        {organization.publishedAt ? 'Published' : 'Draft'}
+                    </StatusChip>
                 </div>
                 <nav
                     aria-label="Main"
-                    className="flex gap-2 px-3 pb-3 lg:grid lg:pb-0"
+                    className="mx-4 grid gap-2 border-t border-sidebar-border pt-4"
                 >
                     <MainLink
                         href={organization.operationsUrl}
@@ -73,36 +82,28 @@ export default function OwnerShell({ children }: { children: ReactNode }) {
                         Operations
                     </MainLink>
                     <MainLink
+                        href={organization.bookingRequestsUrl}
+                        active={onRequests}
+                    >
+                        Booking Requests
+                    </MainLink>
+                    <MainLink
                         href={organization.conflictsUrl}
                         active={onConflicts}
                     >
                         Conflicts
-                        {organization.unresolvedConflicts > 0 ? (
-                            <span
-                                className="ml-2 rounded-full bg-warning px-2 text-xs font-semibold text-warning-foreground tabular-nums"
-                                aria-label={`${organization.unresolvedConflicts} unresolved`}
-                            >
-                                {organization.unresolvedConflicts}
-                            </span>
-                        ) : null}
-                    </MainLink>
-                    <MainLink
-                        href={organization.bookingRequestsUrl}
-                        active={onRequests}
-                    >
-                        Booking requests
+                        <ConflictCount
+                            count={organization.unresolvedConflicts}
+                        />
                     </MainLink>
                     <MainLink href={organization.billingUrl} active={onBilling}>
                         Billing
                     </MainLink>
-                    <MainLink
-                        href={`${organization.baseUrl}/profile`}
-                        active={onSettings}
-                    >
+                    <MainLink href={organization.baseUrl} active={onSettings}>
                         Settings
                     </MainLink>
                 </nav>
-                <div className="mt-auto hidden px-6 py-4 text-sm lg:block">
+                <div className="mx-4 mt-auto border-t border-sidebar-border px-2 py-4 text-sm">
                     <p className="truncate text-sidebar-foreground/70">
                         {auth.user?.email}
                     </p>
@@ -110,24 +111,21 @@ export default function OwnerShell({ children }: { children: ReactNode }) {
                 </div>
             </aside>
             <div className="flex min-w-0 flex-1 flex-col">
-                <header className="flex flex-wrap items-center justify-between gap-3 border-b bg-background px-4 py-4 sm:px-8">
-                    <h1 className="text-2xl font-semibold tracking-tight">
-                        {onOperations
-                            ? 'Today’s operations'
-                            : onConflicts
-                              ? 'Scheduling conflicts'
-                              : onRequests
-                                ? 'Booking requests'
-                                : onBilling
-                                  ? 'Billing'
-                                  : 'Scheduling configuration'}
-                    </h1>
-                    <div className="flex flex-wrap items-center gap-2">
+                <header className="flex items-start justify-between gap-3 border-b bg-background px-4 py-4 lg:hidden">
+                    <div className="grid min-w-0 gap-0.5">
+                        <p className="text-2xl font-semibold tracking-tight text-primary">
+                            {appName}
+                        </p>
+                        <p className="truncate font-semibold">
+                            {organization.name}
+                        </p>
                         {organization.branchName ? (
-                            <StatusChip tone="info">
+                            <p className="truncate text-sm text-muted-foreground">
                                 {organization.branchName}
-                            </StatusChip>
+                            </p>
                         ) : null}
+                    </div>
+                    <div className="grid justify-items-end gap-1">
                         <StatusChip
                             tone={
                                 organization.publishedAt ? 'success' : 'neutral'
@@ -135,49 +133,26 @@ export default function OwnerShell({ children }: { children: ReactNode }) {
                         >
                             {organization.publishedAt ? 'Published' : 'Draft'}
                         </StatusChip>
+                        <SignOut />
                     </div>
                 </header>
-                <main className="flex-1 px-4 py-6 sm:px-8">
-                    {!onSettings ? null : (
-                        <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-                            <nav
-                                aria-label="Settings"
-                                className="-mx-1 flex max-w-full gap-2 overflow-x-auto px-1 py-1"
-                            >
-                                {TABS.map((tab) => {
-                                    const href = `${organization.baseUrl}/${tab.key}`;
-                                    const active = url.startsWith(href);
-
-                                    return (
-                                        <Link
-                                            key={tab.key}
-                                            href={href}
-                                            aria-current={
-                                                active ? 'page' : undefined
-                                            }
-                                            className={cn(
-                                                'flex min-h-11 items-center gap-2 rounded-lg border px-4 text-sm font-semibold whitespace-nowrap focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none',
-                                                active
-                                                    ? 'border-primary bg-primary text-primary-foreground'
-                                                    : 'bg-card text-card-foreground hover:bg-accent',
-                                            )}
-                                        >
-                                            {tab.label}
-                                            {failing.has(tab.key) ? (
-                                                <CircleAlertIcon
-                                                    className="size-4"
-                                                    aria-label="Needs attention"
-                                                />
-                                            ) : null}
-                                        </Link>
-                                    );
-                                })}
-                            </nav>
-                            <StatusChip tone="info" caps>
-                                Owner only
-                            </StatusChip>
+                {onSettings ? null : (
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b bg-background px-4 py-4 sm:px-8">
+                        <h1 className="text-2xl font-semibold tracking-tight">
+                            {onOperations
+                                ? 'Today’s operations'
+                                : onConflicts
+                                  ? 'Scheduling conflicts'
+                                  : onRequests
+                                    ? 'Booking requests'
+                                    : 'Billing'}
+                        </h1>
+                        <div className="hidden flex-wrap items-center gap-2 lg:flex">
+                            {context}
                         </div>
-                    )}
+                    </div>
+                )}
+                <main className="flex-1 px-4 pt-6 pb-28 sm:px-8 lg:pt-8 lg:pb-8">
                     <EntitlementBanner
                         entitlement={entitlement}
                         billingUrl={organization.billingUrl}
@@ -214,11 +189,143 @@ export default function OwnerShell({ children }: { children: ReactNode }) {
                             </Alert>
                         ) : null}
                     </div>
+                    {onSettings ? (
+                        <div
+                            aria-label="Branch and publication"
+                            role="group"
+                            className="mb-4 hidden justify-end gap-2 lg:-mb-7 lg:flex"
+                        >
+                            {context}
+                        </div>
+                    ) : null}
                     {children}
+                    <MoreDestinations
+                        conflictsUrl={organization.conflictsUrl}
+                        unresolved={organization.unresolvedConflicts}
+                        billingUrl={organization.billingUrl}
+                        onConflicts={onConflicts}
+                        onBilling={onBilling}
+                    />
                     <ScheduleImpactDialog />
                 </main>
             </div>
+            <nav
+                aria-label="Primary mobile"
+                data-bottom-nav
+                className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-background pb-[env(safe-area-inset-bottom)] lg:hidden"
+            >
+                <BottomLink
+                    href={organization.operationsUrl}
+                    label="Dashboard"
+                    icon={LayoutDashboardIcon}
+                    active={onOperations}
+                />
+                <BottomLink
+                    href={`${organization.operationsUrl}#queue-heading`}
+                    label="Queue"
+                    icon={ListOrderedIcon}
+                />
+                <BottomLink
+                    href={organization.bookingRequestsUrl}
+                    label="Bookings"
+                    icon={CalendarCheckIcon}
+                    active={onRequests}
+                />
+                <BottomLink
+                    href={`${organization.operationsUrl}#walk-in`}
+                    label="Walk-in"
+                    icon={UserPlusIcon}
+                />
+                <BottomLink
+                    href={organization.baseUrl}
+                    label="More"
+                    icon={EllipsisIcon}
+                    active={onSettings || onBilling || onConflicts}
+                />
+            </nav>
         </div>
+    );
+}
+
+function ConflictCount({ count }: { count: number }) {
+    if (count <= 0) {
+        return null;
+    }
+
+    return (
+        <span
+            className="ml-2 rounded-full bg-warning px-2 text-xs font-semibold text-warning-foreground tabular-nums"
+            aria-label={`${count} unresolved`}
+        >
+            {count > 99 ? '99+' : count}
+        </span>
+    );
+}
+
+/** Mobile-only secondary destinations that the bottom bar's More stands for. */
+function MoreDestinations({
+    conflictsUrl,
+    unresolved,
+    billingUrl,
+    onConflicts,
+    onBilling,
+}: {
+    conflictsUrl: string;
+    unresolved: number;
+    billingUrl: string;
+    onConflicts: boolean;
+    onBilling: boolean;
+}) {
+    const link =
+        'flex min-h-11 items-center rounded-lg border bg-card px-4 text-sm font-semibold focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none';
+
+    return (
+        <nav
+            aria-label="More destinations"
+            className="mt-8 grid gap-2 lg:hidden"
+        >
+            <Link
+                href={conflictsUrl}
+                className={link}
+                aria-current={onConflicts ? 'page' : undefined}
+            >
+                Conflicts
+                <ConflictCount count={unresolved} />
+            </Link>
+            <Link
+                href={billingUrl}
+                className={link}
+                aria-current={onBilling ? 'page' : undefined}
+            >
+                Billing
+            </Link>
+        </nav>
+    );
+}
+
+function BottomLink({
+    href,
+    label,
+    icon: Icon,
+    active = false,
+}: {
+    href: string;
+    label: string;
+    icon: ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
+    active?: boolean;
+}) {
+    return (
+        <Link
+            href={href}
+            aria-current={active ? 'page' : undefined}
+            className={cn(
+                'flex min-h-14 min-w-11 flex-col items-center justify-center gap-0.5 text-xs font-medium focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset',
+                active ? 'text-primary' : 'text-muted-foreground',
+            )}
+        >
+            <Icon className="size-5" aria-hidden={true} />
+            {label}
+        </Link>
     );
 }
 
@@ -236,7 +343,7 @@ function MainLink({
             href={href}
             aria-current={active ? 'page' : undefined}
             className={cn(
-                'flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none',
+                'flex min-h-11 items-center rounded-lg px-4 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none',
                 active
                     ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                     : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/50',
@@ -249,7 +356,12 @@ function MainLink({
 
 function SignOut() {
     return (
-        <Button asChild variant="link" size="sm" className="text-inherit">
+        <Button
+            asChild
+            variant="link"
+            size="sm"
+            className="min-h-11 px-0 text-inherit"
+        >
             <Link href={ownerRoutes.logout} method="post" as="button">
                 Sign out
             </Link>

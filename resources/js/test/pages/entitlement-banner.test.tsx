@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import OwnerShell from '@/layouts/owner-shell';
 import { ACTIVE_ENTITLEMENT, BILLING_URL } from '@/test/fixtures/entitlement';
@@ -138,9 +138,11 @@ describe('Entitlement banner in the Owner shell', () => {
     it('lists Billing as a main destination', () => {
         shell({ state: 'paid' });
 
-        expect(screen.getByRole('link', { name: 'Billing' })).toHaveAttribute(
-            'href',
-            BILLING_URL,
-        );
+        expect(
+            within(screen.getByRole('navigation', { name: 'Main' })).getByRole(
+                'link',
+                { name: 'Billing' },
+            ),
+        ).toHaveAttribute('href', BILLING_URL);
     });
 });

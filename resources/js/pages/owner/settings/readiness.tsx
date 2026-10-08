@@ -1,8 +1,9 @@
-import { Head, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import type { ReactNode } from 'react';
 import { ConfirmAction } from '@/components/owner/confirm-action';
 import { ReadinessChecklist } from '@/components/owner/readiness-checklist';
 import { SectionCard } from '@/components/owner/section-card';
+import { SettingsPageHeader } from '@/components/owner/settings-page-header';
 import { StatusChip } from '@/components/owner/status-chip';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -32,10 +33,12 @@ function StatusPanel({
     tone,
     title,
     children,
+    className,
 }: {
     tone: PanelTone;
     title: string;
     children: ReactNode;
+    className?: string;
 }) {
     return (
         <div
@@ -43,8 +46,9 @@ function StatusPanel({
             className={cn(
                 'grid gap-1 rounded-xl p-4',
                 tone === 'success'
-                    ? 'bg-success/10 text-success'
-                    : 'bg-warning/10 text-warning',
+                    ? 'bg-success/10 text-success-text'
+                    : 'bg-warning/10 text-warning-text',
+                className,
             )}
         >
             <p className="text-lg leading-snug font-semibold">{title}</p>
@@ -65,10 +69,52 @@ export default function Readiness({
         .publish;
     const failingCount = readiness.items.filter((item) => !item.passed).length;
 
+    /**
+     * The publication status leads on small screens (above the checklist) and
+     * sits inside the Publish card from xl up; `placement` picks which copy is
+     * visible, so only one is ever rendered to assistive technology.
+     */
+    const publicationStatus = (placement: 'lead' | 'card') => {
+        const className = placement === 'lead' ? 'xl:hidden' : 'max-xl:hidden';
+
+        if (published && organization.publishedAt) {
+            return (
+                <StatusPanel
+                    tone="success"
+                    title="Your shop is live"
+                    className={className}
+                >
+                    Published on{' '}
+                    {formatInstant(organization.publishedAt, branchTimezone)} (
+                    {branchTimezone}).
+                </StatusPanel>
+            );
+        }
+
+        return readiness.isReady ? (
+            <StatusPanel
+                tone="success"
+                title="Ready to publish"
+                className={className}
+            >
+                All checks pass. You can publish now.
+            </StatusPanel>
+        ) : (
+            <StatusPanel
+                tone="warning"
+                title={`${failingCount} ${failingCount === 1 ? 'check needs' : 'checks need'} attention`}
+                className={className}
+            >
+                Complete the checklist to enable publishing.
+            </StatusPanel>
+        );
+    };
+
     return (
         <>
-            <Head title="Readiness" />
+            <SettingsPageHeader section="readiness" />
             <div className="grid items-start gap-6 xl:grid-cols-[3fr_2fr]">
+                {publicationStatus('lead')}
                 <SectionCard
                     title="Readiness checklist"
                     description="Every check must pass before you can publish. The server re-checks when you press Publish."
@@ -144,17 +190,7 @@ export default function Readiness({
                     ) : null}
                     {published && organization.publishedAt ? (
                         <>
-                            <StatusPanel
-                                tone="success"
-                                title="Your shop is live"
-                            >
-                                Published on{' '}
-                                {formatInstant(
-                                    organization.publishedAt,
-                                    branchTimezone,
-                                )}{' '}
-                                ({branchTimezone}).
-                            </StatusPanel>
+                            {publicationStatus('card')}
                             <p className="text-sm">
                                 Public page:{' '}
                                 <a
@@ -184,21 +220,7 @@ export default function Readiness({
                         </>
                     ) : (
                         <>
-                            {readiness.isReady ? (
-                                <StatusPanel
-                                    tone="success"
-                                    title="Ready to publish"
-                                >
-                                    All checks pass. You can publish now.
-                                </StatusPanel>
-                            ) : (
-                                <StatusPanel
-                                    tone="warning"
-                                    title={`${failingCount} ${failingCount === 1 ? 'check needs' : 'checks need'} attention`}
-                                >
-                                    Complete the checklist to enable publishing.
-                                </StatusPanel>
-                            )}
+                            {publicationStatus('card')}
                             <Button
                                 type="button"
                                 size="lg"

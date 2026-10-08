@@ -37,7 +37,12 @@ const policy = {
 };
 
 describe('Booking policy settings', () => {
-    beforeEach(() => resetInertia());
+    beforeEach(() =>
+        resetInertia(
+            { organization: owner.organization, readiness: owner.readiness },
+            `${BASE}/booking-policy`,
+        ),
+    );
 
     it('explains the consequence of each approval mode and hides the window until it matters', () => {
         render(<BookingPolicy {...owner} policy={policy} />);
@@ -62,6 +67,36 @@ describe('Booking policy settings', () => {
         expect(screen.getByLabelText(/Approval response window/)).toHaveValue(
             120,
         );
+    });
+
+    it('owns exactly one "Settings · Booking Policy" heading and no nested shell', () => {
+        render(<BookingPolicy {...owner} policy={policy} />);
+
+        expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+        expect(
+            screen.getByRole('heading', {
+                level: 1,
+                name: 'Settings · Booking Policy',
+            }),
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByRole('navigation', { name: 'Primary mobile' }),
+        ).not.toBeInTheDocument();
+    });
+
+    it('groups the rules into confirmation, scheduling and cancellation cards', () => {
+        render(<BookingPolicy {...owner} policy={policy} />);
+
+        for (const title of [
+            'Confirmation mode',
+            'Scheduling rules',
+            'Cancellation and rescheduling',
+        ]) {
+            expect(
+                screen.getByRole('heading', { level: 2, name: title }),
+            ).toBeInTheDocument();
+        }
+        expect(screen.getByText(/Self-service cutoff/)).toBeInTheDocument();
     });
 
     it('shows the minimum notice as hours and minutes and submits integer minutes', () => {

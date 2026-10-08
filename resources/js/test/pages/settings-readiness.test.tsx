@@ -73,7 +73,12 @@ function renderPage(
 }
 
 describe('Readiness page', () => {
-    beforeEach(() => resetInertia());
+    beforeEach(() =>
+        resetInertia(
+            { organization, readiness: failing },
+            '/owner/organizations/1/settings/readiness',
+        ),
+    );
 
     it('disables Publish while any check fails and explains why', () => {
         renderPage();
@@ -81,20 +86,60 @@ describe('Readiness page', () => {
         expect(
             screen.getByRole('button', { name: 'Publish shop' }),
         ).toBeDisabled();
-        expect(screen.getByRole('status')).toHaveTextContent(
-            'Complete the checklist',
-        );
-        expect(screen.getByRole('status')).toHaveTextContent(
-            '1 check needs attention',
-        );
+        for (const status of screen.getAllByRole('status')) {
+            expect(status).toHaveTextContent('Complete the checklist');
+            expect(status).toHaveTextContent('1 check needs attention');
+        }
+    });
+
+    it('leads with the publication status before the checklist (mobile status-first order)', () => {
+        renderPage({ readiness: passing });
+
+        const [lead, card] = screen.getAllByRole('status');
+        const checklist = screen.getByRole('heading', {
+            level: 2,
+            name: 'Readiness checklist',
+        });
+
+        expect(lead).toHaveClass('xl:hidden');
+        expect(card).toHaveClass('max-xl:hidden');
+        expect(
+            lead.compareDocumentPosition(checklist) &
+                Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
+    });
+
+    it('keeps passed checklist detail available to assistive tech but hidden on small screens', () => {
+        renderPage({ readiness: passing });
+
+        const detail = screen
+            .getByRole('list', { name: 'Readiness checklist' })
+            .querySelector('p');
+
+        expect(detail).toHaveClass('max-sm:sr-only');
+    });
+
+    it('owns exactly one "Settings · Readiness" heading and no nested shell', () => {
+        renderPage();
+
+        expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+        expect(
+            screen.getByRole('heading', {
+                level: 1,
+                name: 'Settings · Readiness',
+            }),
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByRole('navigation', { name: 'Primary mobile' }),
+        ).not.toBeInTheDocument();
     });
 
     it('says the shop is ready when every check passes', () => {
         renderPage({ readiness: passing });
 
-        expect(screen.getByRole('status')).toHaveTextContent(
-            'Ready to publish',
-        );
+        for (const status of screen.getAllByRole('status')) {
+            expect(status).toHaveTextContent('Ready to publish');
+        }
     });
 
     it('lists unavailable combinations with the reason (missing consumption)', () => {
@@ -137,6 +182,26 @@ describe('Readiness page', () => {
         );
     });
 
+    it('uses the AA-contrast tint text tokens on the status panels', () => {
+        const live = renderPage({
+            readiness: passing,
+            organization: {
+                ...organization,
+                publishedAt: '2026-10-05T01:30:00+00:00',
+            },
+        });
+        for (const status of screen.getAllByRole('status')) {
+            expect(status.className).toContain('text-success-text');
+            expect(status.className).not.toMatch(/text-success(\s|$)/);
+        }
+        live.unmount();
+
+        renderPage();
+        for (const status of screen.getAllByRole('status')) {
+            expect(status.className).toContain('text-warning-text');
+        }
+    });
+
     it('shows the publication instant in the branch timezone with the public link', () => {
         renderPage({
             readiness: passing,
@@ -147,8 +212,10 @@ describe('Readiness page', () => {
         });
 
         // 01:30 UTC is 9:30 AM in Asia/Manila.
-        expect(screen.getByRole('status')).toHaveTextContent(/Oct 5, 2026/);
-        expect(screen.getByRole('status')).toHaveTextContent(/9:30\s?am/i);
+        for (const status of screen.getAllByRole('status')) {
+            expect(status).toHaveTextContent(/Oct 5, 2026/);
+            expect(status).toHaveTextContent(/9:30\s?am/i);
+        }
         expect(
             screen.getByRole('link', { name: 'http://localhost/shops/shine' }),
         ).toBeInTheDocument();

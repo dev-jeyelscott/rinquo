@@ -1,9 +1,9 @@
-import { Head } from '@inertiajs/react';
 import { ConfigForm } from '@/components/owner/config-form';
-import type { ConfigField } from '@/components/owner/config-form';
+import type { ConfigField, ConfigGroup } from '@/components/owner/config-form';
 import { MediaManager } from '@/components/owner/media-manager';
 import type { MediaItem } from '@/components/owner/media-manager';
 import { SectionCard } from '@/components/owner/section-card';
+import { SettingsPageHeader } from '@/components/owner/settings-page-header';
 import type { OwnerPageProps } from '@/types/owner';
 
 type Props = OwnerPageProps & {
@@ -45,6 +45,7 @@ const FIELDS: ConfigField[] = [
         name: 'description',
         label: 'Description',
         required: true,
+        wide: true,
         maxLength: 2000,
     },
     {
@@ -79,6 +80,27 @@ const FIELDS: ConfigField[] = [
     { kind: 'text', name: 'phone', label: 'Phone (optional)', maxLength: 40 },
 ];
 
+const GROUPS: ConfigGroup[] = [
+    {
+        title: 'Public profile',
+        description:
+            'This information controls your tenant-facing public shop identity.',
+        fields: ['name', 'shop_url', 'tagline', 'brand_color', 'description'],
+    },
+    {
+        title: 'Branch information',
+        description:
+            'One active branch in the MVP. This is context, not a branch selector.',
+        fields: [
+            'branch_name',
+            'address_line',
+            'city',
+            'phone',
+            'branch_timezone',
+        ],
+    },
+];
+
 export default function Profile({
     organization,
     profile,
@@ -86,43 +108,53 @@ export default function Profile({
     media,
     galleryLimit,
 }: Props) {
+    const fields: ConfigField[] = [
+        ...FIELDS,
+        {
+            kind: 'static',
+            name: 'shop_url',
+            label: 'Public shop URL',
+            value: `/shops/${profile.slug}`,
+        },
+        {
+            kind: 'static',
+            name: 'branch_timezone',
+            label: 'Timezone',
+            value: branch.timezone,
+        },
+    ];
+
     return (
-        <>
-            <Head title="Profile" />
-            <div className="grid items-start gap-6 xl:grid-cols-[3fr_2fr]">
-                <SectionCard
-                    title="Public profile and branch"
-                    description={`Shop address: /shops/${profile.slug}. The branch uses the ${branch.timezone} timezone.`}
-                >
-                    <ConfigForm
-                        method="patch"
-                        url={`${organization.baseUrl}/profile`}
-                        title="Public profile and branch"
-                        submitLabel="Save profile"
-                        fields={FIELDS}
-                        initial={{
-                            name: profile.name,
-                            tagline: profile.tagline,
-                            description: profile.description,
-                            brand_color: profile.brandColor,
-                            branch_name: branch.name,
-                            address_line: branch.addressLine,
-                            city: branch.city,
-                            phone: branch.phone,
-                        }}
-                    />
-                </SectionCard>
-                <SectionCard
-                    title="Logo and photos"
-                    description="Optional. Missing photos never block publishing."
-                >
-                    <MediaManager
-                        baseUrl={organization.baseUrl}
-                        media={media}
-                        galleryLimit={galleryLimit}
-                    />
-                </SectionCard>
-            </div>
-        </>
+        <div className="grid gap-6">
+            <SettingsPageHeader section="profile" />
+            <ConfigForm
+                method="patch"
+                url={`${organization.baseUrl}/profile`}
+                title="Public profile and branch"
+                submitLabel="Save profile"
+                fields={fields}
+                groups={GROUPS}
+                initial={{
+                    name: profile.name,
+                    tagline: profile.tagline,
+                    description: profile.description,
+                    brand_color: profile.brandColor,
+                    branch_name: branch.name,
+                    address_line: branch.addressLine,
+                    city: branch.city,
+                    phone: branch.phone,
+                }}
+            />
+            <SectionCard
+                title="Media"
+                description="Upload a business logo and optional shop photos. Missing photos never block publishing."
+            >
+                <MediaManager
+                    baseUrl={organization.baseUrl}
+                    media={media}
+                    galleryLimit={galleryLimit}
+                />
+            </SectionCard>
+        </div>
     );
 }

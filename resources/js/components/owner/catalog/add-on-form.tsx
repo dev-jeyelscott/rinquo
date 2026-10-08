@@ -24,6 +24,8 @@ type Props = {
     services: Named[];
     vehicleTypes: Named[];
     submitLabel: string;
+    /** Runs after the server accepts the form (for example to close its panel). */
+    onSuccess?: () => void;
 };
 
 /** Create or edit an add-on with its service and vehicle compatibility. */
@@ -34,6 +36,7 @@ export function AddOnForm({
     services,
     vehicleTypes,
     submitLabel,
+    onSuccess,
 }: Props) {
     const form = useForm({
         name: addOn?.name ?? '',
@@ -66,6 +69,7 @@ export function AddOnForm({
                 if (!addOn) {
                     form.reset();
                 }
+                onSuccess?.();
             },
         });
     }

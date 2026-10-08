@@ -23,3 +23,17 @@ export function formatMinutes(minutes: number): string {
 
     return rest === 0 ? `${hours} h` : `${hours} h ${rest} min`;
 }
+
+/** "13:05" -> "1:05 PM"; returns the input unchanged when it is not HH:MM. */
+export function formatClockTime(time: string): string {
+    const match = /^(\d{1,2}):(\d{2})/.exec(time);
+
+    if (!match) {
+        return time;
+    }
+
+    const hours = Number(match[1]);
+    const suffix = hours >= 12 ? 'PM' : 'AM';
+
+    return `${hours % 12 === 0 ? 12 : hours % 12}:${match[2]} ${suffix}`;
+}

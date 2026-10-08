@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import OwnerShell from '@/layouts/owner-shell';
@@ -41,71 +42,125 @@ const props = {
     },
 };
 
+const SETTINGS = '/owner/organizations/1/settings';
+
 describe('Owner shell', () => {
-    beforeEach(() =>
-        resetInertia(props, '/owner/organizations/1/settings/hours'),
-    );
+    beforeEach(() => resetInertia(props, `${SETTINGS}/hours`));
 
-    it('marks the current tab and flags tabs that need attention', () => {
-        render(<OwnerShell>page</OwnerShell>);
-        const nav = screen.getByRole('navigation', { name: 'Settings' });
-
-        expect(
-            within(nav).getByRole('link', { name: /business hours/i }),
-        ).toHaveAttribute('aria-current', 'page');
-        expect(
-            within(nav).getByRole('link', { name: /profile/i }),
-        ).not.toHaveAttribute('aria-current');
-        expect(
-            within(nav).getByLabelText('Needs attention'),
-        ).toBeInTheDocument();
-        expect(within(nav).getAllByRole('link')).toHaveLength(7);
-        expect(
-            within(nav).getByRole('link', { name: 'Booking policy' }),
-        ).toHaveAttribute(
-            'href',
-            '/owner/organizations/1/settings/booking-policy',
-        );
-        expect(
-            within(nav).getByRole('link', { name: 'Directory' }),
-        ).toHaveAttribute('href', '/owner/organizations/1/settings/directory');
-    });
-
-    it('keeps the sidebar to real destinations and the tabs in the content area', () => {
+    it('shows the five desktop destinations in the approved order with Settings active', () => {
         render(<OwnerShell>page</OwnerShell>);
         const sidebar = screen.getByRole('navigation', { name: 'Main' });
+        const links = within(sidebar).getAllByRole('link');
 
-        expect(within(sidebar).getAllByRole('link')).toHaveLength(5);
+        expect(links.map((link) => link.textContent)).toEqual([
+            'Operations',
+            'Booking Requests',
+            'Conflicts',
+            'Billing',
+            'Settings',
+        ]);
         expect(
             within(sidebar).getByRole('link', { name: 'Settings' }),
         ).toHaveAttribute('aria-current', 'page');
         expect(
-            within(sidebar).getByRole('link', { name: 'Booking requests' }),
-        ).not.toHaveAttribute('aria-current');
+            within(sidebar).getByRole('link', { name: 'Settings' }),
+        ).toHaveAttribute('href', SETTINGS);
         expect(
-            screen
-                .getByRole('main')
-                .contains(screen.getByRole('navigation', { name: 'Settings' })),
-        ).toBe(true);
+            within(sidebar).getByRole('link', { name: 'Billing' }),
+        ).not.toHaveAttribute('aria-current');
     });
 
-    it('shows the operations dashboard without the Owner-only configuration tabs', () => {
+    it('offers native-style bottom navigation with More active inside Settings', () => {
+        render(<OwnerShell>page</OwnerShell>);
+        const bar = screen.getByRole('navigation', { name: 'Primary mobile' });
+        const links = within(bar).getAllByRole('link');
+
+        expect(links.map((link) => link.textContent)).toEqual([
+            'Dashboard',
+            'Queue',
+            'Bookings',
+            'Walk-in',
+            'More',
+        ]);
+        expect(within(bar).getByRole('link', { name: 'More' })).toHaveAttribute(
+            'aria-current',
+            'page',
+        );
+        expect(within(bar).getByRole('link', { name: 'More' })).toHaveAttribute(
+            'href',
+            SETTINGS,
+        );
+        expect(
+            within(bar).getByRole('link', { name: 'Queue' }),
+        ).toHaveAttribute(
+            'href',
+            '/owner/organizations/1/operations#queue-heading',
+        );
+        expect(
+            within(bar).getByRole('link', { name: 'Dashboard' }),
+        ).not.toHaveAttribute('aria-current');
+    });
+
+    it('keeps More active on the Settings index and moves the active item with the route', () => {
+        resetInertia(props, SETTINGS);
+        const { unmount } = render(<OwnerShell>page</OwnerShell>);
+        let bar = screen.getByRole('navigation', { name: 'Primary mobile' });
+
+        expect(within(bar).getByRole('link', { name: 'More' })).toHaveAttribute(
+            'aria-current',
+            'page',
+        );
+        unmount();
+
+        resetInertia(props, '/owner/organizations/1/operations');
+        render(<OwnerShell>page</OwnerShell>);
+        bar = screen.getByRole('navigation', { name: 'Primary mobile' });
+
+        expect(
+            within(bar).getByRole('link', { name: 'Dashboard' }),
+        ).toHaveAttribute('aria-current', 'page');
+        expect(
+            within(bar).getByRole('link', { name: 'More' }),
+        ).not.toHaveAttribute('aria-current');
+    });
+
+    it('has no hamburger, filled Settings pills, Owner-only chip or generic Settings heading', () => {
+        render(<OwnerShell>page</OwnerShell>);
+
+        expect(screen.queryByText('Owner only')).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole('button', { name: /menu/i }),
+        ).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole('heading', { level: 1 }),
+        ).not.toBeInTheDocument();
+        expect(
+            screen.queryByText('Scheduling configuration'),
+        ).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole('navigation', { name: 'Settings' }),
+        ).not.toBeInTheDocument();
+    });
+
+    it('keeps the shell-owned heading and no Settings chrome on operational pages', () => {
         resetInertia(props, '/owner/organizations/1/operations');
         render(<OwnerShell>page</OwnerShell>);
 
         expect(
-            screen.getByRole('link', { name: 'Operations' }),
-        ).toHaveAttribute('aria-current', 'page');
-        expect(
-            screen.getByRole('heading', { name: 'Today’s operations' }),
+            screen.getByRole('heading', {
+                level: 1,
+                name: 'Today’s operations',
+            }),
         ).toBeInTheDocument();
         expect(
-            screen.queryByRole('navigation', { name: 'Settings' }),
-        ).not.toBeInTheDocument();
-        expect(screen.queryByText('Owner only')).not.toBeInTheDocument();
+            within(screen.getByRole('navigation', { name: 'Main' })).getByRole(
+                'link',
+                { name: 'Operations' },
+            ),
+        ).toHaveAttribute('aria-current', 'page');
     });
 
-    it('shows the conflict count in the sidebar and the conflicts page without configuration tabs', () => {
+    it('shows the conflict count on the sidebar link and the conflicts page heading', () => {
         resetInertia(
             {
                 ...props,
@@ -115,7 +170,9 @@ describe('Owner shell', () => {
         );
         render(<OwnerShell>page</OwnerShell>);
 
-        const link = screen.getByRole('link', { name: /Conflicts/ });
+        const link = within(
+            screen.getByRole('navigation', { name: 'Main' }),
+        ).getByRole('link', { name: /Conflicts/ });
         expect(link).toHaveAttribute('aria-current', 'page');
         expect(within(link).getByLabelText('3 unresolved')).toHaveTextContent(
             '3',
@@ -126,38 +183,70 @@ describe('Owner shell', () => {
                 name: 'Scheduling conflicts',
             }),
         ).toBeInTheDocument();
-        expect(
-            screen.queryByRole('navigation', { name: 'Settings' }),
-        ).not.toBeInTheDocument();
     });
 
-    it('shows Booking requests without the Owner-only configuration tabs', () => {
+    it('shows Booking Requests as active with its heading', () => {
         resetInertia(props, '/owner/organizations/1/booking-requests');
         render(<OwnerShell>page</OwnerShell>);
 
         expect(
-            screen.getByRole('link', { name: 'Booking requests' }),
+            within(screen.getByRole('navigation', { name: 'Main' })).getByRole(
+                'link',
+                { name: 'Booking Requests' },
+            ),
         ).toHaveAttribute('aria-current', 'page');
-        expect(
-            screen.queryByRole('navigation', { name: 'Settings' }),
-        ).not.toBeInTheDocument();
-        expect(screen.queryByText('Owner only')).not.toBeInTheDocument();
         expect(
             screen.getByRole('heading', { level: 1, name: 'Booking requests' }),
         ).toBeInTheDocument();
+        expect(
+            within(
+                screen.getByRole('navigation', { name: 'Primary mobile' }),
+            ).getByRole('link', { name: 'Bookings' }),
+        ).toHaveAttribute('aria-current', 'page');
     });
 
-    it('labels the area as owner-only and shows branch and draft versus published', () => {
+    it('treats Billing as a primary destination, outside Settings', () => {
+        resetInertia(props, BILLING_URL);
         render(<OwnerShell>page</OwnerShell>);
-        expect(screen.getByText('Owner only')).toBeInTheDocument();
-        expect(screen.getByText('Main Branch')).toBeInTheDocument();
-        expect(screen.getByText('Draft')).toBeInTheDocument();
+        const sidebar = screen.getByRole('navigation', { name: 'Main' });
+
         expect(
-            screen.getByRole('heading', {
-                level: 1,
-                name: 'Scheduling configuration',
-            }),
+            within(sidebar).getByRole('link', { name: 'Billing' }),
+        ).toHaveAttribute('aria-current', 'page');
+        expect(
+            within(sidebar).getByRole('link', { name: 'Settings' }),
+        ).not.toHaveAttribute('aria-current');
+        expect(
+            screen.getByRole('heading', { level: 1, name: 'Billing' }),
         ).toBeInTheDocument();
+    });
+
+    it('shows the branch and publication context without making it navigation', () => {
+        render(<OwnerShell>page</OwnerShell>);
+
+        expect(screen.getAllByText('Main Branch').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('Draft').length).toBeGreaterThan(0);
+        const context = screen.getByRole('group', {
+            name: 'Branch and publication',
+        });
+        expect(within(context).queryByRole('link')).not.toBeInTheDocument();
+    });
+
+    it('reaches Conflicts and Billing on small screens through More destinations', () => {
+        render(<OwnerShell>page</OwnerShell>);
+        const more = screen.getByRole('navigation', {
+            name: 'More destinations',
+        });
+
+        expect(
+            within(more).getByRole('link', { name: 'Conflicts' }),
+        ).toHaveAttribute(
+            'href',
+            '/owner/organizations/1/scheduling-conflicts',
+        );
+        expect(
+            within(more).getByRole('link', { name: 'Billing' }),
+        ).toHaveAttribute('href', BILLING_URL);
     });
 
     it('announces a success message in a status region', () => {
@@ -173,5 +262,34 @@ describe('Owner shell', () => {
         expect(
             screen.getAllByRole('link', { name: 'Sign out' })[0],
         ).toHaveAttribute('data-method', 'post');
+    });
+
+    it('marks the bottom bar so focus scrolling can reserve its height (focus not obscured)', () => {
+        render(<OwnerShell>page</OwnerShell>);
+
+        expect(
+            screen.getByRole('navigation', { name: 'Primary mobile' }),
+        ).toHaveAttribute('data-bottom-nav');
+
+        const css = readFileSync('resources/css/app.css', 'utf8');
+        expect(css).toMatch(
+            /html:has\(\[data-bottom-nav\]\)\s*\{[^}]*scroll-padding-bottom:[^;]*env\(safe-area-inset-bottom\)/,
+        );
+    });
+
+    it('uses the full-strength ring token for shell link focus (3:1 on light surfaces)', () => {
+        render(<OwnerShell>page</OwnerShell>);
+        const bar = screen.getByRole('navigation', { name: 'Primary mobile' });
+        const more = screen.getByRole('navigation', {
+            name: 'More destinations',
+        });
+
+        for (const link of [
+            ...within(bar).getAllByRole('link'),
+            ...within(more).getAllByRole('link'),
+        ]) {
+            expect(link.className).toContain('focus-visible:ring-ring');
+            expect(link.className).not.toContain('ring-ring/50');
+        }
     });
 });
