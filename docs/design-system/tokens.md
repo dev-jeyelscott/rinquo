@@ -20,6 +20,7 @@ All colors are defined as CSS custom properties in `resources/css/app.css` and e
 | `--muted-foreground` / `text-muted-foreground` | `#6b7280` | Secondary/disabled text |
 | `--border` / `border-border` | `#e5e7eb` | Borders, dividers |
 | `--input` / `bg-input` | `#f9fafb` | Form input backgrounds |
+| `--booking-control-border` / `border-booking-control` | `#7a808c` | Scoped: boundary of booking-journey controls only (fields, OTP cells, time and date chips, choice indicators). 3.97:1 vs `--background`/`--card`, 3.80:1 vs `--input`, 3.20:1 vs `--muted` |
 
 #### Semantic Colors
 
@@ -81,9 +82,16 @@ When `.dark` class is present on document root:
 | `--success` | `#047857` | `#34d399` | Lighter green; 8.62:1 with `#001f3f` text |
 | `--warning` | `#b45309` | `#fbbf24` | Lighter amber; 9.92:1 with `#001f3f` text |
 | `--destructive` | `#dc2626` | `#f87171` | Lighter red for contrast |
+| `--booking-control-border` | `#7a808c` | `#8b93a1` | Scoped booking-journey control boundary; 4.74:1 vs dark `--card`, 5.73:1 vs dark `--background` |
 | `--info` | `#2563eb` | `#60a5fa` | Light blue; 6.52:1 with `#001f3f` text |
 
 **Sidebar remains dark navy in both themes** for visual consistency (branding).
+
+### Booking-journey control border (scoped, deliberate deviation)
+
+`--booking-control-border` is a scoped token for the customer booking journey (Spec 02). It gives text fields, OTP cells, unselected date/time chips, the month control and choice-card indicators a boundary of at least 3:1 against adjacent colours (WCAG 1.4.11). It is not a replacement for `--input` or `--border`, which are unchanged; use it only inside the booking journey.
+
+Deliberate deviation: the Approved Spec 02 references draw these outlines at about 1.6:1 (for example `reference-ui/spec-02/mobile/05-email-verification.png`). The user decided on 2026-10-09 to meet 3:1 now instead of accepting the pictured outline. Selected, focus and error states are unchanged (`border-primary`, `ring`, `border-destructive`).
 
 ## Typography
 

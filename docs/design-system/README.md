@@ -288,6 +288,24 @@ When a viewport is not explicitly covered by Approved Reference UI:
 
 Tablet layouts may normally interpolate between approved mobile and desktop behavior unless a materially different composition requires explicit approval.
 
+## Customer booking journey baseline (Spec 02)
+
+The approved Spec 02 references under `docs/reference-ui/spec-02/` (registered in `docs/reference-ui/README.md`, approved 2026-10-08) are the visual baseline for the customer booking journey at 1600×1000 and 390×844. `spec-02/mobile/03-schedule.png` supersedes the mobile Schedule contract of `02-booking-schedule.png`, which stays as history. Locked Decisions remain higher authority; the references lock composition and hierarchy, not sample data, shops, prices, dates or booking ids.
+
+The reconciled design-system contract:
+
+- **Five stages.** Vehicle, Service, Schedule, Details and Confirm are one ordered progress navigation (`step-indicator`) with the current stage marked `aria-current="step"`. Email verification is a substate of Details, not a sixth stage. Every circle stays visible at 390px; only the current label shows below `sm`.
+- **Tenant-branded composition.** The tenant shell, breadcrumb, eyebrow, page heading and progress card (`booking-journey-header`) lead every booking page. Desktop keeps a step card beside the "Your booking" summary card; mobile leads the step card with the compact summary. Color comes from semantic tokens and `readableForeground` tenant contrast, never from sample hex values.
+- **Mobile primary action.** From below `lg` the primary action lives in a persistent bottom bar (`booking-action-bar`) with Back, a quiet status ("Step n of 5", "Time held") and a full-width 3rem primary action. It respects `env(safe-area-inset-bottom)`, and page content plus `html` scroll padding keep focus and content clear of it. From `lg` up the actions are an ordinary row at the end of the card.
+- **Customer-facing duration.** A service or add-on duration is its own minutes, summed as "service plus add-ons". The internal buffer, capacity, units and resources are never serialized to or rendered for customers (Decision 15); backend scheduling semantics are unchanged.
+- **Exact start.** Month heading, date strip, disabled-but-visible unavailable times, Next available and a "Selected time" confirmation. Schedule's action reads "Hold this time & continue".
+- **Vehicle identity.** Vehicle type cards plus a required "Make / model" field (Decision 23); plate is optional. Saved vehicles appear on the Vehicle step only for a signed-in customer who owns them, and never replace the typed make and model silently.
+- **Verification.** A six-digit code in separate numeric cells (`otp-input`), a resend cooldown, an edit-email path and the held time visible. Signed-in customers skip it.
+- **Hold and uncertainty.** A warning-toned "Time held for mm:ss" banner (`hold-countdown`), a single release alert, a lost-time alert that keeps the selection, and a safe retry when a confirmation outcome is uncertain. Submitting is one logical action with stable button geometry.
+- **Outcomes.** `Booking confirmed` and `Request sent` are distinct, centered, durable presentations. Pending says the request is not confirmed yet, shows the shop's decision deadline and one open loop, and the confirm action reads `Send booking request` when the shop approves each booking. Email copy promises intent to send, never delivery.
+
+Do not add deposits or online payment, capacity displays, resource or staff selection, gestures, or hover-only actions to this journey.
+
 ## Status Indicators
 
 Reference designs use consistent visual language for status:

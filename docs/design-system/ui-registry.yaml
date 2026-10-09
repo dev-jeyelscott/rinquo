@@ -658,6 +658,10 @@ components:
           - name: required
             type: boolean
             required: false
+          - name: controlClassName
+            type: string
+            required: false
+            description: Extra classes for the control itself; the booking journey passes border-booking-control (scoped 3:1 boundary token) for text and textarea fields
       accessibility:
           - Visible label associated through htmlFor/id
           - Error and hint linked with aria-describedby
@@ -788,9 +792,12 @@ components:
       path: resources/js/components/booking/choice-card.tsx
       description: >
           Selectable card around a native radio or checkbox, used for the vehicle,
-          service and add-on choices. The native control stays in the accessibility
+          service, add-on and saved-vehicle choices. An optional tinted icon tile
+          leads, optional trailing content (price, duration) sits before a
+          trailing check indicator. The native control stays in the accessibility
           tree (grouping, keyboard use and announcements come from the platform);
           the card draws the checked and focus states.
+      reference_design: "spec-02/desktop/01-vehicle.png, spec-02/mobile/01-vehicle.png, spec-02/desktop/02-service.png, spec-02/mobile/02-service.png"
       variants:
           - radio
           - checkbox
@@ -801,10 +808,19 @@ components:
           - name: children
             type: ReactNode
             required: true
+          - name: icon
+            type: ReactNode
+            required: false
+            description: Decorative glyph in a tinted tile before the content
+          - name: aside
+            type: ReactNode
+            required: false
+            description: Trailing price or duration, before the check indicator
       accessibility:
           - Native input is visually hidden but focusable (sr-only peer)
-          - Checked state is a ring plus the native checked state, never colour alone
+          - Checked state is a ring, a tinted surface and a filled check indicator beside the native checked state, never colour alone
           - Focus-visible ring on the card
+          - Unchecked indicator boundary uses the scoped booking-control-border token (3:1 or more)
           - Wrap related cards in a fieldset with a legend
       responsive: Full width; the minimum height keeps a 44px touch target
       status: stable
@@ -815,9 +831,13 @@ components:
       category: component
       path: resources/js/components/booking/hold-countdown.tsx
       description: >
-          Visible countdown for a temporary checkout hold. A plain timer while time
-          remains (not announced every second); a single alert when it ends,
-          saying the time was released and offering Choose another time.
+          Visible countdown for a temporary checkout hold. While time remains it
+          is a warning-toned banner reading "Time held for mm:ss" with the line
+          that the selection is temporary (a plain timer, not announced every
+          second); a single alert when it ends, saying the time was released and
+          offering Choose another time. HoldCountdownStatus is the quiet
+          "Time held: mm:ss" line the mobile action bar carries.
+      reference_design: "spec-02/desktop/04-details.png, spec-02/mobile/04-details.png"
       props:
           - name: remaining
             type: number
@@ -832,10 +852,136 @@ components:
       accessibility:
           - role=timer with tabular figures
           - Expiry uses role=alert with text, an icon and a link, not colour alone
-      responsive: Inline text; the alert wraps its action below the message
+          - The banner carries text and an icon; the amber tint is never the only signal
+      responsive: Full-width banner inside the step card; the alert wraps its action below the message
       status: stable
       dependencies:
           - Alert
+
+    - id: booking-journey-header
+      name: BookingJourneyHeader
+      category: component
+      path: resources/js/components/booking/booking-journey-header.tsx
+      description: >
+          Shared header of the customer booking pages: breadcrumb back to the
+          shop, eyebrow, page heading with subtitle and, inside the five-stage
+          journey, the step indicator in a bordered card. Result pages use it
+          without the stepper. The shop name and brand come from the tenant shell.
+      reference_design: "spec-02/desktop/01-vehicle.png, spec-02/mobile/01-vehicle.png, spec-02/desktop/07-booking-confirmed.png"
+      uses:
+          - StepIndicator
+      props:
+          - name: title
+            type: string
+            required: true
+          - name: step
+            type: string
+            required: false
+            description: Wizard stage key; omit outside the five-stage journey
+          - name: crumb
+            type: string
+            required: false
+          - name: eyebrow
+            type: string
+            required: false
+      accessibility:
+          - Breadcrumb nav landmark with the current page marked aria-current="page"
+          - One h1 per page
+      responsive: Single column; the "no payment online" note shows from lg
+      status: stable
+      dependencies:
+          - StepIndicator
+
+    - id: booking-action-bar
+      name: BookingActionBar
+      category: component
+      path: resources/js/components/booking/booking-action-bar.tsx
+      description: >
+          The booking journey's action row. Below lg a persistent bar fixed to
+          the bottom of the viewport (Back and a quiet status, then one
+          full-width primary action) that respects the device safe-area inset;
+          from lg up an ordinary row at the end of the card with Back left and the
+          primary action right. An html scroll-padding rule in app.css keeps
+          focused fields clear of the bar.
+      reference_design: "spec-02/mobile/01-vehicle.png, spec-02/mobile/04-details.png, spec-02/mobile/06-confirm.png, spec-02/desktop/03-schedule.png"
+      props:
+          - name: back
+            type: "{ href } | { onClick }, with optional label"
+            required: false
+          - name: meta
+            type: ReactNode
+            required: false
+            description: 'Quiet status beside Back on small screens, for example "Step 2 of 5" or "Time held: 08:43"'
+          - name: children
+            type: ReactNode
+            required: true
+            description: The one primary action
+      accessibility:
+          - role=group named "Booking actions"
+          - DOM order equals reading order (Back, status, primary), so keyboard order matches
+          - Primary action is 3rem high and Back at least 44px on small screens
+          - Bottom padding uses env(safe-area-inset-bottom); scroll-padding keeps focus visible above the bar
+      responsive: Fixed bottom bar below lg; static row from lg up
+      status: stable
+      tokens:
+          - background
+          - border
+          - muted-foreground
+
+    - id: otp-input
+      name: OtpInput
+      category: component
+      path: resources/js/components/booking/otp-input.tsx
+      description: >
+          One-time code as separate numeric cells (six by default). Typing
+          advances, Backspace steps back, arrows move, a pasted code is spread
+          across the cells and only digits are accepted. The value is a plain
+          digit string.
+      reference_design: "spec-02/desktop/05-email-verification.png, spec-02/mobile/05-email-verification.png"
+      props:
+          - name: value
+            type: string
+            required: true
+          - name: onChange
+            type: "(value: string) => void"
+            required: true
+          - name: length
+            type: number
+            required: false
+          - name: error
+            type: string
+            required: false
+          - name: autoFocus
+            type: boolean
+            required: false
+      tokens: [booking-control-border]
+      accessibility:
+          - Cell boundary uses the scoped booking-control-border token (3:1 or more, WCAG 1.4.11); a deliberate, user-decided deviation from the pictured Spec 02 outline
+          - Visible label and a group named by it; each cell is "Digit n of N"
+          - Focus moves to the first cell when the group opens (autoFocus) and again when an error arrives after the entry was cleared
+          - First cell uses autocomplete one-time-code
+          - Error is linked to the group and announced as an alert
+          - Numeric input mode; focus ring on each cell
+      responsive: Equal-width cells fill the row; 3rem high on small screens, 3.5rem from sm
+      status: stable
+
+    - id: detail-rows
+      name: DetailRows
+      category: component
+      path: resources/js/components/booking/booking-summary-card.tsx
+      description: >
+          Label and value description list with quiet dividers, used by the
+          booking summary card, the review step groups and the result page.
+          Values are tabular so times, durations and prices line up.
+      reference_design: "spec-02/desktop/06-confirm.png, spec-02/desktop/07-booking-confirmed.png"
+      props:
+          - name: rows
+            type: "readonly [label: string, value: string][]"
+            required: true
+      accessibility:
+          - Native description list (dt and dd)
+      responsive: Label and value share a row and wrap on narrow widths
+      status: stable
 
     - id: booking-live-status
       name: BookingLiveStatus
@@ -978,14 +1124,15 @@ compositions:
       category: composition
       path: resources/js/components/booking/exact-start-time-selector.tsx
       description: >
-          Date strip over the booking horizon plus a grid of start-time chips
-          (reference 02). Unavailable times stay visible but disabled, named
+          Month heading with a month control ("previous / next month" jumps to the
+          first open date of the neighbouring month) over a date strip across the
+          booking horizon plus a grid of start-time chips (Spec 02 Schedule references). Unavailable times stay visible but disabled, named
           "9:00 AM, unavailable" and struck through. A Next available action jumps
           to the earliest start. Renders a specific message and recovery action for
           loading (skeleton after 300 ms), closed day, no times left, nothing
           available in the whole window, load error and offline. Customers only
           receive a start time and a boolean: no capacity, units or resources.
-      reference_design: "02-booking-schedule.png"
+      reference_design: "spec-02/desktop/03-schedule.png, spec-02/mobile/03-schedule.png"
       uses:
           - ToggleGroup
           - Skeleton
@@ -1017,24 +1164,33 @@ compositions:
           - Strikethrough and the word Closed back up the disabled colour
           - Polite live region announces the selected time
           - Skeleton and error states carry text and a Retry action
-      responsive: Date strip scrolls horizontally; the time grid auto-fills columns of at least 5.5rem
+          - Chip and month-control boundaries use the scoped booking-control-border token (3:1 or more, WCAG 1.4.11), a user-decided deviation from the pictured Spec 02 outline
+          - The date strip scrolls the selected date into view when it changes from outside the strip (month control, Next available)
+      tokens: [booking-control-border]
+      responsive: Date strip scrolls horizontally; the time grid is three columns, four from lg
       status: stable
       notes: >
-          The reference shows a "40 min capacity" label; the project rule that
-          customers never see capacity wins, so the summary shows the service and
-          buffer minutes instead (recorded conflict).
+          The superseded 02-booking-schedule.png showed a "40 min capacity" label.
+          It was not approved (Locked Decisions keep capacity internal) and the
+          Spec 02 Schedule references replace it for the mobile visual contract.
+          Customers see only times, a disabled state and the selected start.
 
     - id: booking-summary-card
       name: BookingSummaryCard
       category: composition
       path: resources/js/components/booking/booking-summary-card.tsx
       description: >
-          Running summary of a booking: vehicle, service, add-ons, duration as
-          "service + buffer" minutes, the chosen time in Philippine time and the
-          total. Never shows capacity, units or resources.
-      reference_design: "02-booking-schedule.png"
+          Running summary of a booking beside the step content from lg up (the
+          "Your booking" card): vehicle type with make and model, service,
+          add-ons with their prices, duration (service plus add-on minutes), the
+          exact start and the service price, with a note that payment is handled
+          by the shop. Never shows the internal buffer, capacity, units or
+          resources. Below lg the compact summary takes over. Also exports
+          DetailRows and vehicleLabel, used by the review and result pages.
+      reference_design: "spec-02/desktop/01-vehicle.png, spec-02/desktop/03-schedule.png, spec-02/desktop/06-confirm.png"
       uses:
           - Card
+          - DetailRows
       props:
           - name: totalCentavos
             type: number
@@ -1048,7 +1204,28 @@ compositions:
       accessibility:
           - Labelled region with a real heading
           - Values are a description list (dt/dd)
-      responsive: Stacks under the step content on small screens and sticks beside it on lg and above
+      responsive: Hidden below lg (BookingSummaryCompact replaces it); sticks beside the step card from lg up
+      status: stable
+
+    - id: booking-summary-compact
+      name: BookingSummaryCompact
+      category: composition
+      path: resources/js/components/booking/booking-summary-card.tsx
+      description: >
+          Two-line "Your booking" summary that leads the step card on narrow
+          screens: vehicle and service with add-ons, then start (or a hint to pick
+          one), price and duration. Duration is service plus add-on time; the
+          internal buffer never appears.
+      reference_design: "spec-02/mobile/02-service.png, spec-02/mobile/03-schedule.png, spec-02/mobile/04-details.png"
+      props:
+          - name: pendingHint
+            type: string
+            required: false
+            description: Shown in place of the start until one is chosen
+      accessibility:
+          - Labelled region "Your booking" with plain text
+          - Hidden with display none from lg, so it is never announced twice beside the card
+      responsive: Visible below lg only, ahead of the step content
       status: stable
 
     - id: operation-queue-row
@@ -1452,17 +1629,18 @@ patterns:
           completed (check mark) and current steps filled with the primary token.
           An ordered list inside a labelled nav; the current step has
           aria-current="step" and completed steps are announced as completed.
-      reference_design: "02-booking-schedule.png"
+      reference_design: "spec-02/desktop/01-vehicle.png, spec-02/mobile/01-vehicle.png, spec-02/mobile/03-schedule.png"
       use_cases:
-          - Booking flow: Vehicle, Service, Schedule, Details, Confirm
+          - Booking flow: Vehicle, Service, Schedule, Details, Confirm (email verification is a Details substate)
       accessibility:
           - nav landmark labelled "Booking progress" with an ordered list
           - aria-current="step" on the current step
           - Completed steps carry "(completed)" for screen readers
           - Never colour alone: check mark, number and text
       responsive: >
-          From sm up every label and connecting line shows; below sm only the
-          current label shows beside a "Step n of N" count.
+          Every circle and connector shows at every width, inside a bordered card.
+          From sm up every label shows; below sm only the current label shows.
+          The position is always available to assistive technology as "Step n of N".
       status: stable
 
     - id: exact-start-time-selection
@@ -1478,7 +1656,7 @@ patterns:
           - ExactStartTimeSelector
       use_cases:
           - Customer booking flow (Schedule step)
-      reference_design: "02-booking-schedule.png"
+      reference_design: "spec-02/desktop/03-schedule.png, spec-02/mobile/03-schedule.png"
       status: stable
 
     - id: tenant-application-navigation
@@ -1607,21 +1785,25 @@ patterns:
       name: Capacity-Aware Booking
       category: pattern
       description: >
-          Booking system prevents overbooking by showing resource capacity,
-          consumption per service, and available slots. Disables unavailable
-          times. Shows conflict warnings.
-      reference_design: "02-booking-schedule.png, 03-staff-operations-dashboard.png"
+          The server prevents overbooking: physical-resource feasibility, holds and
+          confirmation are atomic. Customer surfaces show only whether an exact
+          start is available (disabled otherwise) and never capacity, units,
+          resources or the internal buffer. Capacity presentation is a staff and
+          Owner concern only, scoped to its own staff references.
+      reference_design: "spec-02/desktop/03-schedule.png, spec-02/mobile/03-schedule.png, 03-staff-operations-dashboard.png"
       components:
-          - ExactStartTimeSelector (with capacity info)
-          - Capacity indicator (proposed CapacityBar)
+          - ExactStartTimeSelector (customer: time and availability only)
+          - Capacity indicator (proposed CapacityBar, staff and Owner surfaces only)
       constraints:
           - Capacity is never intentionally overbooked
           - A booking must fit in one compatible resource
           - Capacity checks and holds are atomic
+          - Customer payloads and renderings never include capacity, units, resources or buffer minutes
       status: experimental
       notes: >
-          Reference designs show capacity as "1/2", "2/2" in queue and
-          config pages. Shows visual bar indicator for utilization.
+          Staff references show capacity as "1/2", "2/2" in queue and
+          configuration pages; that stays out of customer surfaces. The earlier
+          customer capacity label in 02-booking-schedule.png was not approved.
 
     - id: status-driven-color
       name: Status-Driven Color System
@@ -1956,7 +2138,7 @@ patterns:
           - Time slot selection
           - Date selection
           - Resource assignment
-      reference_design: "02-booking-schedule.png, 04-scheduling-conflict-resolution.png"
+      reference_design: "spec-02/desktop/03-schedule.png, spec-02/mobile/03-schedule.png, 04-scheduling-conflict-resolution.png"
       status: experimental
       notes: >
           Implemented for date and time selection in ExactStartTimeSelector

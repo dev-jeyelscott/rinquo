@@ -529,6 +529,11 @@
                     <div class="token-value">#f9fafb</div>
                 </div>
                 <div class="token-card">
+                    <div class="token-swatch" style="background-color: #7a808c;"></div>
+                    <div class="token-name">Booking Control Border</div>
+                    <div class="token-value">#7a808c (dark #8b93a1)</div>
+                </div>
+                <div class="token-card">
                     <div class="token-swatch" style="background-color: #6b7280;"></div>
                     <div class="token-name">Muted Foreground</div>
                     <div class="token-value">#6b7280</div>
@@ -1354,7 +1359,7 @@
                         <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">exact-start-time-selector</div>
-                    <p class="registry-description">Date strip plus start-time chips. Unavailable times stay visible but disabled, named "unavailable" and struck through; Next available jumps to the earliest start. Loading, closed, empty, no-availability, error and offline each have a message and recovery. Customers only see a time and a boolean.</p>
+                    <p class="registry-description">Month heading with previous/next month control, date strip and start-time chips (Spec 02 Schedule references). Unavailable times stay visible but disabled, named "unavailable" and struck through; Next available jumps to the earliest start. Loading, closed, empty, no-availability, error and offline each have a message and recovery. Customers only see a time and a boolean. The date strip scrolls a changed selection into view; chip and month-control boundaries use the scoped booking-control-border token (3:1).</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Path:</span>
@@ -1362,7 +1367,7 @@
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Reference:</span>
-                            <span class="registry-meta-value">02-booking-schedule.png</span>
+                            <span class="registry-meta-value">spec-02/desktop/03-schedule.png, spec-02/mobile/03-schedule.png</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Uses:</span>
@@ -1381,7 +1386,7 @@
                         <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">booking-summary-card</div>
-                    <p class="registry-description">Running booking summary: vehicle, service, add-ons, "service + buffer" minutes, time in Philippine time and total. Never shows capacity, units or resources.</p>
+                    <p class="registry-description">Running "Your booking" card beside the step content from lg up: vehicle with make and model, service, add-ons, duration (service plus add-on minutes), exact start and service price. Never shows the internal buffer, capacity, units or resources. Also exports DetailRows and vehicleLabel.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Path:</span>
@@ -1389,11 +1394,34 @@
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Reference:</span>
-                            <span class="registry-meta-value">02-booking-schedule.png</span>
+                            <span class="registry-meta-value">spec-02/desktop/01-vehicle.png, spec-02/desktop/03-schedule.png, spec-02/desktop/06-confirm.png</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Uses:</span>
                             <span class="registry-meta-value">Card</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Composition</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="booking-summary-compact" data-registry-id="booking-summary-compact" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">BookingSummaryCompact</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">booking-summary-compact</div>
+                    <p class="registry-description">Two-line "Your booking" summary that leads the step card on narrow screens: vehicle and service with add-ons, then start, price and duration. Never shows the internal buffer.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/booking/booking-summary-card.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-02/mobile/02-service.png, spec-02/mobile/03-schedule.png, spec-02/mobile/04-details.png</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Category:</span>
@@ -1454,11 +1482,15 @@
                         <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">choice-card</div>
-                    <p class="registry-description">Selectable card around a native radio or checkbox for vehicle, service and add-on choices. Checked state is a ring plus the native state, never colour alone.</p>
+                    <p class="registry-description">Selectable card around a native radio or checkbox for vehicle, service, add-on and saved-vehicle choices, with an optional icon tile and trailing price or duration. Checked state is a ring, a tinted surface and a filled check indicator beside the native state, never colour alone.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Path:</span>
                             <span class="registry-meta-value">resources/js/components/booking/choice-card.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-02/desktop/01-vehicle.png, spec-02/mobile/01-vehicle.png, spec-02/desktop/02-service.png, spec-02/mobile/02-service.png</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Variants:</span>
@@ -1477,15 +1509,115 @@
                         <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">hold-countdown</div>
-                    <p class="registry-description">Visible countdown for a temporary checkout hold; a single alert with a recovery link when the time is released.</p>
+                    <p class="registry-description">Visible countdown for a temporary checkout hold: a warning-toned "Time held for mm:ss" banner saying the selection is temporary, a quiet "Time held" status for the mobile action bar, and a single alert with a recovery link when the time is released.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Path:</span>
                             <span class="registry-meta-value">resources/js/components/booking/hold-countdown.tsx</span>
                         </div>
                         <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-02/desktop/04-details.png, spec-02/mobile/04-details.png</span>
+                        </div>
+                        <div class="registry-meta-row">
                             <span class="registry-meta-label">Uses:</span>
                             <span class="registry-meta-value">Alert</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="booking-journey-header" data-registry-id="booking-journey-header" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">BookingJourneyHeader</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">booking-journey-header</div>
+                    <p class="registry-description">Shared header of the booking pages: breadcrumb to the shop, eyebrow, page heading with subtitle and, inside the five-stage journey, the step indicator in a bordered card.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/booking/booking-journey-header.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-02/desktop/01-vehicle.png, spec-02/mobile/01-vehicle.png, spec-02/desktop/07-booking-confirmed.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">StepIndicator</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="booking-action-bar" data-registry-id="booking-action-bar" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">BookingActionBar</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">booking-action-bar</div>
+                    <p class="registry-description">Booking action row: a persistent safe-area-aware bar fixed to the bottom below lg (Back and status above one full-width primary action), an ordinary Back and primary row from lg up. DOM order equals reading order.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/booking/booking-action-bar.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-02/mobile/01-vehicle.png, spec-02/mobile/04-details.png, spec-02/mobile/06-confirm.png, spec-02/desktop/03-schedule.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="otp-input" data-registry-id="otp-input" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">OtpInput</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">otp-input</div>
+                    <p class="registry-description">One-time code as separate numeric cells. Typing advances, Backspace steps back, arrows move, a paste spreads across the cells and only digits are accepted; labelled group, one-time-code autofill and a linked error; focus starts on the first cell and returns to it after a rejected code. Cell boundaries use the scoped booking-control-border token (3:1).</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/booking/otp-input.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-02/desktop/05-email-verification.png, spec-02/mobile/05-email-verification.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="detail-rows" data-registry-id="detail-rows" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">DetailRows</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">detail-rows</div>
+                    <p class="registry-description">Label and value description list with quiet dividers, shared by the booking summary, review step and result page. Tabular values.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/booking/booking-summary-card.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-02/desktop/06-confirm.png, spec-02/desktop/07-booking-confirmed.png</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Category:</span>
@@ -1958,7 +2090,7 @@
                         <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">step-indicator</div>
-                    <p class="registry-description">Progress through the booking journey: numbered circles joined by lines, an ordered list with aria-current="step" on the current step and completed steps announced. Narrow screens show the current label and "Step n of N".</p>
+                    <p class="registry-description">Progress through the booking journey: numbered circles joined by lines, an ordered list with aria-current="step" on the current step and completed steps announced. Every circle and connector stays visible at every width inside a bordered card; narrow screens show only the current label, and the position is always available to assistive technology.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Path:</span>
@@ -1966,7 +2098,7 @@
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Reference:</span>
-                            <span class="registry-meta-value">02-booking-schedule.png</span>
+                            <span class="registry-meta-value">spec-02/desktop/01-vehicle.png, spec-02/mobile/01-vehicle.png, spec-02/mobile/03-schedule.png</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Use Cases:</span>
@@ -1989,7 +2121,7 @@
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Reference:</span>
-                            <span class="registry-meta-value">02-booking-schedule.png</span>
+                            <span class="registry-meta-value">spec-02/desktop/03-schedule.png, spec-02/mobile/03-schedule.png</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Use Cases:</span>
@@ -2008,11 +2140,11 @@
                         <span class="registry-status status-experimental">Experimental</span>
                     </div>
                     <div class="registry-id">capacity-aware-booking</div>
-                    <p class="registry-description">Booking system prevents overbooking. Slice 02 implements the server-side guarantees and the customer-safe view (available or not, never capacity); the staff capacity bar is still to come.</p>
+                    <p class="registry-description">The server prevents overbooking. Customer surfaces show only whether an exact start is available and never capacity, units, resources or the internal buffer; capacity presentation is a staff and Owner concern.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">References:</span>
-                            <span class="registry-meta-value">02-booking-schedule.png, 03-staff-operations-dashboard.png</span>
+                            <span class="registry-meta-value">spec-02/desktop/03-schedule.png, spec-02/mobile/03-schedule.png, 03-staff-operations-dashboard.png</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Constraint:</span>
@@ -2301,7 +2433,7 @@
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">References:</span>
-                            <span class="registry-meta-value">02-booking-schedule.png, 04-scheduling-conflict-resolution.png</span>
+                            <span class="registry-meta-value">spec-02/desktop/03-schedule.png, spec-02/mobile/03-schedule.png, 04-scheduling-conflict-resolution.png</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Components:</span>
