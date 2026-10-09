@@ -40,29 +40,47 @@ It remains in the repository for historical context but must not be used as the 
 
 Paths are relative to `docs/reference-ui/`.
 
-| Reference                               | Surface                           | Viewport | Status                                      | Approved   |
-| --------------------------------------- | --------------------------------- | -------- | ------------------------------------------- | ---------- |
-| `01-customer-shop-home.png`             | Tenant-branded customer shop home | Mobile   | Approved                                    | 2026-10-04 |
-| `02-booking-schedule.png`               | Tenant booking schedule selection | Mobile   | Approved                                    | 2026-10-04 |
-| `03-staff-operations-dashboard.png`     | Staff operational workspace       | Desktop  | Approved                                    | 2026-10-04 |
-| `04-scheduling-conflict-resolution.png` | Scheduling conflict resolution    | Desktop  | Approved                                    | 2026-10-04 |
-| `05-owner-scheduling-configuration.png` | Owner scheduling configuration    | Desktop  | Superseded for Owner Settings | 2026-10-04 |
-| `owner-settings/desktop/owner-shell-desktop.png` | Owner shell and Settings index (`/settings`) | Desktop 1600×1000 | Approved | 2026-10-08 |
-| `owner-settings/desktop/profile-desktop.png` | Settings Profile (`/settings/profile`) | Desktop 1600×1000 | Approved | 2026-10-08 |
-| `owner-settings/desktop/hours-desktop.png` | Settings Hours (`/settings/hours`) | Desktop 1600×1000 | Approved | 2026-10-08 |
-| `owner-settings/desktop/services-desktop.png` | Settings Services (`/settings/services`) | Desktop 1600×1000 | Approved | 2026-10-08 |
-| `owner-settings/desktop/resources-desktop.png` | Settings Resources (`/settings/resources`) | Desktop 1600×1000 | Approved | 2026-10-08 |
-| `owner-settings/desktop/booking-policy-desktop.png` | Settings Booking Policy (`/settings/booking-policy`) | Desktop 1600×1000 | Approved | 2026-10-08 |
-| `owner-settings/desktop/readiness-desktop.png` | Settings Readiness (`/settings/readiness`) | Desktop 1600×1000 | Approved | 2026-10-08 |
-| `owner-settings/desktop/directory-desktop.png` | Settings Directory (`/settings/directory`) | Desktop 1600×1000 | Approved | 2026-10-08 |
-| `owner-settings/mobile/owner-shell-mobile.png` | Owner shell and Settings index (`/settings`) | Mobile 390×844 | Approved | 2026-10-08 |
-| `owner-settings/mobile/profile-mobile.png` | Settings Profile (`/settings/profile`) | Mobile 390×844 | Approved | 2026-10-08 |
-| `owner-settings/mobile/hours-mobile.png` | Settings Hours (`/settings/hours`) | Mobile 390×844 | Approved | 2026-10-08 |
-| `owner-settings/mobile/services-mobile.png` | Settings Services (`/settings/services`) | Mobile 390×844 | Approved | 2026-10-08 |
-| `owner-settings/mobile/resources-mobile.png` | Settings Resources (`/settings/resources`) | Mobile 390×844 | Approved | 2026-10-08 |
-| `owner-settings/mobile/booking-policy-mobile.png` | Settings Booking Policy (`/settings/booking-policy`) | Mobile 390×844 | Approved | 2026-10-08 |
-| `owner-settings/mobile/readiness-mobile.png` | Settings Readiness (`/settings/readiness`) | Mobile 390×844 | Approved | 2026-10-08 |
-| `owner-settings/mobile/directory-mobile.png` | Settings Directory (`/settings/directory`) | Mobile 390×844 | Approved | 2026-10-08 |
+| Reference                                           | Surface                                              | Viewport          | Status                              | Approved   |
+| --------------------------------------------------- | ---------------------------------------------------- | ----------------- | ----------------------------------- | ---------- |
+| `01-customer-shop-home.png`                         | Tenant-branded customer shop home                    | Mobile            | Approved                            | 2026-10-04 |
+| `02-booking-schedule.png`                           | Tenant booking schedule selection                    | Mobile            | Superseded (mobile Schedule visual) | 2026-10-04 |
+| `03-staff-operations-dashboard.png`                 | Staff operational workspace                          | Desktop           | Approved                            | 2026-10-04 |
+| `04-scheduling-conflict-resolution.png`             | Scheduling conflict resolution                       | Desktop           | Approved                            | 2026-10-04 |
+| `05-owner-scheduling-configuration.png`             | Owner scheduling configuration                       | Desktop           | Superseded for Owner Settings       | 2026-10-04 |
+| `spec-02/desktop/01-vehicle.png`                    | Vehicle selection                                    | Desktop 1600×1000 | Approved                            | 2026-10-08 |
+| `spec-02/desktop/02-service.png`                    | Service + add-ons                                    | Desktop 1600×1000 | Approved                            | 2026-10-08 |
+| `spec-02/desktop/03-schedule.png`                   | Schedule selection                                   | Desktop 1600×1000 | Approved                            | 2026-10-08 |
+| `spec-02/desktop/04-details.png`                    | Customer details                                     | Desktop 1600×1000 | Approved                            | 2026-10-08 |
+| `spec-02/desktop/05-email-verification.png`         | Email OTP verification                               | Desktop 1600×1000 | Approved                            | 2026-10-08 |
+| `spec-02/desktop/06-confirm.png`                    | Review and confirm                                   | Desktop 1600×1000 | Approved                            | 2026-10-08 |
+| `spec-02/desktop/07-booking-confirmed.png`          | Booking confirmed outcome                            | Desktop 1600×1000 | Approved                            | 2026-10-08 |
+| `spec-02/desktop/08-request-sent.png`               | Pending-approval outcome                             | Desktop 1600×1000 | Approved                            | 2026-10-08 |
+| `spec-02/mobile/01-vehicle.png`                     | Vehicle selection                                    | Mobile 390×844    | Approved                            | 2026-10-08 |
+| `spec-02/mobile/02-service.png`                     | Service + add-ons                                    | Mobile 390×844    | Approved                            | 2026-10-08 |
+| `spec-02/mobile/03-schedule.png`                    | Schedule selection                                   | Mobile 390×844    | Approved                            | 2026-10-08 |
+| `spec-02/mobile/04-details.png`                     | Customer details                                     | Mobile 390×844    | Approved                            | 2026-10-08 |
+| `spec-02/mobile/05-email-verification.png`          | Email OTP verification                               | Mobile 390×844    | Approved                            | 2026-10-08 |
+| `spec-02/mobile/06-confirm.png`                     | Review and confirm                                   | Mobile 390×844    | Approved                            | 2026-10-08 |
+| `spec-02/mobile/07-booking-confirmed.png`           | Booking confirmed outcome                            | Mobile 390×844    | Approved                            | 2026-10-08 |
+| `spec-02/mobile/08-request-sent.png`                | Pending-approval outcome                             | Mobile 390×844    | Approved                            | 2026-10-08 |
+| `owner-settings/desktop/owner-shell-desktop.png`    | Owner shell and Settings index (`/settings`)         | Desktop 1600×1000 | Approved                            | 2026-10-08 |
+| `owner-settings/desktop/profile-desktop.png`        | Settings Profile (`/settings/profile`)               | Desktop 1600×1000 | Approved                            | 2026-10-08 |
+| `owner-settings/desktop/hours-desktop.png`          | Settings Hours (`/settings/hours`)                   | Desktop 1600×1000 | Approved                            | 2026-10-08 |
+| `owner-settings/desktop/services-desktop.png`       | Settings Services (`/settings/services`)             | Desktop 1600×1000 | Approved                            | 2026-10-08 |
+| `owner-settings/desktop/resources-desktop.png`      | Settings Resources (`/settings/resources`)           | Desktop 1600×1000 | Approved                            | 2026-10-08 |
+| `owner-settings/desktop/booking-policy-desktop.png` | Settings Booking Policy (`/settings/booking-policy`) | Desktop 1600×1000 | Approved                            | 2026-10-08 |
+| `owner-settings/desktop/readiness-desktop.png`      | Settings Readiness (`/settings/readiness`)           | Desktop 1600×1000 | Approved                            | 2026-10-08 |
+| `owner-settings/desktop/directory-desktop.png`      | Settings Directory (`/settings/directory`)           | Desktop 1600×1000 | Approved                            | 2026-10-08 |
+| `owner-settings/mobile/owner-shell-mobile.png`      | Owner shell and Settings index (`/settings`)         | Mobile 390×844    | Approved                            | 2026-10-08 |
+| `owner-settings/mobile/profile-mobile.png`          | Settings Profile (`/settings/profile`)               | Mobile 390×844    | Approved                            | 2026-10-08 |
+| `owner-settings/mobile/hours-mobile.png`            | Settings Hours (`/settings/hours`)                   | Mobile 390×844    | Approved                            | 2026-10-08 |
+| `owner-settings/mobile/services-mobile.png`         | Settings Services (`/settings/services`)             | Mobile 390×844    | Approved                            | 2026-10-08 |
+| `owner-settings/mobile/resources-mobile.png`        | Settings Resources (`/settings/resources`)           | Mobile 390×844    | Approved                            | 2026-10-08 |
+| `owner-settings/mobile/booking-policy-mobile.png`   | Settings Booking Policy (`/settings/booking-policy`) | Mobile 390×844    | Approved                            | 2026-10-08 |
+| `owner-settings/mobile/readiness-mobile.png`        | Settings Readiness (`/settings/readiness`)           | Mobile 390×844    | Approved                            | 2026-10-08 |
+| `owner-settings/mobile/directory-mobile.png`        | Settings Directory (`/settings/directory`)           | Mobile 390×844    | Approved                            | 2026-10-08 |
+
+The sixteen Spec 02 booking references were reviewed and approved together on 2026-10-08 under Decision 212; they are canonical under `spec-02/`.
 
 The original references (01-05) were introduced together with the approved MVP planning baseline. The sixteen Owner Settings references were reviewed and approved on 2026-10-08 under Decision 212.
 
@@ -107,9 +125,13 @@ The desktop customer shop layout must not be inferred from this image and descri
 
 **Viewport:** Mobile
 
-**Status:** Approved
+**Status:** Superseded
 
-**Locks:**
+**Superseded by:** `spec-02/mobile/03-schedule.png` (approved 2026-10-08).
+
+The replacement is authoritative for the mobile customer Schedule visual contract. The original remains as history only. The previous image's `40 min capacity` copy was not approved because Locked Decisions prohibit exposing internal scheduling capacity to customers. Backend scheduling semantics remain unchanged.
+
+**Historical locks (no longer the implementation baseline):**
 
 - Booking progress hierarchy
 - Selected-service summary
@@ -271,19 +293,46 @@ The images contain rendering defects that are not approved design. Implementatio
 
 Billing remains a primary Owner application destination outside Settings navigation (Decision 210).
 
+## Spec 02. Customer creates a valid booking (approved 2026-10-08)
+
+**Approval:** User approved all 16 core references together on 2026-10-08.
+
+**Files:** `spec-02/desktop/01-vehicle.png` through `08-request-sent.png` (1600×1000), and the corresponding eight `spec-02/mobile/` PNGs (390×844).
+
+**Product surfaces:** `/shops/{slug}/book`, `/shops/{slug}/book/holds/{hold}/details`, `/shops/{slug}/book/holds/{hold}/confirm`, and `/shops/{slug}/bookings/{booking}` in the represented states; the verified-email screen is a Details substate, not a sixth wizard stage.
+
+**Applicable Locked Decisions:** 3, 14, 15, 16, 17, 22–26, 28, 44, 49–52, 57–61, 203, 211, 212, plus governing scheduling/tenancy decisions.
+
+**Status:** Approved (2026-10-08).
+
+**Locks:** Five-stage booking progress (Vehicle, Service, Schedule, Details, Confirm); tenant-branded shell, responsive hierarchy and mobile primary-action placement; vehicle type and make/model composition; compatible service/add-on selection and visible price/duration deltas; calendar/date and exact-start-time chips with unavailable states, Next available and selected time; temporary hold and countdown; guest contact details, six-digit email OTP, resend cooldown; final review with edit affordances and busy/uncertainty recovery; distinct `Booking confirmed` and `Request sent` status presentations.
+
+**Supersession:** `spec-02/mobile/03-schedule.png` supersedes `02-booking-schedule.png` for the _mobile Schedule visual contract_. No other prior reference is superseded by this batch.
+
+**Supporting Approved UX patterns:** `spec-02/states/desktop-critical-states.png`, `spec-02/states/mobile-critical-states.png` illustrate loading, unavailable/empty/offline, OTP/hold failure, lost-slot and uncertain-confirmation recovery, busy, pending and expiry states. These are not additional canonical routed pages.
+
+**Review-only artifacts:** `spec-02/review/` comparisons and `spec-02/review-contact-sheet.png` illustrate the approval package; they are not independent canonical page contracts.
+
+**Does not lock:** Example shop names, prices, vehicles, dates, booking IDs, customer data; backend API or database structure; internal resource IDs, capacity, buffers or resource matching; scheduling/OTP provider algorithms; implementation assumptions not visible in the references; tablet breakpoints beyond existing responsive rules; unrelated Spec 01/03, Owner, Staff, Billing and Platform Admin surfaces.
+
+**Implementation gaps after approval:** The currently inspected booking wizard lacks explicit vehicle make/model collection despite Locked Decision 23; `BookingSummaryCard` exposes buffer time despite the approved customer-facing duration model. Reconcile these through the normal domain and design-system implementation steps without changing capacity-safe scheduling, holds, OTP or idempotency.
+
+For the per-image route/state, viewport, lock and exclusion record, see `spec-02/manifest.md`.
+
 ## Responsive coverage
 
 Desktop and mobile references are separate visual contracts when their compositions materially differ.
 
 Current approved coverage is incomplete:
 
-| Surface                        | Mobile                        | Desktop                       |
-| ------------------------------ | ----------------------------- | ----------------------------- |
-| Customer shop home             | Approved                      | Not yet locked                |
-| Booking schedule               | Approved                      | Not yet locked                |
-| Staff operations               | Not yet locked                | Approved                      |
-| Conflict resolution            | Not yet locked                | Approved                      |
-| Owner shell and Settings       | Approved (2026-10-08)         | Approved (2026-10-08)         |
+| Surface                                                                                                                       | Mobile                         | Desktop                          |
+| ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | -------------------------------- |
+| Customer shop home                                                                                                            | Approved                       | Not yet locked                   |
+| Booking schedule (historical `02`)                                                                                            | Superseded by Spec 02          | Not yet locked                   |
+| Customer booking journey (Spec 02: vehicle, service, schedule, details, email verification, confirm, confirmed, request sent) | Approved (2026-10-08, 390×844) | Approved (2026-10-08, 1600×1000) |
+| Staff operations                                                                                                              | Not yet locked                 | Approved                         |
+| Conflict resolution                                                                                                           | Not yet locked                 | Approved                         |
+| Owner shell and Settings                                                                                                      | Approved (2026-10-08)          | Approved (2026-10-08)            |
 
 Owner Settings coverage is limited to the shell, the Settings index, and the seven pages at the viewports listed above. Owner surfaces outside Settings (Operations, Booking Requests, Conflicts, Billing) have no approved Owner-specific reference.
 
