@@ -6,24 +6,27 @@ export type Step = { key: string; label: string };
 type Props = { steps: readonly Step[]; current: string };
 
 /**
- * Progress through the booking journey (reference 02): numbered circles joined
- * by lines, completed and current steps filled with the primary token. An
- * ordered list with the current step marked aria-current="step"; completed
- * steps say so for screen readers. On narrow screens only the current label is
- * shown beside a "Step n of N" count, so five steps never overflow.
+ * Progress through the booking journey (Spec 02 references): numbered circles
+ * joined by connector lines, completed (check mark) and current steps filled
+ * with the primary token. An ordered list with the current step marked
+ * aria-current="step"; completed steps say so for screen readers. All five
+ * stages stay visible at every width; below `sm` only the current label shows
+ * beside its circle so the row never overflows, and the position is always
+ * available in words for assistive technology.
  */
 export function StepIndicator({ steps, current }: Props) {
     const currentIndex = steps.findIndex((step) => step.key === current);
 
     return (
         <nav aria-label="Booking progress">
-            <p className="mb-2 text-sm font-medium text-muted-foreground tabular-nums sm:hidden">
+            <p className="sr-only">
                 Step {currentIndex + 1} of {steps.length}
             </p>
             <ol className="flex items-center gap-2">
                 {steps.map((step, index) => {
                     const done = index < currentIndex;
                     const active = index === currentIndex;
+                    const last = index === steps.length - 1;
 
                     return (
                         <li
@@ -31,7 +34,7 @@ export function StepIndicator({ steps, current }: Props) {
                             aria-current={active ? 'step' : undefined}
                             className={cn(
                                 'flex items-center gap-2',
-                                index < steps.length - 1 && 'sm:flex-1',
+                                !last && 'flex-1',
                             )}
                         >
                             <span
@@ -51,9 +54,9 @@ export function StepIndicator({ steps, current }: Props) {
                             </span>
                             <span
                                 className={cn(
-                                    'text-sm whitespace-nowrap',
+                                    'text-sm font-semibold whitespace-nowrap',
                                     active
-                                        ? 'font-semibold'
+                                        ? 'text-primary'
                                         : 'hidden text-muted-foreground sm:inline',
                                 )}
                             >
@@ -65,11 +68,11 @@ export function StepIndicator({ steps, current }: Props) {
                                     </span>
                                 ) : null}
                             </span>
-                            {index < steps.length - 1 ? (
+                            {!last ? (
                                 <span
                                     aria-hidden="true"
                                     className={cn(
-                                        'hidden h-px flex-1 sm:block',
+                                        'h-px min-w-2 flex-1',
                                         done ? 'bg-primary' : 'bg-border',
                                     )}
                                 />

@@ -10,6 +10,8 @@ type FieldProps = {
     hint?: string;
     required?: boolean;
     className?: string;
+    /** Extra classes for the control itself (for example a scoped border token). */
+    controlClassName?: string;
 };
 
 const controlClass =
@@ -82,12 +84,15 @@ export function TextField({
     hint,
     required,
     className,
+    controlClassName,
     ...input
 }: FieldProps & Omit<ComponentProps<'input'>, 'className' | 'id'>) {
     return (
         <Shell
             {...{ label, error, hint, required, className }}
-            render={(aria) => <Input {...aria} {...input} />}
+            render={(aria) => (
+                <Input {...aria} {...input} className={controlClassName} />
+            )}
         />
     );
 }
@@ -98,6 +103,7 @@ export function TextareaField({
     hint,
     required,
     className,
+    controlClassName,
     ...textarea
 }: FieldProps & Omit<ComponentProps<'textarea'>, 'className' | 'id'>) {
     return (
@@ -108,7 +114,7 @@ export function TextareaField({
                     rows={3}
                     {...aria}
                     {...textarea}
-                    className={controlClass}
+                    className={cn(controlClass, controlClassName)}
                 />
             )}
         />

@@ -457,7 +457,6 @@ describe('Operations dashboard', () => {
                                     description: null,
                                     priceCentavos: 35000,
                                     durationMinutes: 60,
-                                    bufferMinutes: 10,
                                     addOns: [],
                                 },
                             ],

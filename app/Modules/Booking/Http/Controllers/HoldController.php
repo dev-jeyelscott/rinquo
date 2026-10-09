@@ -10,9 +10,11 @@ use App\Modules\Booking\Availability\BranchCalendar;
 use App\Modules\Booking\Http\Requests\HoldDetailsRequest;
 use App\Modules\Booking\Http\Requests\PlaceHoldRequest;
 use App\Modules\Booking\Http\ResolvesShop;
+use App\Modules\Booking\Models\Booking;
 use App\Modules\Booking\Models\Hold;
 use App\Modules\Booking\Support\BookingSession;
 use App\Modules\Booking\Support\HoldSummary;
+use App\Modules\Customer\Actions\SaveCustomerVehicle;
 use App\Modules\Customer\Models\CustomerVehicle;
 use App\Modules\Identity\Actions\RequestLoginCode;
 use App\Modules\Identity\Actions\VerifyLoginCode;
@@ -27,6 +29,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 /**
  * The hold-bound steps of the customer journey: place the hold at Schedule,
@@ -43,6 +46,20 @@ class HoldController extends Controller
     {
         $organization = $this->shop($request, $slug);
 
+        $plate = null;
+        $vehicleId = $request->validated('customer_vehicle_id');
+
+        if ($vehicleId !== null) {
+            // Never trust a vehicle id submitted by the browser. A missing
+            // ownership match deliberately looks like an unknown resource.
+            $plate = CustomerVehicle::query()
+                ->whereKey($vehicleId)
+                ->where('user_id', $request->user()->id)
+                ->whereNull('archived_at')
+                ->firstOrFail()
+                ->plate;
+        }
+
         $hold = $placeHold->handle(
             $organization,
             (string) $request->validated('idempotency_key'),
@@ -51,6 +68,8 @@ class HoldController extends Controller
             $request->addOnIds(),
             $request->startAt(),
             (new BookingSession($request->session()))->token(),
+            $request->vehicleMakeModel(),
+            $plate,
         );
 
         return to_route('bookings.holds.details', [$slug, $hold->public_id]);
@@ -71,20 +90,10 @@ class HoldController extends Controller
             'contact' => [
                 'name' => $record->contact_name ?? '',
                 'phone' => $record->contact_phone ?? '',
+                'makeModel' => $record->vehicle_make_model ?? '',
                 'plate' => $record->vehicle_plate ?? '',
                 'notes' => $record->customer_notes ?? '',
             ],
-            'savedVehicles' => $request->user() === null ? [] : CustomerVehicle::query()
-                ->where('user_id', $request->user()->id)
-                ->whereNull('archived_at')
-                ->orderBy('id')
-                ->get()
-                ->map(fn (CustomerVehicle $vehicle): array => [
-                    'id' => $vehicle->id,
-                    'plate' => $vehicle->plate,
-                    'label' => $vehicle->label,
-                ])
-                ->values(),
             'verification' => (new BookingSession($request->session()))->verificationState($request->user() !== null),
         ]);
     }
@@ -103,21 +112,7 @@ class HoldController extends Controller
             return $redirect;
         }
 
-        $details = $request->details();
-        $vehicleId = $request->validated('customer_vehicle_id');
-
-        if ($vehicleId !== null) {
-            // Never trust a vehicle id submitted by the browser. A missing
-            // ownership match deliberately looks like an unknown resource.
-            $vehicle = CustomerVehicle::query()
-                ->whereKey($vehicleId)
-                ->where('user_id', $request->user()->id)
-                ->whereNull('archived_at')
-                ->firstOrFail();
-            $details['vehicle_plate'] = $vehicle->plate;
-        }
-
-        $save->handle($record, $details);
+        $save->handle($record, $request->details());
 
         if ($request->user() !== null) {
             return to_route('bookings.holds.confirm.show', [$slug, $record->public_id]);
@@ -197,14 +192,17 @@ class HoldController extends Controller
             'contact' => [
                 'name' => $record->contact_name,
                 'phone' => $record->contact_phone,
+                'makeModel' => $record->vehicle_make_model,
                 'plate' => $record->vehicle_plate,
                 'notes' => $record->customer_notes,
             ],
             'customerEmail' => $request->user()->email,
+            // The primary action says Send booking request when the shop approves each booking first.
+            'requestOnly' => $organization->bookingPolicy()->firstOrFail()->requiresApproval(),
         ]);
     }
 
-    public function confirm(Request $request, string $slug, string $hold, ConfirmBooking $confirm): RedirectResponse
+    public function confirm(Request $request, string $slug, string $hold, ConfirmBooking $confirm, SaveCustomerVehicle $saveVehicle): RedirectResponse
     {
         $organization = $this->shop($request, $slug);
         $record = $this->ownHold($request, $organization, $hold);
@@ -217,14 +215,34 @@ class HoldController extends Controller
             $booking = $confirm->handle($organization, $hold, (new BookingSession($request->session()))->token(), $request->user());
         } catch (ValidationException $exception) {
             // A missing detail is fixed on the Details step; a lost time stays on this page with the selection kept.
-            if (isset($exception->errors()['contact_name'])) {
+            if (isset($exception->errors()['contact_name']) || isset($exception->errors()['vehicle_make_model'])) {
                 return to_route('bookings.holds.details', [$slug, $record->public_id])->withErrors($exception->errors());
             }
 
             throw $exception;
         }
 
+        $this->rememberVehicle($saveVehicle, $request->user(), $booking);
+
         return to_route('bookings.show', [$slug, $booking->public_id]);
+    }
+
+    /**
+     * Keeps the verified customer's vehicle for next time. It runs after the
+     * booking is committed and never fails it: the booking already holds its own
+     * immutable snapshot, and a missed save only means retyping the vehicle once.
+     */
+    private function rememberVehicle(SaveCustomerVehicle $save, User $customer, Booking $booking): void
+    {
+        if (trim((string) $booking->vehicle_make_model) === '') {
+            return;
+        }
+
+        try {
+            $save->handle($customer, (string) $booking->vehicle_make_model, $booking->vehicle_plate);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
     }
 
     /** A converted hold continues at its booking; a released one starts over at Schedule. */

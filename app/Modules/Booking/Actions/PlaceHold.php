@@ -38,11 +38,13 @@ final class PlaceHold
         array $addOnIds,
         CarbonImmutable $startAt,
         string $sessionToken,
+        string $vehicleMakeModel,
+        ?string $vehiclePlate = null,
     ): Hold {
         $start = $startAt->utc();
         $tokenHash = hash('sha256', $sessionToken);
 
-        return DB::transaction(function () use ($organization, $idempotencyKey, $vehicleTypeId, $serviceId, $addOnIds, $start, $tokenHash): Hold {
+        return DB::transaction(function () use ($organization, $idempotencyKey, $vehicleTypeId, $serviceId, $addOnIds, $start, $tokenHash, $vehicleMakeModel, $vehiclePlate): Hold {
             $locked = Organization::query()->whereKey($organization->id)->lockForUpdate()->firstOrFail();
 
             $existing = Hold::query()
@@ -51,7 +53,7 @@ final class PlaceHold
                 ->first();
 
             if ($existing !== null) {
-                $this->assertSamePayload($existing, $tokenHash, $vehicleTypeId, $serviceId, $addOnIds, $start);
+                $this->assertSamePayload($existing, $tokenHash, $vehicleTypeId, $serviceId, $addOnIds, $start, $vehicleMakeModel);
 
                 return $existing;
             }
@@ -96,6 +98,8 @@ final class PlaceHold
                 'service_end_at' => $serviceEnd,
                 'occupied_end_at' => $serviceEnd->addMinutes($offer->variant->buffer_minutes),
                 'add_on_ids' => $offer->addOnIds(),
+                'vehicle_make_model' => $vehicleMakeModel,
+                'vehicle_plate' => $vehiclePlate,
                 'status' => Hold::ACTIVE,
                 'expires_at' => $now->addMinutes((int) config('rinquo.booking.hold_minutes')),
             ]);
@@ -103,7 +107,7 @@ final class PlaceHold
     }
 
     /** @param  list<int>  $addOnIds */
-    private function assertSamePayload(Hold $hold, string $tokenHash, int $vehicleTypeId, int $serviceId, array $addOnIds, CarbonImmutable $start): void
+    private function assertSamePayload(Hold $hold, string $tokenHash, int $vehicleTypeId, int $serviceId, array $addOnIds, CarbonImmutable $start, string $vehicleMakeModel): void
     {
         $variantId = ServiceVehicleVariant::query()
             ->where('organization_id', $hold->organization_id)
@@ -117,7 +121,8 @@ final class PlaceHold
         $same = hash_equals($hold->session_token_hash, $tokenHash)
             && $variantId === $hold->service_vehicle_variant_id
             && $ids === array_map('intval', $hold->add_on_ids)
-            && $hold->scheduled_start_at->equalTo($start);
+            && $hold->scheduled_start_at->equalTo($start)
+            && $hold->vehicle_make_model === $vehicleMakeModel;
 
         if (! $same) {
             throw ValidationException::withMessages(['idempotency_key' => 'This request was already used for a different selection. Please try again.']);

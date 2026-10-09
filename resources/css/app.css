@@ -42,6 +42,7 @@
 
     --color-border: var(--border);
     --color-input: var(--input);
+    --color-booking-control: var(--booking-control-border);
     --color-ring: var(--ring);
 
     --color-success: var(--success);
@@ -101,6 +102,8 @@
     /* Borders and inputs */
     --border: #e5e7eb;
     --input: #f9fafb;
+    /* Booking journey control boundary (fields, OTP cells, time chips): 3:1 or more (WCAG 1.4.11). */
+    --booking-control-border: #7a808c;
     --ring: #3b82f6;
 
     /* Status colors */
@@ -167,6 +170,7 @@
     /* Borders and inputs on dark */
     --border: #374151;
     --input: #1f2937;
+    --booking-control-border: #8b93a1;
     --ring: #3b82f6;
 
     /* Status colors on dark */
@@ -217,5 +221,16 @@
         scroll-padding-bottom: calc(
             3.5rem + 1px + 0.75rem + env(safe-area-inset-bottom)
         );
+    }
+}
+
+/*
+ * The booking journey's fixed action bar (Spec 02) is taller than the bottom
+ * navigation: Back and status row, a 3rem primary action and the safe-area
+ * inset. Focus scrolling and the end of the page stay clear of it.
+ */
+@media (max-width: 1023.98px) {
+    html:has([data-booking-action-bar]) {
+        scroll-padding-bottom: calc(7rem + env(safe-area-inset-bottom));
     }
 }

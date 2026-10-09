@@ -129,7 +129,7 @@ describe('Booking detail live updates', () => {
         });
         expect(
             screen.getByRole('heading', {
-                level: 1,
+                level: 2,
                 name: 'Booking cancelled',
             }),
         ).toBeInTheDocument();
@@ -335,7 +335,12 @@ describe('Booking detail live updates', () => {
             screen.getByRole('button', { name: 'Load latest details' }),
         );
 
-        expect(screen.getByRole('heading', { level: 1 })).toHaveFocus();
+        expect(
+            screen.getByRole('heading', {
+                level: 2,
+                name: 'Booking confirmed',
+            }),
+        ).toHaveFocus();
         expect(inertia.calls.some((call) => call.method === 'get')).toBe(true);
         expect(
             screen.queryByText('Load latest details'),

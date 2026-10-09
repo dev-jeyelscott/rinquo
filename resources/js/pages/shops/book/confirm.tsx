@@ -1,16 +1,27 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { CircleAlertIcon } from 'lucide-react';
+import { ArrowRightIcon, CircleAlertIcon } from 'lucide-react';
 import { useState } from 'react';
-import { BookingSummaryCard } from '@/components/booking/booking-summary-card';
-import { HoldCountdown } from '@/components/booking/hold-countdown';
+import { BookingActionBar } from '@/components/booking/booking-action-bar';
+import { BookingJourneyHeader } from '@/components/booking/booking-journey-header';
 import {
-    BOOKING_STEPS,
-    StepIndicator,
-} from '@/components/booking/step-indicator';
+    BookingSummaryCard,
+    BookingSummaryCompact,
+    DetailRows,
+    vehicleLabel,
+} from '@/components/booking/booking-summary-card';
+import type { DetailRow } from '@/components/booking/booking-summary-card';
+import {
+    HoldCountdown,
+    HoldCountdownStatus,
+} from '@/components/booking/hold-countdown';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useCountdown } from '@/hooks/use-countdown';
+import { useFocusOnChange } from '@/hooks/use-focus-on-change';
+import { formatDayAndTime } from '@/lib/booking-format';
+import { formatCentavos } from '@/lib/money';
+import { formatMinutes } from '@/lib/schedule';
 import { ALERT_TONES } from '@/lib/tones';
 import { cn } from '@/lib/utils';
 import type { ConfirmPageProps } from '@/types/booking';
@@ -20,24 +31,43 @@ import type { ConfirmPageProps } from '@/types/booking';
  * (not a modal: the summary is the context). The button posts once and is
  * disabled while it runs; the server never reports success before the booking
  * exists, and a retry after a network failure is safe because confirmation is
- * idempotent per hold.
+ * idempotent per hold. When the shop approves each booking first the action
+ * says it sends a request, never that it confirms one.
  */
 export default function Confirm({
+    shop,
     branch,
     hold,
     summary,
     contact,
     customerEmail,
+    requestOnly,
     urls,
 }: ConfirmPageProps) {
     const form = useForm({});
     const remaining = useCountdown(hold.expiresInSeconds);
+    const heading = useFocusOnChange<HTMLHeadingElement>('review', {
+        onMount: true,
+    });
     const expired = hold.expired || remaining <= 0;
     const [networkFailed, setNetworkFailed] = useState(false);
     const lostTime = (form.errors as Record<string, string | undefined>)
         .start_at;
+    const summaryInput = {
+        vehicleName: summary.vehicleName,
+        vehicleMakeModel: summary.vehicleMakeModel,
+        serviceName: summary.serviceName,
+        addOns: summary.addOns,
+        totalCentavos: summary.totalCentavos,
+        durationMinutes: summary.durationMinutes,
+        startAt: summary.startAt,
+        timezone: branch.timezone,
+    };
 
     function confirm() {
+        if (form.processing) {
+            return;
+        }
         setNetworkFailed(false);
         form.post(urls.confirm, {
             onNetworkError: () => setNetworkFailed(true),
@@ -49,59 +79,92 @@ export default function Confirm({
         });
     }
 
+    const bookingRows: DetailRow[] = [
+        ['Vehicle', vehicleLabel(summary.vehicleName, contact.makeModel)],
+        ['Service', summary.serviceName],
+        ...(summary.addOns.length > 0
+            ? [
+                  [
+                      summary.addOns.length === 1 ? 'Add-on' : 'Add-ons',
+                      summary.addOns.map((addOn) => addOn.name).join(', '),
+                  ] as DetailRow,
+              ]
+            : []),
+        ['Duration', formatMinutes(summary.durationMinutes)],
+        ['Exact start', formatDayAndTime(summary.startAt, branch.timezone)],
+        ['Service price', formatCentavos(summary.totalCentavos)],
+    ];
+    const contactRows: DetailRow[] = [
+        ['Name', contact.name],
+        ['Email (verified)', customerEmail],
+        ...(contact.phone ? [['Phone', contact.phone] as DetailRow] : []),
+        ...(contact.plate
+            ? [['Plate number', contact.plate] as DetailRow]
+            : []),
+        ...(contact.notes ? [['Notes', contact.notes] as DetailRow] : []),
+    ];
+
+    const label = form.processing
+        ? requestOnly
+            ? 'Sending request…'
+            : 'Confirming…'
+        : networkFailed
+          ? 'Try again'
+          : expired
+            ? 'Try to keep this time'
+            : requestOnly
+              ? 'Send booking request'
+              : 'Confirm booking';
+
     return (
         <>
             <Head title="Confirm your booking" />
-            <div className="grid gap-6">
-                <div className="grid gap-4">
-                    <h1 className="text-3xl font-semibold tracking-tight">
-                        Review and confirm
-                    </h1>
-                    <StepIndicator steps={BOOKING_STEPS} current="confirm" />
-                    <HoldCountdown
-                        remaining={remaining}
-                        expired={expired}
-                        chooseAnotherUrl={urls.wizard}
-                    />
-                </div>
-                <div className="grid items-start gap-6 lg:grid-cols-[2fr_1fr]">
+            <div className="grid gap-6 pb-36 lg:pb-0">
+                <BookingJourneyHeader
+                    shopName={shop.name}
+                    shopUrl={urls.shop}
+                    title="Review and confirm"
+                    step="confirm"
+                />
+                <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_21rem]">
                     <section
-                        aria-labelledby="contact-heading"
-                        className="grid gap-5"
+                        aria-labelledby="review-heading"
+                        className="grid gap-5 rounded-2xl border bg-card p-4 sm:p-7"
                     >
-                        <div className="grid gap-2 rounded-2xl border bg-card p-4 text-sm">
+                        <BookingSummaryCompact {...summaryInput} />
+                        <HoldCountdown
+                            remaining={remaining}
+                            expired={expired}
+                            chooseAnotherUrl={urls.wizard}
+                        />
+                        <div className="grid gap-1">
                             <h2
-                                id="contact-heading"
-                                className="text-lg font-semibold"
+                                id="review-heading"
+                                ref={heading}
+                                tabIndex={-1}
+                                className="text-2xl font-semibold tracking-tight outline-none"
                             >
-                                Your details
+                                Review before confirming
                             </h2>
-                            <dl className="grid gap-2">
-                                <Row label="Name" value={contact.name} />
-                                <Row
-                                    label="Email (verified)"
-                                    value={customerEmail}
-                                />
-                                {contact.phone ? (
-                                    <Row label="Phone" value={contact.phone} />
-                                ) : null}
-                                {contact.plate ? (
-                                    <Row
-                                        label="Plate or vehicle note"
-                                        value={contact.plate}
-                                    />
-                                ) : null}
-                                {contact.notes ? (
-                                    <Row label="Notes" value={contact.notes} />
-                                ) : null}
-                            </dl>
-                            <Link
-                                href={urls.details}
-                                className="w-fit text-primary underline underline-offset-4"
-                            >
-                                Edit details
-                            </Link>
+                            <p className="text-sm text-muted-foreground">
+                                {requestOnly
+                                    ? 'Check the details. The shop reviews your request before it is confirmed. You are not being charged online.'
+                                    : 'Check the details. You are not being charged online.'}
+                            </p>
                         </div>
+
+                        <ReviewGroup
+                            heading="Booking details"
+                            editHref={urls.wizard}
+                            editLabel="Edit booking"
+                            rows={bookingRows}
+                        />
+                        <ReviewGroup
+                            heading="Your contact"
+                            editHref={urls.details}
+                            editLabel="Edit details"
+                            rows={contactRows}
+                        />
 
                         {lostTime ? (
                             <Alert className={ALERT_TONES.error}>
@@ -121,7 +184,7 @@ export default function Confirm({
                                             buttonVariants({
                                                 variant: 'outline',
                                             }),
-                                            'max-sm:h-11',
+                                            'max-lg:min-h-11',
                                         )}
                                     >
                                         Choose another time
@@ -146,10 +209,12 @@ export default function Confirm({
                             </Alert>
                         ) : null}
 
-                        <div className="flex flex-wrap items-center gap-3">
+                        <BookingActionBar
+                            back={{ href: urls.details }}
+                            meta={<HoldCountdownStatus remaining={remaining} />}
+                        >
                             <Button
                                 type="button"
-                                className="max-sm:h-11"
                                 disabled={form.processing}
                                 aria-busy={form.processing}
                                 onClick={confirm}
@@ -160,30 +225,18 @@ export default function Confirm({
                                         aria-hidden="true"
                                     />
                                 ) : null}
-                                {form.processing
-                                    ? 'Confirming…'
-                                    : networkFailed
-                                      ? 'Try again'
-                                      : expired
-                                        ? 'Try to keep this time'
-                                        : 'Confirm booking'}
+                                {label}
+                                {form.processing ? null : (
+                                    <ArrowRightIcon aria-hidden="true" />
+                                )}
                             </Button>
-                        </div>
+                        </BookingActionBar>
                     </section>
                     <aside
                         aria-label="Booking summary"
                         className="lg:sticky lg:top-6"
                     >
-                        <BookingSummaryCard
-                            vehicleName={summary.vehicleName}
-                            serviceName={summary.serviceName}
-                            addOns={summary.addOns}
-                            totalCentavos={summary.totalCentavos}
-                            durationMinutes={summary.durationMinutes}
-                            bufferMinutes={summary.bufferMinutes}
-                            startAt={summary.startAt}
-                            timezone={branch.timezone}
-                        />
+                        <BookingSummaryCard {...summaryInput} />
                     </aside>
                 </div>
             </div>
@@ -191,11 +244,32 @@ export default function Confirm({
     );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function ReviewGroup({
+    heading,
+    editHref,
+    editLabel,
+    rows,
+}: {
+    heading: string;
+    editHref: string;
+    editLabel: string;
+    rows: DetailRow[];
+}) {
     return (
-        <div className="grid gap-0.5">
-            <dt className="text-muted-foreground">{label}</dt>
-            <dd className="font-semibold break-words">{value}</dd>
-        </div>
+        <section
+            aria-label={heading}
+            className="grid gap-3 rounded-xl border p-4"
+        >
+            <div className="flex items-baseline justify-between gap-3">
+                <h3 className="font-semibold">{heading}</h3>
+                <Link
+                    href={editHref}
+                    className="inline-flex min-h-8 items-center text-sm font-semibold text-primary underline underline-offset-4"
+                >
+                    {editLabel}
+                </Link>
+            </div>
+            <DetailRows rows={rows} />
+        </section>
     );
 }

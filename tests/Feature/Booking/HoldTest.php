@@ -101,6 +101,11 @@ test('hold input is validated', function () {
     $this->post($url, ['idempotency_key' => 'nope'] + Journey::holdPayload($shop))->assertSessionHasErrors('idempotency_key');
     $this->post($url, ['add_on_ids' => [1, 1]] + Journey::holdPayload($shop))->assertSessionHasErrors('add_on_ids.0');
     $this->post($url, ['start_at' => 'whenever'] + Journey::holdPayload($shop))->assertSessionHasErrors('start_at');
+    $this->post($url, ['vehicle_make_model' => '   '] + Journey::holdPayload($shop))->assertSessionHasErrors('vehicle_make_model');
+    $this->post($url, ['vehicle_make_model' => str_repeat('a', 121)] + Journey::holdPayload($shop))->assertSessionHasErrors('vehicle_make_model');
+    $this->post($url, array_diff_key(Journey::holdPayload($shop), ['vehicle_make_model' => 1]))->assertSessionHasErrors('vehicle_make_model');
+    $this->post($url, ['customer_vehicle_id' => 1] + Journey::holdPayload($shop))->assertSessionHasErrors('customer_vehicle_id');
+    expect(Hold::query()->count())->toBe(0);
 });
 
 test('add-ons extend the held span and must be compatible', function () {
@@ -158,7 +163,7 @@ test('a hold is only reachable by its own browser session and shop', function ()
     $this->get(route('bookings.holds.details', ['other', $hold->public_id]))->assertNotFound();
     $this->flushSession();
     $this->get($mine)->assertNotFound();
-    $this->put(route('bookings.holds.details.save', ['shine', $hold->public_id]), ['contact_name' => 'X', 'email' => 'x@example.test'])->assertNotFound();
+    $this->put(route('bookings.holds.details.save', ['shine', $hold->public_id]), ['contact_name' => 'X', 'vehicle_make_model' => 'Toyota Vios', 'email' => 'x@example.test'])->assertNotFound();
     $this->post(route('bookings.holds.confirm', ['shine', $hold->public_id]))->assertNotFound();
 });
 
@@ -176,7 +181,8 @@ test('the details page summarises the hold without scheduler internals', functio
             ->where('summary.vehicleName', 'Sedan')
             ->where('summary.totalCentavos', 35000)
             ->where('summary.durationMinutes', 60)
-            ->where('summary.bufferMinutes', 10)
+            ->missing('summary.bufferMinutes')
+            ->where('summary.vehicleMakeModel', 'Toyota Vios')
             ->where('signedIn', false)
             ->where('verification.step', 'details'));
 
@@ -222,4 +228,23 @@ test('malformed hold and booking ids are a plain 404', function () {
     $this->get(route('bookings.holds.details', ['shine', 'not-a-uuid']))->assertNotFound();
     $this->post(route('bookings.holds.confirm', ['shine', 'not-a-uuid']))->assertNotFound();
     $this->get('/shops/shine/bookings/x')->assertNotFound();
+});
+
+test('a hold stores the trimmed make and model and a replay with another make and model is rejected', function () {
+    $shop = Shop::make();
+    $key = (string) Str::uuid();
+
+    $this->post(route('bookings.holds.store', 'shine'), ['vehicle_make_model' => '  Toyota Vios  '] + Journey::holdPayload($shop, key: $key))->assertSessionHasNoErrors();
+    expect(Hold::query()->sole()->vehicle_make_model)->toBe('Toyota Vios');
+
+    $this->post(route('bookings.holds.store', 'shine'), ['vehicle_make_model' => 'Toyota Vios'] + Journey::holdPayload($shop, key: $key))->assertSessionHasNoErrors();
+    $this->post(route('bookings.holds.store', 'shine'), ['vehicle_make_model' => 'Honda City'] + Journey::holdPayload($shop, key: $key))->assertSessionHasErrors('idempotency_key');
+    expect(Hold::query()->count())->toBe(1);
+});
+
+test('a signed-out browser may send an empty saved-vehicle id but never a real one', function () {
+    $shop = Shop::make();
+
+    $this->post(route('bookings.holds.store', 'shine'), ['customer_vehicle_id' => null] + Journey::holdPayload($shop))->assertSessionHasNoErrors();
+    expect(Hold::query()->count())->toBe(1);
 });

@@ -26,6 +26,7 @@ final class HoldSummary
         return [
             'serviceName' => $offer->service->name,
             'vehicleName' => $offer->vehicleType->name,
+            'vehicleMakeModel' => $hold->vehicle_make_model,
             'addOns' => $offer->addOns->map(fn ($addOn): array => [
                 'id' => $addOn->id,
                 'name' => $addOn->name,
@@ -34,7 +35,6 @@ final class HoldSummary
             'priceCentavos' => $offer->variant->price_centavos,
             'totalCentavos' => $offer->variant->price_centavos + $addOnsPrice,
             'durationMinutes' => $offer->variant->duration_minutes + (int) $offer->addOns->sum('duration_minutes'),
-            'bufferMinutes' => $offer->variant->buffer_minutes,
             'startAt' => $hold->scheduled_start_at->utc()->toIso8601String(),
             'timezone' => Branch::TIMEZONE,
             'vehicleTypeId' => $offer->vehicleType->id,

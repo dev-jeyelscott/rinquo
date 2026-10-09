@@ -6,6 +6,7 @@ use App\Modules\Booking\Models\Booking;
 use App\Modules\Booking\Models\BookingAddOn;
 use App\Modules\Booking\Models\Hold;
 use App\Modules\Booking\Support\BookingNotifier;
+use App\Modules\Customer\Models\CustomerVehicle;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -69,6 +70,7 @@ test('instant confirmation creates one confirmed booking with the full snapshot'
         ->and($booking->contact_name)->toBe('Ana Cruz')
         ->and($booking->contact_email)->toBe($customer->email)
         ->and($booking->contact_phone)->toBe('+63 912 345 6789')
+        ->and($booking->vehicle_make_model)->toBe('Toyota Vios')
         ->and($booking->vehicle_plate)->toBe('ABC 123')
         ->and($booking->customer_notes)->toBe('Please rinse the wheels.');
 
@@ -240,7 +242,7 @@ test('the database rejects rewriting snapshot columns and the add-on lines', fun
     Journey::confirm($shop, $hold);
     $booking = Booking::query()->sole();
 
-    foreach (['total_price_centavos' => 1, 'service_name' => 'x', 'scheduled_start_at' => now(), 'contact_email' => 'x@example.test', 'approval_mode' => 'staff_approval', 'consumption_units' => 2] as $column => $value) {
+    foreach (['total_price_centavos' => 1, 'service_name' => 'x', 'scheduled_start_at' => now(), 'contact_email' => 'x@example.test', 'approval_mode' => 'staff_approval', 'consumption_units' => 2, 'vehicle_make_model' => 'Other'] as $column => $value) {
         expect(fn () => DB::transaction(fn () => DB::table('bookings')->where('id', $booking->id)->update([$column => $value])))
             ->toThrow(QueryException::class);
     }
@@ -370,6 +372,8 @@ test('only the booking customer can open the booking page, inside its own shop',
         ->where('booking.serviceName', 'Full wash')
         ->where('booking.totalCentavos', 35000)
         ->where('booking.timezone', 'Asia/Manila')
+        ->where('booking.vehicleMakeModel', 'Toyota Vios')
+        ->missing('booking.bufferMinutes')
         ->where('booking.contactEmail', $customer->email));
 
     $other = Shop::make('other');
@@ -387,7 +391,7 @@ test('the confirm page is only for a signed-in customer with details and carries
 
     $response = $this->withoutVite()->get(route('bookings.holds.confirm.show', ['shine', $hold->public_id]))
         ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page->component('shops/book/confirm')->where('contact.name', 'Ana Cruz'));
+        ->assertInertia(fn (Assert $page) => $page->component('shops/book/confirm')->where('contact.name', 'Ana Cruz')->where('contact.makeModel', 'Toyota Vios')->where('requestOnly', false)->missing('summary.bufferMinutes'));
 
     expect(Journey::leaksInternals($response->original->getData()['page']['props']))->toBeFalse();
 });
@@ -399,4 +403,53 @@ test('confirming is throttled per IP', function () {
     Journey::confirm($shop, $hold)->assertRedirect();
     Journey::confirm($shop, $hold)->assertStatus(429);
     expect(Booking::query()->count())->toBe(1);
+});
+
+test('a hold without a make and model cannot be confirmed and sends the customer back to Details', function () {
+    $shop = Shop::make();
+    $customer = Tenant::user('legacy@example.test');
+    $this->actingAs($customer);
+    $hold = Journey::hold($shop);
+    $hold->forceFill(['vehicle_make_model' => null])->save();
+    Journey::saveDetails($shop, $hold, ['vehicle_make_model' => ''])->assertSessionHasErrors('vehicle_make_model');
+    $hold->forceFill(['contact_name' => 'Ana Cruz'])->save();
+
+    Journey::confirm($shop, $hold)->assertRedirect(route('bookings.holds.details', ['shine', $hold->public_id]))->assertSessionHasErrors('vehicle_make_model');
+
+    expect(Booking::query()->count())->toBe(0)->and($hold->fresh()->status)->toBe(Hold::ACTIVE);
+});
+
+test('confirming keeps the vehicle for the verified customer once, without touching the booking snapshot', function () {
+    [$shop, $hold, $customer] = readyToConfirm();
+
+    Journey::confirm($shop, $hold)->assertSessionHasNoErrors();
+    Journey::confirm($shop, $hold)->assertSessionHasNoErrors();
+
+    $vehicle = CustomerVehicle::query()->where('user_id', $customer->id)->sole();
+    expect($vehicle->make_model)->toBe('Toyota Vios')->and($vehicle->plate)->toBe('ABC 123');
+
+    $vehicle->forceFill(['make_model' => 'Renamed', 'archived_at' => now()])->save();
+    expect(Booking::query()->sole()->vehicle_make_model)->toBe('Toyota Vios');
+});
+
+test('a plateless vehicle is saved once per customer and never as another customer\'s', function () {
+    $shop = Shop::make();
+    $customer = Tenant::user('plateless@example.test');
+    $this->actingAs($customer);
+    $hold = Journey::hold($shop);
+    Journey::saveDetails($shop, $hold, ['vehicle_plate' => ''])->assertSessionHasNoErrors();
+
+    Journey::confirm($shop, $hold)->assertSessionHasNoErrors();
+
+    expect(CustomerVehicle::query()->count())->toBe(1)
+        ->and(CustomerVehicle::query()->sole()->plate)->toBeNull()
+        ->and(CustomerVehicle::query()->sole()->user_id)->toBe($customer->id);
+});
+
+test('the confirm page tells the customer when the shop approves each booking first', function () {
+    $shop = Shop::make()->policy(['approval_mode' => 'staff_approval', 'approval_window_minutes' => 120]);
+    [, $hold] = readyToConfirm(shop: $shop);
+
+    $this->withoutVite()->get(route('bookings.holds.confirm.show', ['shine', $hold->public_id]))
+        ->assertInertia(fn (Assert $page) => $page->where('requestOnly', true));
 });

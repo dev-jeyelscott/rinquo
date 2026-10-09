@@ -189,36 +189,52 @@ test('a signed-in customer skips the code step and may not type another email', 
 
 test('a signed-in customer can use only their saved vehicle and its plate is snapshotted', function () {
     $customer = Tenant::user('known@example.test');
-    $vehicle = CustomerVehicle::query()->create(['user_id' => $customer->id, 'plate' => 'RIN-007', 'label' => 'Daily driver']);
+    $vehicle = CustomerVehicle::query()->create(['user_id' => $customer->id, 'make_model' => 'Honda City', 'plate' => 'RIN-007', 'label' => 'Daily driver']);
     $shop = Shop::make();
     $this->actingAs($customer);
-    $hold = Journey::hold($shop);
 
-    $this->put(route('bookings.holds.details.save', ['shine', $hold->public_id]), [
-        'contact_name' => 'Ana Cruz',
-        'customer_vehicle_id' => $vehicle->id,
-        'vehicle_plate' => 'UNTRUSTED',
-    ])->assertRedirect(route('bookings.holds.confirm.show', ['shine', $hold->public_id]));
+    Journey::placeHold($shop, key: null)->assertRedirect();
+    Hold::query()->delete();
+    $this->post(route('bookings.holds.store', 'shine'), ['customer_vehicle_id' => $vehicle->id] + Journey::holdPayload($shop))->assertSessionHasNoErrors()->assertRedirect();
+    $hold = Hold::query()->sole();
 
-    expect($hold->fresh()->vehicle_plate)->toBe('RIN-007');
-    $vehicle->forceFill(['plate' => 'RIN-008'])->save();
-    expect($hold->fresh()->vehicle_plate)->toBe('RIN-007');
+    expect($hold->vehicle_plate)->toBe('RIN-007')->and($hold->vehicle_make_model)->toBe('Toyota Vios');
+    $vehicle->forceFill(['plate' => 'RIN-008', 'make_model' => 'Mazda 3'])->save();
+    expect($hold->fresh()->vehicle_plate)->toBe('RIN-007')->and($hold->fresh()->vehicle_make_model)->toBe('Toyota Vios');
 });
 
-test('a customer cannot use another customer\'s saved vehicle', function () {
+test('a customer cannot use another customer\'s or an archived saved vehicle', function () {
     $customer = Tenant::user('known@example.test');
     $other = Tenant::user('other@example.test');
-    $vehicle = CustomerVehicle::query()->create(['user_id' => $other->id, 'plate' => 'OTHER-1']);
+    $foreign = CustomerVehicle::query()->create(['user_id' => $other->id, 'make_model' => 'Other car', 'plate' => 'OTHER-1']);
+    $archived = CustomerVehicle::query()->create(['user_id' => $customer->id, 'make_model' => 'Old car', 'plate' => 'OLD-1', 'archived_at' => now()]);
     $shop = Shop::make();
     $this->actingAs($customer);
+
+    foreach ([$foreign, $archived] as $vehicle) {
+        $this->post(route('bookings.holds.store', 'shine'), ['customer_vehicle_id' => $vehicle->id] + Journey::holdPayload($shop))->assertNotFound();
+    }
+
+    expect(Hold::query()->count())->toBe(0);
+});
+
+test('typing an email never grants access to a saved vehicle', function () {
+    $owner = Tenant::user('known@example.test');
+    $vehicle = CustomerVehicle::query()->create(['user_id' => $owner->id, 'make_model' => 'Honda City', 'plate' => 'RIN-007']);
+    $shop = Shop::make();
+
+    $this->post(route('bookings.holds.store', 'shine'), ['customer_vehicle_id' => $vehicle->id] + Journey::holdPayload($shop))->assertSessionHasErrors('customer_vehicle_id');
+    expect(Hold::query()->count())->toBe(0);
+});
+
+test('details require a make and model and let the customer correct it', function () {
+    $shop = Shop::make();
     $hold = Journey::hold($shop);
 
-    $this->put(route('bookings.holds.details.save', ['shine', $hold->public_id]), [
-        'contact_name' => 'Ana Cruz',
-        'customer_vehicle_id' => $vehicle->id,
-    ])->assertNotFound();
+    Journey::saveDetails($shop, $hold, ['vehicle_make_model' => '', 'email' => 'a@example.test'])->assertSessionHasErrors('vehicle_make_model');
+    Journey::saveDetails($shop, $hold, ['vehicle_make_model' => '  Toyota   Fortuner ', 'vehicle_plate' => '', 'email' => 'a@example.test'])->assertSessionHasNoErrors();
 
-    expect($hold->fresh()->vehicle_plate)->toBeNull();
+    expect($hold->fresh()->vehicle_make_model)->toBe('Toyota   Fortuner')->and($hold->fresh()->vehicle_plate)->toBeNull();
 });
 
 test('details are validated', function () {

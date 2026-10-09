@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Modules\Booking\Availability\AvailabilitySearch;
 use App\Modules\Booking\Availability\BranchCalendar;
 use App\Modules\Booking\Http\ResolvesShop;
+use App\Modules\Booking\Models\Hold;
 use App\Modules\Booking\Support\BookingCatalog;
 use App\Modules\Booking\Support\BookingIntake;
 use App\Modules\Booking\Support\BookingSession;
 use App\Modules\Booking\Support\Offer;
+use App\Modules\Customer\Models\CustomerVehicle;
 use App\Modules\Scheduling\Models\BookingPolicy;
 use App\Modules\Tenancy\Http\Storefront;
 use App\Modules\Tenancy\Models\Organization;
@@ -73,11 +75,33 @@ class BookingWizardController extends Controller
                 'service' => isset($query['service']) ? (int) $query['service'] : null,
                 'addOns' => $offer === null ? [] : $offer->addOnIds(),
                 'date' => $date?->toDateString(),
+                // Typed earlier by this browser session (a released hold), so choosing another time keeps it.
+                'makeModel' => $ownSession === null ? null : Hold::query()
+                    ->where('organization_id', $organization->id)
+                    ->where('session_token_hash', $ownSession)
+                    ->whereNotNull('vehicle_make_model')
+                    ->latest('id')
+                    ->value('vehicle_make_model'),
             ],
             'availability' => fn (): ?array => $offer !== null && $date !== null
                 ? $search->forDate($organization, $policy, $offer->variant, $offer->addOns, $date, $now, $ownSession)->toArray()
                 : null,
             'nextAvailable' => fn (): ?array => $offer === null ? null : $this->next($search, $organization, $policy, $offer, $now, $ownSession),
+            // An owned, active vehicle may prefill make/model and plate; ownership is re-checked when the hold is placed.
+            'savedVehicles' => $request->user() === null ? [] : CustomerVehicle::query()
+                ->where('user_id', $request->user()->id)
+                ->whereNull('archived_at')
+                ->orderBy('id')
+                ->limit(20)
+                ->get()
+                ->map(fn (CustomerVehicle $vehicle): array => [
+                    'id' => $vehicle->id,
+                    'makeModel' => $vehicle->make_model,
+                    'plate' => $vehicle->plate,
+                    'label' => $vehicle->label,
+                ])
+                ->values()
+                ->all(),
             'urls' => [
                 'holds' => route('bookings.holds.store', $slug, absolute: false),
                 'shop' => route('shops.show', $slug, absolute: false),

@@ -169,6 +169,7 @@ test('parallel hold requests cannot both claim the last unit', function () {
             [],
             Shop::at('2026-10-06 10:00'),
             Str::random(40),
+            'Toyota Vios',
         );
 
         return $hold->public_id;
@@ -240,7 +241,7 @@ test('a temporary hold racing a confirm re-acquire leaves exactly one claim on t
     }
     foreach (range(1, 3) as $i) {
         $jobs[] = function () use ($shop) {
-            return app(PlaceHold::class)->handle($shop->organization, (string) Str::uuid(), $shop->records->vehicle->id, $shop->records->service->id, [], Shop::at('2026-10-06 10:00'), Str::random(40))->public_id;
+            return app(PlaceHold::class)->handle($shop->organization, (string) Str::uuid(), $shop->records->vehicle->id, $shop->records->service->id, [], Shop::at('2026-10-06 10:00'), Str::random(40), 'Toyota Vios')->public_id;
         };
     }
 
@@ -258,7 +259,7 @@ test('two units of capacity admit exactly two of many parallel holds', function 
     commitFixtures();
 
     $jobs = array_map(fn (int $i) => function () use ($shop) {
-        return app(PlaceHold::class)->handle($shop->organization, (string) Str::uuid(), $shop->records->vehicle->id, $shop->records->service->id, [], Shop::at('2026-10-06 10:00'), Str::random(40))->public_id;
+        return app(PlaceHold::class)->handle($shop->organization, (string) Str::uuid(), $shop->records->vehicle->id, $shop->records->service->id, [], Shop::at('2026-10-06 10:00'), Str::random(40), 'Toyota Vios')->public_id;
     }, range(1, 8));
 
     $results = race($jobs);
@@ -361,7 +362,7 @@ test('a staff proposal and a customer hold racing for the last unit leave exactl
 
     $jobs = [fn () => app(ProposeReschedule::class)->send($shop->organization, $staff, $conflict->public_id, 1, (string) Str::uuid(), Shop::at('2026-10-06 14:00')->toIso8601String())->public_id];
     foreach (range(1, 3) as $i) {
-        $jobs[] = fn () => app(PlaceHold::class)->handle($shop->organization, (string) Str::uuid(), $shop->records->vehicle->id, $shop->records->service->id, [], Shop::at('2026-10-06 14:00'), Str::random(40))->public_id;
+        $jobs[] = fn () => app(PlaceHold::class)->handle($shop->organization, (string) Str::uuid(), $shop->records->vehicle->id, $shop->records->service->id, [], Shop::at('2026-10-06 14:00'), Str::random(40), 'Toyota Vios')->public_id;
     }
 
     $results = race($jobs);

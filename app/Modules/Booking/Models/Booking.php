@@ -51,6 +51,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $contact_name
  * @property ?string $contact_email
  * @property ?string $contact_phone
+ * @property ?string $vehicle_make_model
  * @property ?string $vehicle_plate
  * @property ?string $customer_notes
  * @property int $physical_resource_id

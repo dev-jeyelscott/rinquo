@@ -20,7 +20,6 @@ export type CatalogService = {
     description: string | null;
     priceCentavos: number;
     durationMinutes: number;
-    bufferMinutes: number;
     addOns: CatalogAddOn[];
 };
 
@@ -49,6 +48,16 @@ export type BookingSelection = {
     service: number | null;
     addOns: number[];
     date: string | null;
+    /** Make and model typed earlier in this browser session, so choosing another time keeps it. */
+    makeModel: string | null;
+};
+
+/** One of the signed-in customer's active platform vehicles; make/model is null on legacy rows. */
+export type SavedVehicle = {
+    id: number;
+    makeModel: string | null;
+    plate: string | null;
+    label: string | null;
 };
 
 export type WizardPageProps = ShopShellProps & {
@@ -56,6 +65,7 @@ export type WizardPageProps = ShopShellProps & {
     dates: BookingDate[];
     policy: { minNoticeMinutes: number; horizonDays: number };
     selection: BookingSelection;
+    savedVehicles: SavedVehicle[];
     availability?: DayAvailability | null;
     nextAvailable?: NextAvailable;
     urls: { holds: string; shop: string; wizard: string };
@@ -65,11 +75,13 @@ export type WizardPageProps = ShopShellProps & {
 export type BookingSummary = {
     serviceName: string;
     vehicleName: string;
+    /** Null only for bookings made before make/model was collected. */
+    vehicleMakeModel: string | null;
     addOns: { id: number; name: string; priceCentavos: number }[];
     priceCentavos: number;
     totalCentavos: number;
+    /** Service plus add-on minutes; the shop's internal buffer is never sent to customers. */
     durationMinutes: number;
-    bufferMinutes: number;
     startAt: string;
     timezone: string;
 };
@@ -98,6 +110,7 @@ export type HoldPageProps = ShopShellProps & {
 export type ContactDetails = {
     name: string;
     phone: string;
+    makeModel: string;
     plate: string;
     notes: string;
 };
@@ -112,7 +125,6 @@ export type VerificationState = {
 
 export type DetailsPageProps = HoldPageProps & {
     contact: ContactDetails;
-    savedVehicles: { id: number; plate: string; label: string | null }[];
     verification: VerificationState;
 };
 
@@ -120,10 +132,13 @@ export type ConfirmPageProps = HoldPageProps & {
     contact: {
         name: string;
         phone: string | null;
+        makeModel: string | null;
         plate: string | null;
         notes: string | null;
     };
     customerEmail: string;
+    /** The shop approves each booking first, so the action sends a request. */
+    requestOnly: boolean;
 };
 
 export type BookingStatus =

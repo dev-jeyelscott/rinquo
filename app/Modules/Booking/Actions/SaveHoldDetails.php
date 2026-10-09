@@ -12,7 +12,7 @@ use App\Modules\Booking\Models\Hold;
  */
 final class SaveHoldDetails
 {
-    /** @param  array{contact_name: string, contact_phone: ?string, vehicle_plate: ?string, customer_notes: ?string}  $details */
+    /** @param  array{contact_name: string, contact_phone: ?string, vehicle_make_model: string, vehicle_plate: ?string, customer_notes: ?string}  $details */
     public function handle(Hold $hold, array $details): void
     {
         $updated = Hold::query()

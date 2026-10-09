@@ -3,9 +3,14 @@ import CustomerShell from '@/layouts/customer-shell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-type Vehicle = { id: number; plate: string; label: string | null };
+type Vehicle = {
+    id: number;
+    makeModel: string | null;
+    plate: string | null;
+    label: string | null;
+};
 export default function Vehicles({ vehicles }: { vehicles: Vehicle[] }) {
-    const form = useForm({ plate: '', label: '' });
+    const form = useForm({ make_model: '', plate: '', label: '' });
     return (
         <CustomerShell>
             <Head title="Vehicles" />
@@ -23,7 +28,13 @@ export default function Vehicles({ vehicles }: { vehicles: Vehicle[] }) {
                                 <Card key={vehicle.id}>
                                     <CardContent className="flex items-center justify-between gap-3 py-4">
                                         <span>
-                                            <strong>{vehicle.plate}</strong>
+                                            <strong>
+                                                {vehicle.makeModel ??
+                                                    'Vehicle (add make and model when you book)'}
+                                            </strong>
+                                            {vehicle.plate
+                                                ? ` · ${vehicle.plate}`
+                                                : ''}
                                             {vehicle.label
                                                 ? ` · ${vehicle.label}`
                                                 : ''}
@@ -66,8 +77,29 @@ export default function Vehicles({ vehicles }: { vehicles: Vehicle[] }) {
                             }}
                         >
                             <Input
-                                aria-label="Plate number"
-                                placeholder="Plate number"
+                                aria-label="Make and model"
+                                placeholder="Make and model"
+                                required
+                                maxLength={120}
+                                aria-invalid={
+                                    form.errors.make_model ? true : undefined
+                                }
+                                value={form.data.make_model}
+                                onChange={(e) =>
+                                    form.setData('make_model', e.target.value)
+                                }
+                            />
+                            {form.errors.make_model ? (
+                                <p
+                                    role="alert"
+                                    className="text-sm text-destructive"
+                                >
+                                    {form.errors.make_model}
+                                </p>
+                            ) : null}
+                            <Input
+                                aria-label="Plate number (optional)"
+                                placeholder="Plate number (optional)"
                                 value={form.data.plate}
                                 onChange={(e) =>
                                     form.setData('plate', e.target.value)

@@ -37,7 +37,7 @@ type Overrides = Partial<{
     phone: string | null;
 }>;
 
-function setup(overrides: Overrides = {}) {
+function setup(overrides: Overrides = {}, dateList = dates) {
     const handlers = {
         onDateChange: vi.fn(),
         onSelect: vi.fn(),
@@ -45,7 +45,7 @@ function setup(overrides: Overrides = {}) {
         onRetry: vi.fn(),
     };
     const props = {
-        dates,
+        dates: dateList,
         selectedDate: '2026-10-06',
         status: 'ready' as SelectorStatus,
         availability: day as DayAvailability | null,
@@ -75,6 +75,62 @@ describe('ExactStartTimeSelector', () => {
         });
         expect(taken).toBeDisabled();
         expect(taken).toHaveTextContent('9:15 AM');
+    });
+
+    it('jumps to the first open date of the neighbouring month with the month control', () => {
+        const { onDateChange } = setup({}, [
+            { date: '2026-09-30', closed: false },
+            { date: '2026-10-05', closed: false },
+            { date: '2026-10-06', closed: false },
+            { date: '2026-11-01', closed: true },
+            { date: '2026-11-02', closed: false },
+        ]);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Next month' }));
+        expect(onDateChange).toHaveBeenLastCalledWith('2026-11-02');
+        fireEvent.click(screen.getByRole('button', { name: 'Previous month' }));
+        expect(onDateChange).toHaveBeenLastCalledWith('2026-09-30');
+    });
+
+    it('scrolls the date strip to the selected date when it changes from outside the strip', () => {
+        const rect = vi
+            .spyOn(Element.prototype, 'getBoundingClientRect')
+            .mockImplementation(function (this: Element) {
+                const label = this.getAttribute('aria-label') ?? '';
+                if (this.getAttribute('data-state') === 'on') {
+                    return { left: 1505, width: 56 } as DOMRect;
+                }
+                return label === 'Date'
+                    ? ({ left: 0, width: 300 } as DOMRect)
+                    : ({ left: 0, width: 0 } as DOMRect);
+            });
+        const list = [
+            { date: '2026-10-05', closed: false },
+            { date: '2026-11-02', closed: false },
+        ];
+        const { props, rerender } = setup({}, list);
+        const strip = screen.getByRole('radiogroup', { name: 'Date' });
+        Object.defineProperty(strip, 'clientWidth', { value: 300 });
+        strip.scrollLeft = 0;
+
+        rerender(
+            <ExactStartTimeSelector {...props} selectedDate="2026-11-02" />,
+        );
+
+        // Selected tile left 1505, centred in a 300px strip: 1505 - (300 - 56) / 2.
+        expect(strip.scrollLeft).toBe(1383);
+        rect.mockRestore();
+    });
+
+    it('disables the month control when the horizon has no other month', () => {
+        setup();
+
+        expect(
+            screen.getByRole('button', { name: 'Previous month' }),
+        ).toBeDisabled();
+        expect(
+            screen.getByRole('button', { name: 'Next month' }),
+        ).toBeDisabled();
     });
 
     it('selects an available time and announces it politely', () => {

@@ -404,7 +404,8 @@ test('operational history is append-only and snapshots stay immutable through op
     expect(fn () => BookingOperationEvent::query()->whereKey($event->id)->update(['reason' => 'rewrite']))->toThrow(QueryException::class)
         ->and(fn () => BookingOperationEvent::query()->whereKey($event->id)->delete())->toThrow(QueryException::class)
         ->and(fn () => Booking::query()->whereKey($booking->id)->update(['service_name' => 'Hacked']))->toThrow(QueryException::class)
-        ->and(fn () => Booking::query()->whereKey($booking->id)->update(['source' => 'walk_in']))->toThrow(QueryException::class);
+        ->and(fn () => Booking::query()->whereKey($booking->id)->update(['source' => 'walk_in']))->toThrow(QueryException::class)
+        ->and(fn () => Booking::query()->whereKey($booking->id)->update(['vehicle_make_model' => 'Hacked']))->toThrow(QueryException::class);
 });
 
 test('a staff-entered contact can never carry an account and illegal state combinations are impossible', function () {

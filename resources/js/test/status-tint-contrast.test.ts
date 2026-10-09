@@ -73,3 +73,21 @@ describe('tinted status text tokens (SC 1.4.3)', () => {
         ).toBeGreaterThanOrEqual(3);
     });
 });
+
+describe('booking control border token (SC 1.4.11)', () => {
+    it.each([
+        ['root', ['background', 'card', 'input', 'muted']],
+        ['dark', ['background', 'card']],
+    ] as const)(
+        'reaches 3:1 against adjacent surfaces in %s',
+        (block, surfaces) => {
+            const border = rgb(token('booking-control-border', block));
+
+            for (const surface of surfaces) {
+                expect(
+                    ratio(border, rgb(token(surface, block))),
+                ).toBeGreaterThanOrEqual(3);
+            }
+        },
+    );
+});

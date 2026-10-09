@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property list<int> $add_on_ids
  * @property ?string $contact_name
  * @property ?string $contact_phone
+ * @property ?string $vehicle_make_model
  * @property ?string $vehicle_plate
  * @property ?string $customer_notes
  * @property string $status
@@ -64,7 +65,13 @@ class Hold extends Model
 
     public function hasDetails(): bool
     {
-        return trim((string) $this->contact_name) !== '';
+        return trim((string) $this->contact_name) !== '' && $this->hasVehicle();
+    }
+
+    /** New holds always carry a make/model; holds from before it was collected must be completed on Details. */
+    public function hasVehicle(): bool
+    {
+        return trim((string) $this->vehicle_make_model) !== '';
     }
 
     /** @return HasOne<Booking, $this> */

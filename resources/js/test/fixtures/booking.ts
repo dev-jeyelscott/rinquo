@@ -45,7 +45,6 @@ export const wizardProps: WizardPageProps = {
                     description: 'Hand wash and dry.',
                     priceCentavos: 35000,
                     durationMinutes: 60,
-                    bufferMinutes: 10,
                     addOns: [
                         {
                             id: 100,
@@ -65,7 +64,14 @@ export const wizardProps: WizardPageProps = {
         { date: '2026-10-07', closed: true },
     ],
     policy: { minNoticeMinutes: 60, horizonDays: 30 },
-    selection: { vehicle: null, service: null, addOns: [], date: null },
+    selection: {
+        vehicle: null,
+        service: null,
+        addOns: [],
+        date: null,
+        makeModel: null,
+    },
+    savedVehicles: [],
     availability: null,
     nextAvailable: null,
     urls: {
@@ -78,11 +84,11 @@ export const wizardProps: WizardPageProps = {
 export const summary: HoldSummary = {
     serviceName: 'Full wash',
     vehicleName: 'Sedan',
+    vehicleMakeModel: 'Toyota Vios',
     addOns: [{ id: 100, name: 'Wax', priceCentavos: 15000 }],
     priceCentavos: 35000,
     totalCentavos: 50000,
     durationMinutes: 80,
-    bufferMinutes: 10,
     startAt: T0900,
     timezone: 'Asia/Manila',
     vehicleTypeId: 1,
@@ -106,8 +112,7 @@ export const detailsProps: DetailsPageProps = {
     summary,
     signedIn: false,
     urls: holdUrls,
-    contact: { name: '', phone: '', plate: '', notes: '' },
-    savedVehicles: [],
+    contact: { name: '', phone: '', makeModel: '', plate: '', notes: '' },
     verification: {
         step: 'details',
         email: null,
@@ -126,10 +131,12 @@ export const confirmProps: ConfirmPageProps = {
     contact: {
         name: 'Ana Cruz',
         phone: '+63 912',
+        makeModel: 'Toyota Vios',
         plate: 'ABC 123',
         notes: null,
     },
     customerEmail: 'ana@example.test',
+    requestOnly: false,
 };
 
 export const bookingProps: BookingPageProps = {
@@ -139,10 +146,10 @@ export const bookingProps: BookingPageProps = {
         status: 'confirmed',
         serviceName: 'Full wash',
         vehicleName: 'Sedan',
+        vehicleMakeModel: 'Toyota Vios',
         addOns: [{ name: 'Wax', priceCentavos: 15000 }],
         totalCentavos: 50000,
         durationMinutes: 80,
-        bufferMinutes: 10,
         startAt: T0900,
         timezone: 'Asia/Manila',
         pendingExpiresAt: null,

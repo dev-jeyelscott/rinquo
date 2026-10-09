@@ -58,7 +58,6 @@ final class BookingCatalog
                         'description' => $service->description,
                         'priceCentavos' => $variant->price_centavos,
                         'durationMinutes' => $variant->duration_minutes,
-                        'bufferMinutes' => $variant->buffer_minutes,
                         'addOns' => $addOns->only(array_values(array_intersect($offered, $compatible)))->map(fn (AddOn $addOn): array => [
                             'id' => $addOn->id,
                             'name' => $addOn->name,

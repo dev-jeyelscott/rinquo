@@ -36,6 +36,20 @@ export function formatDayAndTime(startAt: string, timeZone: string): string {
     });
 }
 
+/** "Tuesday, October 6 · 9:00 AM" in the branch timezone. */
+export function formatLongDayAndTime(
+    startAt: string,
+    timeZone: string,
+): string {
+    const day = formatInstant(startAt, timeZone, {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+    });
+
+    return `${day} · ${formatTime(startAt, timeZone)}`;
+}
+
 /** The branch-local calendar date (YYYY-MM-DD) of an instant. */
 export function localDateOf(startAt: string, timeZone: string): string {
     return new Intl.DateTimeFormat('en-CA', {
@@ -91,11 +105,12 @@ export function wallTimeToInstant(local: string, timeZone: string): string {
     return new Date(instant).toISOString();
 }
 
-/** "mm:ss" for a countdown in seconds. */
-export function formatClock(seconds: number): string {
+/** "m:ss" for a countdown in seconds, or "mm:ss" when `padMinutes` is set. */
+export function formatClock(seconds: number, padMinutes = false): string {
     const safe = Math.max(0, Math.floor(seconds));
+    const minutes = String(Math.floor(safe / 60));
 
-    return `${Math.floor(safe / 60)}:${String(safe % 60).padStart(2, '0')}`;
+    return `${padMinutes ? minutes.padStart(2, '0') : minutes}:${String(safe % 60).padStart(2, '0')}`;
 }
 
 /** An RFC 4122 v4 id, from crypto.randomUUID when available. */

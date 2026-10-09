@@ -113,6 +113,7 @@ final class Shop
             'service_end_at' => $start->addMinutes($minutes - 10),
             'occupied_end_at' => $start->addMinutes($minutes),
             'add_on_ids' => [],
+            'vehicle_make_model' => 'Toyota Vios',
             'status' => Hold::ACTIVE,
             'expires_at' => now()->addMinutes(15),
         ]);

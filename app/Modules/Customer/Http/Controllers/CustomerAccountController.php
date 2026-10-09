@@ -5,6 +5,7 @@ namespace App\Modules\Customer\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Booking\Models\Booking;
 use App\Modules\Customer\Actions\ChangeCustomerEmail;
+use App\Modules\Customer\Actions\SaveCustomerVehicle;
 use App\Modules\Customer\Models\CustomerProfile;
 use App\Modules\Customer\Models\CustomerVehicle;
 use App\Modules\Scheduling\Readiness\ReadinessEvaluator;
@@ -59,14 +60,17 @@ class CustomerAccountController extends Controller
 
     public function vehicles(Request $request): Response
     {
-        return Inertia::render('customer/vehicles', ['vehicles' => CustomerVehicle::query()->where('user_id', $request->user()->id)->whereNull('archived_at')->orderBy('id')->get()->map(fn (CustomerVehicle $vehicle): array => ['id' => $vehicle->id, 'plate' => $vehicle->plate, 'label' => $vehicle->label])->values()]);
+        return Inertia::render('customer/vehicles', ['vehicles' => CustomerVehicle::query()->where('user_id', $request->user()->id)->whereNull('archived_at')->orderBy('id')->get()->map(fn (CustomerVehicle $vehicle): array => ['id' => $vehicle->id, 'makeModel' => $vehicle->make_model, 'plate' => $vehicle->plate, 'label' => $vehicle->label])->values()]);
     }
 
-    public function storeVehicle(Request $request): RedirectResponse
+    public function storeVehicle(Request $request, SaveCustomerVehicle $save): RedirectResponse
     {
-        $data = $request->validate(['plate' => ['required', 'string', 'max:20'], 'label' => ['nullable', 'string', 'max:120']]);
-        $data['plate'] = strtoupper(trim($data['plate']));
-        CustomerVehicle::query()->updateOrCreate(['user_id' => $request->user()->id, 'plate' => $data['plate']], $data + ['archived_at' => null]);
+        $data = $request->validate([
+            'make_model' => ['required', 'string', 'max:120', 'regex:/\S/'],
+            'plate' => ['nullable', 'string', 'max:20'],
+            'label' => ['nullable', 'string', 'max:120'],
+        ], ['make_model.required' => 'Enter your vehicle make and model.', 'make_model.regex' => 'Enter your vehicle make and model.']);
+        $save->handle($request->user(), $data['make_model'], $data['plate'] ?? null, isset($data['label']) && trim($data['label']) !== '' ? trim($data['label']) : null);
 
         return to_route('customer.vehicles')->with('status', 'Vehicle saved to your Rinquo account.');
     }

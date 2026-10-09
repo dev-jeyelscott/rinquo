@@ -17,6 +17,7 @@ final class Journey
             'service_id' => $shop->records->service->id,
             'add_on_ids' => $addOnIds,
             'start_at' => Shop::at($localStart)->toIso8601String(),
+            'vehicle_make_model' => 'Toyota Vios',
         ];
     }
 
@@ -39,6 +40,7 @@ final class Journey
         return test()->put(route('bookings.holds.details.save', [$shop->organization->slug, $hold->public_id]), $overrides + [
             'contact_name' => 'Ana Cruz',
             'contact_phone' => '+63 912 345 6789',
+            'vehicle_make_model' => 'Toyota Vios',
             'vehicle_plate' => 'ABC 123',
             'customer_notes' => 'Please rinse the wheels.',
         ]);
@@ -52,7 +54,7 @@ final class Journey
     /** True when no key at any depth matches one of the internals customers must never see. */
     public static function leaksInternals(mixed $payload): bool
     {
-        $forbidden = ['capacity', 'units', 'physical_resource', 'physicalresource', 'resource', 'load', 'consumption'];
+        $forbidden = ['capacity', 'units', 'physical_resource', 'physicalresource', 'resource', 'load', 'consumption', 'buffer', 'bufferminutes', 'buffer_minutes'];
         $walk = function (mixed $node) use (&$walk, $forbidden): bool {
             if (! is_array($node)) {
                 return false;

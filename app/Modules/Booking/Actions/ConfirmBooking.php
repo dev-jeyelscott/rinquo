@@ -58,8 +58,12 @@ final class ConfirmBooking
                 return Booking::query()->where('hold_id', $hold->id)->firstOrFail();
             }
 
-            if (! $hold->hasDetails()) {
+            if (trim((string) $hold->contact_name) === '') {
                 throw ValidationException::withMessages(['contact_name' => 'Add your contact details before confirming.']);
+            }
+
+            if (! $hold->hasVehicle()) {
+                throw ValidationException::withMessages(['vehicle_make_model' => 'Add your vehicle make and model before confirming.']);
             }
 
             $this->intake->assertAcceptingNewBookings($locked);
@@ -131,6 +135,7 @@ final class ConfirmBooking
                 'contact_name' => (string) $hold->contact_name,
                 'contact_email' => $customer->email,
                 'contact_phone' => $hold->contact_phone,
+                'vehicle_make_model' => $hold->vehicle_make_model,
                 'vehicle_plate' => $hold->vehicle_plate,
                 'customer_notes' => $hold->customer_notes,
                 'physical_resource_id' => $assignment->resource->id,

@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Booking\Models\Hold;
+use App\Modules\Customer\Models\CustomerVehicle;
 use App\Modules\Scheduling\Models\BranchDateOverride;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\Support\Journey;
@@ -25,7 +26,7 @@ test('the wizard exposes the catalog without any scheduler internals', function 
             ->where('catalog.0.services.0.name', 'Full wash')
             ->where('catalog.0.services.0.priceCentavos', 35000)
             ->where('catalog.0.services.0.durationMinutes', 60)
-            ->where('catalog.0.services.0.bufferMinutes', 10)
+            ->missing('catalog.0.services.0.bufferMinutes')
             ->where('catalog.0.services.0.addOns.0.name', 'Wax')
             ->where('availability.date', '2026-10-06')
             ->where('availability.times.0.available', true)
@@ -163,4 +164,38 @@ test('the own booking of the session still occupies capacity in availability', f
             $times = collect($page->toArray()['props']['availability']['times'])->keyBy('startAt');
             expect($times[Shop::at('2026-10-06 10:00')->toIso8601String()]['available'])->toBeFalse();
         });
+});
+
+test('only the signed-in customer\'s active vehicles are offered on the Vehicle step', function () {
+    $shop = Shop::make();
+    $customer = Tenant::user('known@example.test');
+    $other = Tenant::user('other@example.test');
+    CustomerVehicle::query()->create(['user_id' => $customer->id, 'make_model' => 'Honda City', 'plate' => 'RIN-007']);
+    CustomerVehicle::query()->create(['user_id' => $customer->id, 'make_model' => 'Old', 'plate' => 'OLD-1', 'archived_at' => now()]);
+    CustomerVehicle::query()->create(['user_id' => $other->id, 'make_model' => 'Mazda 3', 'plate' => 'OTH-1']);
+
+    $this->withoutVite()->get(route('bookings.wizard', 'shine'))
+        ->assertInertia(fn (Assert $page) => $page->where('savedVehicles', []));
+
+    $this->actingAs($customer)->withoutVite()->get(route('bookings.wizard', 'shine'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('savedVehicles', 1)
+            ->where('savedVehicles.0.makeModel', 'Honda City')
+            ->where('savedVehicles.0.plate', 'RIN-007'));
+});
+
+test('the wizard offers back the make and model this browser session typed for its last hold', function () {
+    $shop = Shop::make();
+
+    $this->withoutVite()->get(route('bookings.wizard', 'shine'))
+        ->assertInertia(fn (Assert $page) => $page->where('selection.makeModel', null));
+
+    Journey::placeHold($shop)->assertSessionHasNoErrors();
+
+    $this->withoutVite()->get(route('bookings.wizard', 'shine'))
+        ->assertInertia(fn (Assert $page) => $page->where('selection.makeModel', 'Toyota Vios'));
+
+    $this->flushSession();
+    $this->withoutVite()->get(route('bookings.wizard', 'shine'))
+        ->assertInertia(fn (Assert $page) => $page->where('selection.makeModel', null));
 });
