@@ -306,6 +306,18 @@ The reconciled design-system contract:
 
 Do not add deposits or online payment, capacity displays, resource or staff selection, gestures, or hover-only actions to this journey.
 
+## Customer booking management baseline (Spec 03)
+
+The approved Spec 03 references under `docs/reference-ui/spec-03/` (registered in `docs/reference-ui/README.md`, approved 2026-10-09) are the visual baseline for managing an existing booking at 1600×1000 and 390×844. They share the route `/shops/{slug}/bookings/{booking}` with the Approved Spec 02 outcomes, which are not superseded: the `Booking confirmed` and `Request sent` result stays at the top and management sits below it. The critical-state boards are state patterns, not routes; sample names, prices, times and the raster fallback font are not locked.
+
+The reconciled design-system contract:
+
+- **Progress and history.** `booking-progress` shows Confirmed, Checked in, In service and Completed as text-labelled steps. Customer progress is a safe projection of the booking's operation state and timestamps. "Delayed" is derived by the server, never stored, and appears only when the projected delay exceeds five minutes. Resources, capacity, actors, staff reasons and internal conflict causes never enter the customer contract. History is an allowlist of kind and instant.
+- **Replacement times.** `exact-start-time-selector` is reused. Times are authored by the server for the booked service terms; the confirm request revalidates them, so a displayed time is never a reservation. Unavailable times stay visible and disabled without reasons.
+- **Deliberate steps.** Rescheduling is choose, then review, then one critical request (`booking-reschedule`); cancellation is an optional reason then a focused destructive review (`booking-cancellation`). Every failure states that the original booking is unchanged.
+- **Tokens.** No new tokens: semantic status tones, `booking-control-border` for the selector and `muted-foreground` borders for page-local text fields.
+- **Mobile action treatment.** The existing `booking-action-bar` safe-area behavior is reused.
+
 ## Status Indicators
 
 Reference designs use consistent visual language for status:

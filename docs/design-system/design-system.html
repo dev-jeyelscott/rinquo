@@ -1632,7 +1632,7 @@
                         <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">booking-live-status</div>
-                    <p class="registry-description">Live-status line for an open booking page: quiet when connected, "Updating booking" only after 300 ms, a warning alert with Refresh now when the connection is lost, an error alert with Try again when a reload fails. Announcements use persistent live regions and recovery moves focus to the status region.</p>
+                    <p class="registry-description">Live-status line for an open booking page: quiet when connected, "Updating booking" only after 300 ms, a warning alert with Refresh now when the connection is lost, an error alert with Try again when a reload fails. Announcements use persistent live regions, a lost connection is announced on every loss (the pause supersedes an earlier updated outcome), and recovery moves focus to the status region.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Path:</span>
@@ -1786,7 +1786,7 @@
                         <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">reschedule-proposal-card</div>
-                    <p class="registry-description">The shop's replacement-time proposal on the customer's booking page: the original booking stays confirmed and reserved, the proposed time and deadline follow, and accepting is a deliberate confirmation. Never shows resources, capacity or the internal cause.</p>
+                    <p class="registry-description">The shop's replacement-time proposal on the customer's booking page (Spec 03 references 12 and 13): a "Review proposed time" card with a Response needed badge, a current versus requested comparison, the response deadline, and an "Accept the new time?" dialog stating that the original stays reserved until acceptance succeeds. Never shows resources, capacity or the internal cause.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Path:</span>
@@ -1794,11 +1794,146 @@
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Reference:</span>
-                            <span class="registry-meta-value">04-scheduling-conflict-resolution.png</span>
+                            <span class="registry-meta-value">04-scheduling-conflict-resolution.png, spec-03/desktop/12-staff-proposed-time.png, spec-03/desktop/13-proposal-accept-review.png</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Uses:</span>
                             <span class="registry-meta-value">Alert, Button, Dialog</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Composition</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="booking-progress" data-registry-id="booking-progress" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">BookingProgress</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">booking-progress</div>
+                    <p class="registry-description">Operational progress of a confirmed booking (Confirmed, Checked in, In service, Completed) with a labelled note; delay is derived by the server and shown only beyond five minutes. Exported with BookingHistory, the customer-safe list of events (kind and instant only). Meaning is always in text.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/booking/booking-progress.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-03/desktop/03-in-service-status.png, spec-03/desktop/14-completed-history.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">ALERT_TONES</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Composition</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="booking-reschedule" data-registry-id="booking-reschedule" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">BookingReschedule</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">booking-reschedule</div>
+                    <p class="registry-description">Self-service reschedule as its own staged view with a three-stage indicator (Choose a time, Review change, Done) beside the booking summary: choose an exact start from server-authored availability for the booked terms, then review current versus requested time before the one critical request. A refused time returns to Step 1 with the reason; the original booking is never changed by a failure.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/booking/booking-reschedule.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-03/desktop/07-reschedule-select.png, spec-03/desktop/08-reschedule-review.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">ExactStartTimeSelector, StepIndicator, BookingActionBar, DetailRows, Alert</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Composition</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="booking-cancellation" data-registry-id="booking-cancellation" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">BookingCancellation</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">booking-cancellation</div>
+                    <p class="registry-description">Customer cancellation as its own staged view: the policy note, an optional reason, then a focused destructive review that names the time and shop, says it cannot be undone and that the booking stays as it is until cancellation succeeds. Pending keeps the geometry; every rejection is written out and announced.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/booking/booking-cancellation.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-03/desktop/04-cancel-reason.png, spec-03/desktop/05-cancel-confirmation.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">Dialog, Alert, BookingActionBar</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Composition</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="booking-manage-card" data-registry-id="booking-manage-card" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">BookingManageCard</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">booking-manage-card</div>
+                    <p class="registry-description">The management region under the Spec 02 result: one sentence on what the booking is (You're all set, or Awaiting the shop's decision), a choice between Choose another time and Cancel booking with the change deadline stated, and no open form. When rescheduling is withdrawn the button says so and points at the reason. Exported with StayInformed and BookingCutoffNotice.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/booking/booking-manage-card.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-03/desktop/01-confirmed-management.png, spec-03/desktop/02-pending-approval.png, spec-03/desktop/10-cutoff-reached.png, spec-03/desktop/11-tenant-restricted.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">Alert, ALERT_TONES</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Composition</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="booking-summary-panel" data-registry-id="booking-summary-panel" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">BookingSummaryPanel</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">booking-summary-panel</div>
+                    <p class="registry-description">The persistent booking summary beside the management and staged views: a status badge spelled in words, an appointment date tile, then location, service, vehicle and customer. Customer-safe values only.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/booking/booking-summary-panel.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-03/desktop/01-confirmed-management.png, spec-03/desktop/03-in-service-status.png, spec-03/desktop/07-reschedule-select.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">Detail rows (description list)</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Category:</span>

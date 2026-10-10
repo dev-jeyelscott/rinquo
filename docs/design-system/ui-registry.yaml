@@ -224,6 +224,7 @@ primitives:
           - Escape key closes dialog
           - Backdrop prevents interaction with page
           - Proper heading structure
+          - The Close control is a 44 px target below sm
       status: stable
       dependencies:
           - "@radix-ui/react-dialog"
@@ -901,9 +902,11 @@ components:
           the bottom of the viewport (Back and a quiet status, then one
           full-width primary action) that respects the device safe-area inset;
           from lg up an ordinary row at the end of the card with Back left and the
-          primary action right. An html scroll-padding rule in app.css keeps
-          focused fields clear of the bar.
-      reference_design: "spec-02/mobile/01-vehicle.png, spec-02/mobile/04-details.png, spec-02/mobile/06-confirm.png, spec-02/desktop/03-schedule.png"
+          primary action right. With inline, the small-screen bar is one row (a
+          bordered Back beside the full-width primary action), as in the Spec 03
+          management and staged-view references. An html scroll-padding rule in
+          app.css keeps focused fields clear of the bar.
+      reference_design: "spec-02/mobile/01-vehicle.png, spec-02/mobile/04-details.png, spec-02/mobile/06-confirm.png, spec-02/desktop/03-schedule.png, spec-03/mobile/01-confirmed-management.png, spec-03/mobile/04-cancel-reason.png"
       props:
           - name: back
             type: "{ href } | { onClick }, with optional label"
@@ -912,6 +915,10 @@ components:
             type: ReactNode
             required: false
             description: 'Quiet status beside Back on small screens, for example "Step 2 of 5" or "Time held: 08:43"'
+          - name: inline
+            type: boolean
+            required: false
+            description: One row on small screens with a bordered Back (Spec 03); the default is the stacked Spec 02 bar
           - name: children
             type: ReactNode
             required: true
@@ -973,7 +980,7 @@ components:
           Label and value description list with quiet dividers, used by the
           booking summary card, the review step groups and the result page.
           Values are tabular so times, durations and prices line up.
-      reference_design: "spec-02/desktop/06-confirm.png, spec-02/desktop/07-booking-confirmed.png"
+      reference_design: "spec-02/desktop/06-confirm.png, spec-02/desktop/07-booking-confirmed.png, spec-03/desktop/08-reschedule-review.png"
       props:
           - name: rows
             type: "readonly [label: string, value: string][]"
@@ -994,6 +1001,7 @@ components:
           connection is lost (page may be out of date, Refresh now, with the refresh outcome shown); an error alert
           when a reload fails (Try again). Realtime only nudges a refetch of the
           server booking, it never supplies displayed data.
+      reference_design: "spec-03/critical-states/01-live-and-refresh-desktop.png, spec-03/critical-states/01-live-and-refresh-mobile.png"
       props:
           - name: link
             type: "'connecting' | 'connected' | 'disconnected'"
@@ -1005,7 +1013,7 @@ components:
             type: () => void
             required: true
       accessibility:
-          - One persistent polite role=status region announces pause and refresh outcomes (silent while healthy); a persistent assertive region announces a failed reload; the visible alerts carry no live role
+          - One persistent polite role=status region announces pause and refresh outcomes (silent while healthy); a lost connection is announced on every loss because the pause supersedes an earlier "updated" outcome, which useBookingLive clears when the link drops; a persistent assertive region announces a failed reload; the visible alerts carry no live role
           - Activating a recovery control moves focus to the status region
           - Meaning carried by text and an icon, never colour alone
           - Recovery buttons keep 44 px height on small screens
@@ -1132,7 +1140,7 @@ compositions:
           loading (skeleton after 300 ms), closed day, no times left, nothing
           available in the whole window, load error and offline. Customers only
           receive a start time and a boolean: no capacity, units or resources.
-      reference_design: "spec-02/desktop/03-schedule.png, spec-02/mobile/03-schedule.png"
+      reference_design: "spec-02/desktop/03-schedule.png, spec-02/mobile/03-schedule.png, spec-03/desktop/07-reschedule-select.png, spec-03/mobile/07-reschedule-select.png, spec-03/critical-states/03-availability-and-policy-desktop.png"
       uses:
           - ToggleGroup
           - Skeleton
@@ -1174,6 +1182,9 @@ compositions:
           It was not approved (Locked Decisions keep capacity internal) and the
           Spec 02 Schedule references replace it for the mobile visual contract.
           Customers see only times, a disabled state and the selected start.
+          The same selector drives replacement times on the booking page
+          (BookingReschedule), where the times are authored by the server for the
+          booked service terms; a displayed time is never a reservation.
 
     - id: booking-summary-card
       name: BookingSummaryCard
@@ -1581,12 +1592,18 @@ compositions:
       category: composition
       path: resources/js/components/booking/reschedule-proposal-card.tsx
       description: >
-          The shop's replacement-time proposal on the customer's booking page. It
-          states that the original booking is still confirmed and reserved, shows the
-          proposed time and the response deadline, and offers Accept new time (behind
-          a confirmation that says the original time is released) and Keep my
-          original time. It never shows resources, capacity or the internal cause.
-      reference_design: "04-scheduling-conflict-resolution.png"
+          The shop's replacement-time proposal on the customer's booking page (Spec
+          03 references 12 and 13). It renders the "The shop suggested a new
+          appointment time" alert, a "Review proposed time" card with a "Response
+          needed" badge, a Current appointment versus Requested replacement
+          comparison, the response deadline and the two decisions (Keep my original
+          time, Accept new time; fixed to the bottom of the viewport below lg as
+          "Keep original"), and the decline footnote. Accepting opens "Accept the new
+          time?", which says the replacement is secured before the original is
+          released and that the original stays reserved if acceptance fails. The page
+          shows no generic management card beside it. It never shows resources,
+          capacity or the internal cause.
+      reference_design: "04-scheduling-conflict-resolution.png, spec-03/desktop/12-staff-proposed-time.png, spec-03/desktop/13-proposal-accept-review.png, spec-03/mobile/12-staff-proposed-time.png, spec-03/mobile/13-proposal-accept-review.png"
       uses:
           - Alert
           - Button
@@ -1607,12 +1624,237 @@ compositions:
           - name: declineUrl
             type: string
             required: true
+          - name: heading
+            type: RefObject<HTMLHeadingElement | null>
+            required: true
+          - name: onAnswered
+            type: () => void
+            required: true
       accessibility:
-          - A labelled region whose heading says the shop proposed a new time
+          - A labelled region whose focusable heading is "Review proposed time"; the status is spelled out in the Response needed badge
           - Accepting needs an explicit dialog confirmation with focus management
           - Pending answers disable both buttons and set aria-busy
           - A failed or expired answer is announced in an alert
-      responsive: Single column; buttons are 44 px tall on small screens
+      responsive: Current and requested stack with a down arrow below lg and sit side by side with a right arrow from lg; the decisions are a fixed bar of 48 px buttons below lg
+      status: stable
+
+    - id: booking-progress
+      name: BookingProgress
+      category: composition
+      path: resources/js/components/booking/booking-progress.tsx
+      description: >
+          Operational progress of a confirmed booking on the customer's booking
+          page: Confirmed, Checked in, In service and Completed as an ordered
+          list, with one labelled note below it. Delay is a derived presentation
+          (the server projects it; it is not a stored state) shown only when the
+          projection exceeds five minutes, and the page never guesses a new
+          arrival time. Exported alongside BookingHistory, the durable
+          customer-safe list of events (kind and instant only) in the shop's
+          timezone.
+      reference_design: "spec-03/desktop/03-in-service-status.png, spec-03/desktop/14-completed-history.png, spec-03/mobile/03-in-service-status.png, spec-03/mobile/14-completed-history.png, spec-03/critical-states/04-operations-and-delays-desktop.png"
+      props:
+          - name: progress
+            type: OperationalProgress
+            required: true
+            description: State, derived delay and the customer-visible timestamps; never a resource, actor or reason
+          - name: timezone
+            type: string
+            required: true
+      accessibility:
+          - Ordered list; each step says ", done", ", current" or ", upcoming" in text and the current step carries aria-current="step"
+          - Delay is the word "Delayed" plus minutes, with a clock icon and the warning tone, never colour alone
+          - History is an ordered list of kind and time, labelled by its own heading
+      responsive: Four equal steps at every width; history rows wrap label and time
+      status: stable
+      tokens:
+          - success
+          - primary
+          - warning
+          - muted-foreground
+      uses:
+          - ALERT_TONES
+
+    - id: booking-reschedule
+      name: BookingReschedule
+      category: composition
+      path: resources/js/components/booking/booking-reschedule.tsx
+      description: >
+          Self-service rescheduling as its own staged view of the booking page,
+          with a three-stage StepIndicator (Choose a time, Review change, Done)
+          and the booking summary beside it. Step 1 selects an exact start from
+          server-authored replacement availability through ExactStartTimeSelector;
+          selecting changes nothing and times of another day are never shown
+          under the selected day while it loads. Step 2 reviews the current and
+          the requested time side by side and only then sends the one critical
+          request. If the server refuses the time the original booking is
+          untouched and the customer returns to Step 1 with the written reason
+          and a refreshed day. Offline and network failures say nothing was
+          changed. "Done" is the replacement booking's own page.
+      reference_design: "spec-03/desktop/07-reschedule-select.png, spec-03/desktop/08-reschedule-review.png, spec-03/mobile/07-reschedule-select.png, spec-03/mobile/08-reschedule-review.png"
+      uses:
+          - ExactStartTimeSelector
+          - StepIndicator
+          - BookingActionBar
+          - DetailRows
+          - Alert
+      props:
+          - name: form
+            type: BookingManagement['reschedule']
+            required: true
+            description: Owned by the route so its idempotency key rotates with the booking
+          - name: url
+            type: string
+            required: true
+          - name: pageUrl
+            type: string
+            required: true
+            description: The booking page the availability partial reloads target
+          - name: step
+            type: "'select' | 'review'"
+            required: true
+            description: Owned by the page, which names the view from it
+          - name: onStep
+            type: (step) => void
+            required: true
+          - name: onLeave
+            type: () => void
+            required: true
+            description: Returns to the management overview without changing anything
+          - name: dates
+            type: array
+            required: false
+          - name: availability
+            type: object
+            required: false
+          - name: next
+            type: object
+            required: false
+      accessibility:
+          - Step heading takes focus when the view opens and on each step change; it never takes focus when the booking changes (the outcome heading does)
+          - Rejections render in a role=alert paragraph that takes focus, including a spent idempotency key
+          - Confirm and Review use aria-disabled so they stay focusable; Review is described by "Choose a start time first." and says so when activated
+          - Static explanations carry no live role so only real outcomes are announced
+      responsive: Current and replacement cards stack below sm; the action bar is fixed to the bottom below lg; all three stage labels stay visible at 390 px
+      status: stable
+
+    - id: booking-manage-card
+      name: BookingManageCard
+      category: composition
+      path: resources/js/components/booking/booking-manage-card.tsx
+      description: >
+          The management region of a confirmed or pending booking below the Spec
+          02 result: what the booking is in one sentence ("You're all set" or
+          "Awaiting the shop's decision"), a choice between "Choose another time"
+          and "Cancel booking" with the change deadline stated, and no open form.
+          When rescheduling is withdrawn (restricted shop, staff proposal, changed
+          catalogue) the button stays, reads "Reschedule unavailable" and points at
+          the written reason while cancel stays reachable. Exported with
+          StayInformed (the quiet email notice) and BookingCutoffNotice (the state
+          after the self-service deadline: the closed deadline, the shop as the only
+          route, and no controls). The cutoff notice states when changes closed and
+          offers Contact the shop only when the shop publishes a phone; a restricted
+          shop shows "Rescheduling is temporarily unavailable" and a Changes limited
+          badge in the summary panel.
+      reference_design: "spec-03/desktop/01-confirmed-management.png, spec-03/mobile/01-confirmed-management.png, spec-03/desktop/02-pending-approval.png, spec-03/mobile/02-pending-approval.png, spec-03/desktop/10-cutoff-reached.png, spec-03/desktop/11-tenant-restricted.png"
+      uses:
+          - Alert
+          - ALERT_TONES
+      props:
+          - name: booking
+            type: BookingPageProps['booking']
+            required: true
+          - name: liveStatus
+            type: ReactNode
+            required: true
+            description: The BookingLiveStatus indicator, placed in the card header
+          - name: onReschedule
+            type: () => void
+            required: true
+          - name: onCancel
+            type: () => void
+            required: true
+      accessibility:
+          - Card is a section named by its heading; the heading takes focus when the customer returns from a staged view
+          - The disabled reschedule button uses aria-disabled and aria-describedby the reason
+          - Status meaning is in words with an icon, never colour alone
+      responsive: Buttons share the row and are 44 px tall below sm
+      status: stable
+      tokens:
+          - success
+          - warning
+          - info
+          - booking-control-border
+
+    - id: booking-summary-panel
+      name: BookingSummaryPanel
+      category: composition
+      path: resources/js/components/booking/booking-summary-panel.tsx
+      description: >
+          The persistent booking summary beside the management and staged views:
+          a status badge (the lifecycle status, or the operational step once a
+          confirmed booking is under way), an appointment date tile, then
+          location, service, vehicle and customer. Customer-safe values only.
+      reference_design: "spec-03/desktop/01-confirmed-management.png, spec-03/desktop/03-in-service-status.png, spec-03/desktop/07-reschedule-select.png, spec-03/mobile/01-confirmed-management.png"
+      props:
+          - name: booking
+            type: BookingPageProps['booking']
+            required: true
+          - name: shopName
+            type: string
+            required: true
+          - name: addressLine
+            type: string
+            required: true
+          - name: city
+            type: string
+            required: true
+      accessibility:
+          - Section named "Your booking"; the badge always spells the status
+          - Label and value pairs are a description list
+      responsive: Beside the main column from lg up; stacked after it below lg
+      status: stable
+      tokens:
+          - success
+          - warning
+          - primary
+          - destructive
+          - muted-foreground
+
+    - id: booking-cancellation
+      name: BookingCancellation
+      category: composition
+      path: resources/js/components/booking/booking-cancellation.tsx
+      description: >
+          Customer cancellation as its own staged view of the booking page: the
+          policy note, an optional reason, then one focused destructive review in a
+          dialog that names the time and shop, states that it cannot be undone and
+          that the booking stays as it is until the cancellation succeeds, and keeps
+          its geometry while pending. Rejections (cutoff, stale revision, spent
+          key) are written out in an alert; offline and network failures keep the
+          review open with a plain note.
+      reference_design: "spec-03/desktop/04-cancel-reason.png, spec-03/desktop/05-cancel-confirmation.png, spec-03/mobile/04-cancel-reason.png, spec-03/mobile/05-cancel-confirmation.png"
+      uses:
+          - Dialog
+          - Alert
+          - BookingActionBar
+      props:
+          - name: form
+            type: BookingManagement['cancellation']
+            required: true
+          - name: onKeep
+            type: () => void
+            required: true
+            description: Returns to the management overview without changing anything
+          - name: onCancelled
+            type: () => void
+            required: true
+            description: Moves focus to the outcome heading, because the trigger disappears with the booking
+      accessibility:
+          - The view heading takes focus when it opens
+          - Dialog is trigger-based so focus returns to the trigger on dismiss
+          - Reason field has a visible 3:1 boundary and a linked error and hint
+          - Keep booking, Cancel booking and the dialog Close control are 44 px targets on small screens
+      responsive: Fixed bottom action bar below lg; summary stacks below the card
       status: stable
 
 # ==============================================================================
@@ -1641,6 +1883,9 @@ patterns:
           Every circle and connector shows at every width, inside a bordered card.
           From sm up every label shows; below sm only the current label shows.
           The position is always available to assistive technology as "Step n of N".
+          With labels="all" (the three-stage reschedule flow) every label shows at
+          every width and circles shrink below sm; doneTone="success" fills
+          completed stages with the success token (Spec 03 reschedule references).
       status: stable
 
     - id: exact-start-time-selection
