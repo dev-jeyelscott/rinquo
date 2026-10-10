@@ -29,18 +29,19 @@ final class ManageBooking
 {
     public function __construct(private readonly BookingIntake $intake, private readonly AvailabilitySearch $search) {}
 
-    /** @return array{canCancel: bool, canReschedule: bool, reason: ?string, deadlineAt: ?string} */
+    /** @return array{canCancel: bool, canReschedule: bool, reason: ?string, deadlineAt: ?string, closedAt: ?string} */
     public static function eligibility(Booking $booking): array
     {
-        if (! $booking->isLive()) {
-            return ['canCancel' => false, 'canReschedule' => false, 'reason' => 'This booking can no longer be changed.', 'deadlineAt' => null];
+        // Work already under way or finished is a historical fact: no self-service change, whatever the cutoff says.
+        if (! $booking->isLive() || in_array($booking->operational_state, [Booking::IN_SERVICE, Booking::COMPLETED, Booking::NO_SHOW], true)) {
+            return ['canCancel' => false, 'canReschedule' => false, 'reason' => 'This booking can no longer be changed.', 'deadlineAt' => null, 'closedAt' => null];
         }
         $cutoff = $booking->scheduled_start_at->subMinutes((int) ($booking->policy_snapshot['min_notice_minutes'] ?? 0));
         if (CarbonImmutable::now()->greaterThanOrEqualTo($cutoff)) {
-            return ['canCancel' => false, 'canReschedule' => false, 'reason' => 'The change deadline has passed.', 'deadlineAt' => null];
+            return ['canCancel' => false, 'canReschedule' => false, 'reason' => 'The change deadline has passed.', 'deadlineAt' => null, 'closedAt' => $cutoff->utc()->toIso8601String()];
         }
 
-        return ['canCancel' => true, 'canReschedule' => true, 'reason' => null, 'deadlineAt' => $cutoff->utc()->toIso8601String()];
+        return ['canCancel' => true, 'canReschedule' => true, 'reason' => null, 'deadlineAt' => $cutoff->utc()->toIso8601String(), 'closedAt' => null];
     }
 
     public function cancel(Organization $organization, int $bookingId, User $actor, int $revision, string $key, ?string $reason): Booking
@@ -87,17 +88,11 @@ final class ManageBooking
                 throw ValidationException::withMessages(['booking' => 'The shop proposed a new time for this booking. Accept or decline it first.']);
             }
             $this->intake->assertAcceptingNewBookings($locked);
-            $addOnIds = BookingAddOn::query()->where('booking_id', $source->id)->pluck('add_on_id')->map(fn ($id): int => (int) $id)->all();
-            try {
-                $offer = $this->intake->resolveOfferForVariant($locked, $source->service_vehicle_variant_id, $addOnIds);
-            } catch (ValidationException) {
-                throw ValidationException::withMessages(['start_at' => 'This booking can no longer be rescheduled to that time.']);
-            }
             $policy = $locked->bookingPolicy()->firstOrFail();
             $now = CarbonImmutable::now();
             // The replacement keeps the booked service terms, so availability, the hold and the
             // booking all use the same snapshot span rather than today's catalogue duration.
-            [$variant, $addOns] = $this->snapshotTerms($source, $offer->variant, $offer->addOns);
+            [$variant, $addOns] = $this->replacementTerms($locked, $source);
             if (! $this->search->isCandidateStart($locked, $policy, $variant, $addOns, $start, $now)) {
                 throw ValidationException::withMessages(['start_at' => 'That time is not available.']);
             }
@@ -116,6 +111,24 @@ final class ManageBooking
     }
 
     /**
+     * The booked service terms a replacement keeps, shared by the customer's availability read
+     * and the reschedule write so both judge the same span.
+     *
+     * @return array{0: ServiceVehicleVariant, 1: Collection<int, AddOn>}
+     */
+    public function replacementTerms(Organization $organization, Booking $source): array
+    {
+        $addOnIds = array_values(BookingAddOn::query()->where('booking_id', $source->id)->pluck('add_on_id')->map(fn ($id): int => (int) $id)->all());
+        try {
+            $offer = $this->intake->resolveOfferForVariant($organization, $source->service_vehicle_variant_id, $addOnIds);
+        } catch (ValidationException) {
+            throw ValidationException::withMessages(['start_at' => 'This booking can no longer be rescheduled to that time.']);
+        }
+
+        return $this->snapshotTerms($source, $offer->variant, $offer->addOns);
+    }
+
+    /**
      * The converted hold that gives a replacement booking its own hold lineage
      * (a hold is the claim record every booking points at).
      *
@@ -127,7 +140,7 @@ final class ManageBooking
             'organization_id' => $organization->id, 'public_id' => (string) Str::uuid(), 'session_token_hash' => hash('sha256', $seed), 'idempotency_key' => (string) Str::uuid(),
             'service_vehicle_variant_id' => $variant->id, 'resource_type_id' => $resourceTypeId, 'physical_resource_id' => $resourceId, 'units' => $units,
             'scheduled_start_at' => $start, 'service_end_at' => $start->addMinutes(AvailabilitySearch::spanMinutes($variant, $addOns)), 'occupied_end_at' => AvailabilitySearch::occupiedEnd($variant, $addOns, $start), 'add_on_ids' => $addOns->pluck('id')->values()->all(),
-            'contact_name' => $source->contact_name, 'contact_phone' => $source->contact_phone, 'vehicle_plate' => $source->vehicle_plate, 'customer_notes' => $source->customer_notes, 'status' => Hold::CONVERTED, 'expires_at' => $now,
+            'contact_name' => $source->contact_name, 'contact_phone' => $source->contact_phone, 'vehicle_make_model' => $source->vehicle_make_model, 'vehicle_plate' => $source->vehicle_plate, 'customer_notes' => $source->customer_notes, 'status' => Hold::CONVERTED, 'expires_at' => $now,
         ]);
     }
 
@@ -184,7 +197,7 @@ final class ManageBooking
         // replacement. A pending request stays pending on its original deadline, never a fresh one.
         $pending = $source->status === Booking::PENDING_APPROVAL;
         $replacement = Booking::query()->create($source->only([
-            'organization_id', 'customer_user_id', 'service_id', 'service_name', 'vehicle_type_id', 'vehicle_type_name', 'service_vehicle_variant_id', 'variant_price_centavos', 'variant_duration_minutes', 'buffer_minutes', 'add_ons_price_centavos', 'add_ons_duration_minutes', 'total_price_centavos', 'branch_timezone', 'approval_mode', 'policy_snapshot', 'contact_name', 'contact_email', 'contact_phone', 'vehicle_plate', 'customer_notes',
+            'organization_id', 'customer_user_id', 'service_id', 'service_name', 'vehicle_type_id', 'vehicle_type_name', 'service_vehicle_variant_id', 'variant_price_centavos', 'variant_duration_minutes', 'buffer_minutes', 'add_ons_price_centavos', 'add_ons_duration_minutes', 'total_price_centavos', 'branch_timezone', 'approval_mode', 'policy_snapshot', 'contact_name', 'contact_email', 'contact_phone', 'vehicle_make_model', 'vehicle_plate', 'customer_notes',
         ]) + [
             'public_id' => (string) Str::uuid(), 'hold_id' => $hold->id, 'status' => $pending ? Booking::PENDING_APPROVAL : Booking::CONFIRMED, 'resource_type_id' => $resourceTypeId, 'resource_type_name' => (string) ResourceType::query()->where('organization_id', $organization->id)->whereKey($resourceTypeId)->value('name'), 'consumption_units' => $units, 'physical_resource_id' => $resourceId,
             'scheduled_start_at' => $start, 'service_end_at' => $start->addMinutes($minutes), 'occupied_end_at' => $start->addMinutes($minutes + $source->buffer_minutes), 'confirmed_at' => $pending ? null : $now, 'pending_expires_at' => $pending ? $source->pending_expires_at->min($start) : null,

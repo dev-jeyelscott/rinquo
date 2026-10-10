@@ -537,8 +537,12 @@ describe('Booking result page', () => {
                 'Your appointment is confirmed with Shine Auto Spa.',
             ),
         ).toBeInTheDocument();
-        expect(screen.getByText('Full wash + Wax')).toBeInTheDocument();
-        expect(screen.getByText('Sedan · Toyota Vios')).toBeInTheDocument();
+        expect(screen.getAllByText('Full wash + Wax').length).toBeGreaterThan(
+            0,
+        );
+        expect(
+            screen.getAllByText('Sedan · Toyota Vios').length,
+        ).toBeGreaterThan(0);
         expect(
             screen.getByText('Tuesday, October 6 · 9:00 AM'),
         ).toBeInTheDocument();

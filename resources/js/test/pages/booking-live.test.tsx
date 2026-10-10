@@ -269,6 +269,29 @@ describe('Booking detail live updates', () => {
         ).toBeInTheDocument();
     });
 
+    it('announces every lost connection, even after an earlier successful refresh', () => {
+        const live = fakeEcho();
+        render(<BookingShow {...bookingProps} />);
+        const region = document.querySelector(
+            '[role="status"][tabindex="-1"]',
+        ) as HTMLElement;
+
+        // connected -> updated -> disconnected: the pause replaces the stale "updated".
+        act(() => live.emit());
+        expect(region).toHaveTextContent('Booking details updated.');
+        act(() => live.transition('unavailable', 'connected'));
+        expect(region).toHaveTextContent('Live updates are paused');
+        expect(screen.queryByText(/Updated just now/)).not.toBeInTheDocument();
+
+        // Reconnect catches up, then a second loss is announced again.
+        act(() => live.transition('connecting', 'unavailable'));
+        act(() => live.transition('connected', 'connecting'));
+        expect(region).toHaveTextContent('Booking details updated.');
+        act(() => live.transition('unavailable', 'connected'));
+        expect(region).toHaveTextContent('Live updates are paused');
+        expect(screen.getByText('Live updates are paused')).toBeInTheDocument();
+    });
+
     it('is paused with a manual refresh when no realtime connection exists', () => {
         render(<BookingShow {...bookingProps} />);
 
@@ -320,8 +343,9 @@ describe('Booking detail live updates', () => {
             revision: 'This booking changed. Refresh and try again.',
         };
 
+        fireEvent.click(screen.getByRole('button', { name: 'Cancel booking' }));
         fireEvent.click(
-            screen.getAllByRole('button', { name: 'Cancel booking' })[0],
+            screen.getByRole('button', { name: 'Review cancellation' }),
         );
         fireEvent.click(
             screen.getAllByRole('button', { name: 'Cancel booking' }).at(-1)!,
@@ -355,6 +379,9 @@ describe('Booking detail live updates', () => {
         const { rerender } = render(<BookingShow {...bookingProps} />);
         fireEvent.click(screen.getByRole('button', { name: 'Cancel booking' }));
         fireEvent.click(
+            screen.getByRole('button', { name: 'Review cancellation' }),
+        );
+        fireEvent.click(
             screen.getAllByRole('button', { name: 'Cancel booking' }).at(-1)!,
         );
         const first = inertia.calls.find((call) => call.method === 'post');
@@ -363,7 +390,9 @@ describe('Booking detail live updates', () => {
 
         act(() => live.emit());
         rerender(<BookingShow {...(inertia.props as typeof bookingProps)} />);
-        fireEvent.click(screen.getByRole('button', { name: 'Cancel booking' }));
+        fireEvent.click(
+            screen.getByRole('button', { name: 'Review cancellation' }),
+        );
         fireEvent.click(
             screen.getAllByRole('button', { name: 'Cancel booking' }).at(-1)!,
         );
@@ -385,8 +414,9 @@ describe('Booking detail live updates', () => {
                 actions: {
                     ...bookingProps.booking.actions,
                     canReschedule: false,
+                    restricted: true,
                     rescheduleReason:
-                        'Rescheduling is unavailable while this shop is not accepting new bookings. You can still cancel.',
+                        'This shop is not accepting new bookings or replacement times. Your existing booking remains confirmed.',
                 },
             },
         };
@@ -394,13 +424,23 @@ describe('Booking detail live updates', () => {
         render(<BookingShow {...restricted} />);
 
         expect(
-            screen.getByText(/Rescheduling is unavailable/),
+            screen.getByText('Rescheduling is temporarily unavailable'),
         ).toBeInTheDocument();
         expect(
-            screen.getByRole('heading', { name: 'Need to cancel?' }),
+            screen.getByText(/not accepting new bookings or replacement times/),
         ).toBeInTheDocument();
         expect(
-            screen.queryByRole('heading', { name: 'Reschedule booking' }),
+            screen.getByText('Some changes are temporarily unavailable'),
+        ).toBeInTheDocument();
+        expect(screen.getByText('Changes limited')).toBeInTheDocument();
+        expect(
+            screen.getByRole('button', { name: 'Reschedule unavailable' }),
+        ).toHaveAttribute('aria-disabled', 'true');
+        expect(
+            screen.getByRole('button', { name: 'Cancel booking' }),
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByRole('button', { name: 'Choose another time' }),
         ).not.toBeInTheDocument();
     });
 });

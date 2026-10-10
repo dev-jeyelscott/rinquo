@@ -5,13 +5,19 @@ namespace App\Modules\Booking\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Modules\Booking\Actions\ManageBooking;
 use App\Modules\Booking\Actions\RespondToProposal;
+use App\Modules\Booking\Availability\BranchCalendar;
 use App\Modules\Booking\Http\ResolvesShop;
 use App\Modules\Booking\Models\Booking;
 use App\Modules\Booking\Models\ConflictProposal;
+use App\Modules\Booking\Support\CustomerBookingView;
+use App\Modules\Booking\Support\ReplacementAvailability;
 use App\Modules\Subscription\Access\AccessResolver;
 use App\Modules\Tenancy\Http\Storefront;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -23,8 +29,15 @@ class BookingController extends Controller
 {
     use ResolvesShop;
 
-    public function show(Request $request, string $slug, string $booking, Storefront $storefront, AccessResolver $access): Response
-    {
+    public function show(
+        Request $request,
+        string $slug,
+        string $booking,
+        Storefront $storefront,
+        AccessResolver $access,
+        CustomerBookingView $view,
+        ReplacementAvailability $replacements,
+    ): Response {
         $organization = $this->bookingShop($slug);
         $record = $this->ownBooking($request, $organization, $booking)->load('addOns');
         $actions = ManageBooking::eligibility($record);
@@ -33,44 +46,69 @@ class BookingController extends Controller
         // Only the active, unexpired proposal is shown; nothing about resources, capacity or the cause.
         $proposal = ConflictProposal::query()->where('organization_id', $organization->id)->where('booking_id', $record->id)
             ->where('status', ConflictProposal::ACTIVE)->where('expires_at', '>', now())->first();
+        $data = $view->present($record, $actions, $restricted, $proposal);
+        $now = CarbonImmutable::now();
+        // A booked service or add-on that was archived since can no longer be re-offered: the page still
+        // renders and cancelling stays available; only rescheduling is withdrawn, with a customer-safe reason.
+        if ($data['actions']['canReschedule'] && ! $replacements->resolvable($organization, $record)) {
+            $data['actions']['canReschedule'] = false;
+            $data['actions']['rescheduleReason'] = 'Rescheduling is unavailable because this service has changed. You can still cancel, or contact the shop.';
+        }
+        // Replacement times exist only while a reschedule can really be attempted; they are partial reloads.
+        $offered = $data['actions']['canReschedule'];
+        $today = BranchCalendar::localDate($now);
+        $query = Validator::make($request->query(), ['date' => ['nullable', 'date_format:Y-m-d']])->validate();
+        $date = isset($query['date']) ? CarbonImmutable::parse($query['date'], $today->timezone)->startOfDay() : null;
+        if ($offered && $date !== null && ($date < $today || $date > $replacements->horizonEnd($organization, $now))) {
+            throw ValidationException::withMessages(['date' => 'Choose a date within the booking window.']);
+        }
+        // The next available start is searched once per request and shared by the day and "next" props.
+        $next = null;
+        $nextLoaded = false;
+        $nextStart = function () use (&$next, &$nextLoaded, $replacements, $organization, $record, $now): ?array {
+            if (! $nextLoaded) {
+                try {
+                    $next = $replacements->next($organization, $record, $now);
+                } catch (ValidationException) {
+                    $next = null;
+                }
+                $nextLoaded = true;
+            }
+
+            return $next;
+        };
 
         return Inertia::render('shops/bookings/show', [
             ...$storefront->shell($organization),
-            'booking' => [
-                'publicId' => $record->public_id,
-                'status' => $record->status,
-                'serviceName' => $record->service_name,
-                'vehicleName' => $record->vehicle_type_name,
-                'vehicleMakeModel' => $record->vehicle_make_model,
-                'addOns' => $record->addOns->map(fn ($addOn): array => ['name' => $addOn->name, 'priceCentavos' => $addOn->price_centavos])->all(),
-                'totalCentavos' => $record->total_price_centavos,
-                'durationMinutes' => $record->variant_duration_minutes + $record->add_ons_duration_minutes,
-                'startAt' => $record->scheduled_start_at->utc()->toIso8601String(),
-                'timezone' => $record->branch_timezone,
-                'pendingExpiresAt' => $record->pending_expires_at?->utc()->toIso8601String(),
-                'contactName' => $record->contact_name,
-                'contactEmail' => $record->contact_email,
-                'revision' => $record->revision,
-                'actions' => [
-                    ...$actions,
-                    'canReschedule' => $actions['canReschedule'] && ! $restricted && $proposal === null,
-                    'rescheduleReason' => $proposal !== null
-                        ? 'The shop proposed a new time. Accept or decline it first.'
-                        : ($restricted ? 'Rescheduling is unavailable while this shop is not accepting new bookings. You can still cancel.' : null),
-                ],
-                'proposal' => $proposal === null ? null : [
-                    'id' => $proposal->public_id,
-                    'revision' => $proposal->revision,
-                    'startAt' => $proposal->proposed_start_at->utc()->toIso8601String(),
-                    'expiresAt' => $proposal->expires_at->utc()->toIso8601String(),
-                ],
-            ],
+            'booking' => $data,
+            'replacementDates' => fn (): ?array => $offered ? $replacements->dates($organization, $record, $now) : null,
+            // Without a chosen date, the day of the next available time opens first (no extra round trip).
+            'replacementAvailability' => function () use ($offered, $date, $replacements, $organization, $record, $now, $nextStart): ?array {
+                if (! $offered) {
+                    return null;
+                }
+                $day = $date ?? (($start = $nextStart()) !== null
+                    ? BranchCalendar::localDate(CarbonImmutable::parse($start['startAt']))
+                    : null);
+                if ($day === null) {
+                    return null;
+                }
+                try {
+                    return $replacements->day($organization, $record, $day, $now)->toArray();
+                } catch (ValidationException) {
+                    return null;
+                }
+            },
+            'replacementNext' => fn (): ?array => $offered ? $nextStart() : null,
             'urls' => [
                 'shop' => route('shops.show', $slug, absolute: false),
                 'cancel' => route('bookings.cancel', [$slug, $record->public_id], absolute: false),
                 'reschedule' => route('bookings.reschedule', [$slug, $record->public_id], absolute: false),
                 'acceptProposal' => route('bookings.proposal.accept', [$slug, $record->public_id], absolute: false),
                 'declineProposal' => route('bookings.proposal.decline', [$slug, $record->public_id], absolute: false),
+                'booking' => route('bookings.show', [$slug, $record->public_id], absolute: false),
+                'rescheduledFrom' => $data['rescheduledFrom'] === null ? null : route('bookings.show', [$slug, $data['rescheduledFrom']['publicId']], absolute: false),
+                'rescheduledTo' => $data['rescheduledTo'] === null ? null : route('bookings.show', [$slug, $data['rescheduledTo']['publicId']], absolute: false),
             ],
         ]);
     }

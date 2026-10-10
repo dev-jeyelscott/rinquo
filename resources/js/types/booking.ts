@@ -149,6 +149,36 @@ export type BookingStatus =
     | 'cancelled'
     | 'rescheduled';
 
+/** The operational progress a customer may see; `delayed` is derived by the server (never a stored state). */
+export type OperationalProgress = {
+    state: 'scheduled' | 'checked_in' | 'in_service' | 'completed' | 'no_show';
+    delayed: boolean;
+    /** Minutes of projected delay beyond the five-minute threshold, else 0. */
+    delayMinutes: number;
+    checkedInAt: string | null;
+    startedAt: string | null;
+    completedAt: string | null;
+    projectedEndAt: string | null;
+};
+
+export type BookingHistoryKind =
+    | 'requested'
+    | 'confirmed'
+    | 'declined'
+    | 'expired'
+    | 'checked_in'
+    | 'in_service'
+    | 'completed'
+    | 'no_show'
+    | 'cancelled'
+    | 'rescheduled';
+
+/** One customer-meaningful event: a kind and an instant, never an actor, reason or resource. */
+export type BookingHistoryEntry = { kind: BookingHistoryKind; at: string };
+
+/** The booking a reschedule came from or went to. */
+export type LinkedBooking = { publicId: string; startAt: string };
+
 export type BookingPageProps = ShopShellProps & {
     booking: Omit<BookingSummary, 'priceCentavos' | 'addOns'> & {
         publicId: string;
@@ -166,11 +196,28 @@ export type BookingPageProps = ShopShellProps & {
             rescheduleReason: string | null;
             /** When the customer can no longer change the booking, if still open. */
             deadlineAt: string | null;
+            /** When self-service changes closed, once the deadline has passed. */
+            closedAt: string | null;
+            /** The shop is not accepting new bookings or replacement times; cancelling stays possible. */
+            restricted: boolean;
         };
         /** The shop's active replacement proposal, if any; never carries resource or capacity detail. */
         proposal: ProposalForCustomer | null;
+        /** Null unless the booking is confirmed. */
+        progress: OperationalProgress | null;
+        history: BookingHistoryEntry[];
+        rescheduledFrom: LinkedBooking | null;
+        rescheduledTo: LinkedBooking | null;
     };
+    /** Replacement dates/times for the booked service terms (null unless rescheduling is possible); times are partial reloads. */
+    replacementDates?: BookingDate[] | null;
+    replacementAvailability?: DayAvailability | null;
+    replacementNext?: NextAvailable;
     urls: {
+        booking: string;
+        /** Where the booking was moved from or to, when it was rescheduled. */
+        rescheduledFrom: string | null;
+        rescheduledTo: string | null;
         shop: string;
         cancel: string;
         reschedule: string;

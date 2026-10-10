@@ -117,8 +117,17 @@ export function useBookingLive(publicId: string, deadlineAt: string | null) {
         // pusher-js recovers a dropped socket through connecting, so the previous
         // state says nothing: any connect after the first one must catch up.
         let hasConnected = connection.state === 'connected';
+        // A refresh outcome describes a link that no longer exists once it drops: clear it so the
+        // pause is what the page says (and announces), not "updated just now".
+        const lose = () =>
+            setRefresh((previous) =>
+                previous === 'updated' ? 'idle' : previous,
+            );
         const onState = ({ current }: { current: string }) => {
             setLink(linkOf(current));
+            if (linkOf(current) === 'disconnected') {
+                lose();
+            }
             if (current !== 'connected') {
                 return;
             }
@@ -133,7 +142,10 @@ export function useBookingLive(publicId: string, deadlineAt: string | null) {
         connection.bind('state_change', onState);
         echo.private(name)
             .listen(EVENT, () => run.current())
-            .error(() => setLink('disconnected'));
+            .error(() => {
+                setLink('disconnected');
+                lose();
+            });
 
         return () => {
             connection.unbind('state_change', onState);

@@ -3,7 +3,16 @@ import { cn } from '@/lib/utils';
 
 export type Step = { key: string; label: string };
 
-type Props = { steps: readonly Step[]; current: string };
+type Props = {
+    steps: readonly Step[];
+    current: string;
+    /** Accessible name of the progress region. */
+    label?: string;
+    /** `all` keeps every label visible at every width (a short, three-stage flow). */
+    labels?: 'current' | 'all';
+    /** Completed stages in the success tone (the reschedule flow) instead of the primary one. */
+    doneTone?: 'primary' | 'success';
+};
 
 /**
  * Progress through the booking journey (Spec 02 references): numbered circles
@@ -14,15 +23,26 @@ type Props = { steps: readonly Step[]; current: string };
  * beside its circle so the row never overflows, and the position is always
  * available in words for assistive technology.
  */
-export function StepIndicator({ steps, current }: Props) {
+export function StepIndicator({
+    steps,
+    current,
+    label = 'Booking progress',
+    labels = 'current',
+    doneTone = 'primary',
+}: Props) {
     const currentIndex = steps.findIndex((step) => step.key === current);
 
     return (
-        <nav aria-label="Booking progress">
+        <nav aria-label={label}>
             <p className="sr-only">
                 Step {currentIndex + 1} of {steps.length}
             </p>
-            <ol className="flex items-center gap-2">
+            <ol
+                className={cn(
+                    'flex items-center gap-2',
+                    labels === 'all' && 'max-sm:gap-1.5',
+                )}
+            >
                 {steps.map((step, index) => {
                     const done = index < currentIndex;
                     const active = index === currentIndex;
@@ -34,6 +54,7 @@ export function StepIndicator({ steps, current }: Props) {
                             aria-current={active ? 'step' : undefined}
                             className={cn(
                                 'flex items-center gap-2',
+                                labels === 'all' && 'max-sm:gap-1.5',
                                 !last && 'flex-1',
                             )}
                         >
@@ -41,9 +62,13 @@ export function StepIndicator({ steps, current }: Props) {
                                 aria-hidden="true"
                                 className={cn(
                                     'flex size-8 shrink-0 items-center justify-center rounded-full border text-sm font-semibold tabular-nums',
-                                    done || active
-                                        ? 'border-primary bg-primary text-primary-foreground'
-                                        : 'bg-background text-muted-foreground',
+                                    labels === 'all' &&
+                                        'max-sm:size-6 max-sm:text-xs',
+                                    done && doneTone === 'success'
+                                        ? 'border-success bg-success text-success-foreground'
+                                        : done || active
+                                          ? 'border-primary bg-primary text-primary-foreground'
+                                          : 'bg-background text-muted-foreground',
                                 )}
                             >
                                 {done ? (
@@ -55,9 +80,16 @@ export function StepIndicator({ steps, current }: Props) {
                             <span
                                 className={cn(
                                     'text-sm font-semibold whitespace-nowrap',
-                                    active
-                                        ? 'text-primary'
-                                        : 'hidden text-muted-foreground sm:inline',
+                                    done && doneTone === 'success'
+                                        ? 'text-success-text'
+                                        : active || (done && labels === 'all')
+                                          ? 'text-primary'
+                                          : cn(
+                                                'text-muted-foreground',
+                                                labels === 'current' &&
+                                                    'hidden sm:inline',
+                                            ),
+                                    labels === 'all' && 'text-xs sm:text-sm',
                                 )}
                             >
                                 {step.label}
@@ -72,8 +104,12 @@ export function StepIndicator({ steps, current }: Props) {
                                 <span
                                     aria-hidden="true"
                                     className={cn(
-                                        'h-px min-w-2 flex-1',
-                                        done ? 'bg-primary' : 'bg-border',
+                                        'h-px min-w-1 flex-1',
+                                        done
+                                            ? doneTone === 'success'
+                                                ? 'bg-success'
+                                                : 'bg-primary'
+                                            : 'bg-border',
                                     )}
                                 />
                             ) : null}

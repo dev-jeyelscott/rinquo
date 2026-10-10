@@ -122,9 +122,10 @@ test('staff resolve a blocked-bay conflict with a customer-approved replacement 
     const bookingUrl = `/shops/${seed.slug}/bookings/${seed.bookingId}`;
     await customer.goto(bookingUrl);
     const proposal = customer.getByRole('region', {
-        name: /The shop proposed a new time/,
+        name: 'Review proposed time',
     });
-    await expect(proposal).toContainText('still confirmed');
+    await expect(proposal).toContainText('Confirmed and still reserved');
+    await expect(proposal).toContainText('Requested replacement');
     await expect(proposal).not.toContainText(/Bay 1/);
     await proposal
         .getByRole('button', { name: 'Keep my original time' })

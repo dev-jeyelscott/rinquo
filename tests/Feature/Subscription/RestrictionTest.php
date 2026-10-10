@@ -147,7 +147,7 @@ test('customer rescheduling is blocked with an explanation while cancelling stay
     $this->actingAs($customer)->withoutVite()->get(route('bookings.show', ['shine', $booking->public_id]))->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('booking.actions.canCancel', true)->where('booking.actions.canReschedule', false)
-            ->where('booking.actions.rescheduleReason', fn ($reason) => str_contains($reason, 'You can still cancel')));
+            ->where('booking.actions.rescheduleReason', fn ($reason) => str_contains($reason, 'existing booking remains confirmed')));
     $this->actingAs($customer)->post(route('bookings.reschedule', ['shine', $booking->public_id]), [
         'revision' => $booking->fresh()->revision, 'idempotency_key' => (string) Str::uuid(), 'start_at' => Shop::at('2026-10-07 12:00')->toIso8601String(),
     ])->assertSessionHasErrors('access');

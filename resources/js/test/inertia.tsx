@@ -95,13 +95,20 @@ function useFormMock(initial: Record<string, unknown>) {
         processing,
         hasErrors: Object.keys(errors).length > 0,
         setData: (
-            keyOrData: string | Record<string, unknown>,
+            keyOrData:
+                | string
+                | Record<string, unknown>
+                | ((
+                      current: Record<string, unknown>,
+                  ) => Record<string, unknown>),
             value?: unknown,
         ) =>
             setDataState((current) =>
                 typeof keyOrData === 'string'
                     ? { ...current, [keyOrData]: value }
-                    : { ...current, ...keyOrData },
+                    : typeof keyOrData === 'function'
+                      ? keyOrData(current)
+                      : { ...current, ...keyOrData },
             ),
         transform: (callback: typeof transformer) => {
             transformer = callback;
@@ -128,7 +135,12 @@ function useFormMock(initial: Record<string, unknown>) {
 /** Factory for `vi.mock('@inertiajs/react', ...)`. */
 export function inertiaModule() {
     return {
-        Head: () => null,
+        Head: ({ title }: { title?: string }) => {
+            // Mirror Inertia's title handling so tests can assert the document title.
+            document.title = title ?? '';
+
+            return null;
+        },
         Link: ({
             href,
             children,
