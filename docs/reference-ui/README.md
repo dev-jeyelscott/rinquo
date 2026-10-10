@@ -79,6 +79,34 @@ Paths are relative to `docs/reference-ui/`.
 | `owner-settings/mobile/booking-policy-mobile.png`   | Settings Booking Policy (`/settings/booking-policy`) | Mobile 390×844    | Approved                            | 2026-10-08 |
 | `owner-settings/mobile/readiness-mobile.png`        | Settings Readiness (`/settings/readiness`)           | Mobile 390×844    | Approved                            | 2026-10-08 |
 | `owner-settings/mobile/directory-mobile.png`        | Settings Directory (`/settings/directory`)           | Mobile 390×844    | Approved                            | 2026-10-08 |
+| `spec-03/desktop/01-confirmed-management.png`       | Confirmed booking and management                     | Desktop 1600×1000 | Approved                            | 2026-10-09 |
+| `spec-03/mobile/01-confirmed-management.png`        | Confirmed booking and management                     | Mobile 390×844    | Approved                            | 2026-10-09 |
+| `spec-03/desktop/02-pending-approval.png`           | Pending approval and management                      | Desktop 1600×1000 | Approved                            | 2026-10-09 |
+| `spec-03/mobile/02-pending-approval.png`            | Pending approval and management                      | Mobile 390×844    | Approved                            | 2026-10-09 |
+| `spec-03/desktop/03-in-service-status.png`          | Operational progress                                 | Desktop 1600×1000 | Approved                            | 2026-10-09 |
+| `spec-03/mobile/03-in-service-status.png`           | Operational progress                                 | Mobile 390×844    | Approved                            | 2026-10-09 |
+| `spec-03/desktop/04-cancel-reason.png`              | Cancellation entry and optional reason               | Desktop 1600×1000 | Approved                            | 2026-10-09 |
+| `spec-03/mobile/04-cancel-reason.png`               | Cancellation entry and optional reason               | Mobile 390×844    | Approved                            | 2026-10-09 |
+| `spec-03/desktop/05-cancel-confirmation.png`        | Final cancellation review                            | Desktop 1600×1000 | Approved                            | 2026-10-09 |
+| `spec-03/mobile/05-cancel-confirmation.png`         | Final cancellation review                            | Mobile 390×844    | Approved                            | 2026-10-09 |
+| `spec-03/desktop/06-cancelled-result.png`           | Cancellation completed                               | Desktop 1600×1000 | Approved                            | 2026-10-09 |
+| `spec-03/mobile/06-cancelled-result.png`            | Cancellation completed                               | Mobile 390×844    | Approved                            | 2026-10-09 |
+| `spec-03/desktop/07-reschedule-select.png`          | Choose replacement date and exact start              | Desktop 1600×1000 | Approved                            | 2026-10-09 |
+| `spec-03/mobile/07-reschedule-select.png`           | Choose replacement date and exact start              | Mobile 390×844    | Approved                            | 2026-10-09 |
+| `spec-03/desktop/08-reschedule-review.png`          | Review replacement before applying                   | Desktop 1600×1000 | Approved                            | 2026-10-09 |
+| `spec-03/mobile/08-reschedule-review.png`           | Review replacement before applying                   | Mobile 390×844    | Approved                            | 2026-10-09 |
+| `spec-03/desktop/09-reschedule-success.png`         | Successful replacement appointment                   | Desktop 1600×1000 | Approved                            | 2026-10-09 |
+| `spec-03/mobile/09-reschedule-success.png`          | Successful replacement appointment                   | Mobile 390×844    | Approved                            | 2026-10-09 |
+| `spec-03/desktop/10-cutoff-reached.png`             | After self-service cutoff                            | Desktop 1600×1000 | Approved                            | 2026-10-09 |
+| `spec-03/mobile/10-cutoff-reached.png`              | After self-service cutoff                            | Mobile 390×844    | Approved                            | 2026-10-09 |
+| `spec-03/desktop/11-tenant-restricted.png`          | Shop temporarily restricted                          | Desktop 1600×1000 | Approved                            | 2026-10-09 |
+| `spec-03/mobile/11-tenant-restricted.png`           | Shop temporarily restricted                          | Mobile 390×844    | Approved                            | 2026-10-09 |
+| `spec-03/desktop/12-staff-proposed-time.png`        | Staff-proposed replacement time                      | Desktop 1600×1000 | Approved                            | 2026-10-09 |
+| `spec-03/mobile/12-staff-proposed-time.png`         | Staff-proposed replacement time                      | Mobile 390×844    | Approved                            | 2026-10-09 |
+| `spec-03/desktop/13-proposal-accept-review.png`     | Accept proposed time confirmation                    | Desktop 1600×1000 | Approved                            | 2026-10-09 |
+| `spec-03/mobile/13-proposal-accept-review.png`      | Accept proposed time confirmation                    | Mobile 390×844    | Approved                            | 2026-10-09 |
+| `spec-03/desktop/14-completed-history.png`          | Completed booking and history                        | Desktop 1600×1000 | Approved                            | 2026-10-09 |
+| `spec-03/mobile/14-completed-history.png`           | Completed booking and history                        | Mobile 390×844    | Approved                            | 2026-10-09 |
 
 The sixteen Spec 02 booking references were reviewed and approved together on 2026-10-08 under Decision 212; they are canonical under `spec-02/`.
 
@@ -319,6 +347,26 @@ Billing remains a primary Owner application destination outside Settings navigat
 
 For the per-image route/state, viewport, lock and exclusion record, see `spec-02/manifest.md`.
 
+## Spec 03. Customer manages an existing booking (approved 2026-10-09)
+
+**Approval:** User approved all 28 core references (14 desktop 1600×1000, 14 mobile 390×844) together on 2026-10-09 under Decision 212; they are canonical under `spec-03/`.
+
+**Files:** `spec-03/desktop/01-confirmed-management.png` through `14-completed-history.png` and the corresponding fourteen `spec-03/mobile/` PNGs.
+
+**Product surface:** `/shops/{slug}/bookings/{booking}` in the represented states (confirmed, pending, in service, cancel entry, cancel review, cancelled, reschedule select/review/success, cutoff, restricted, staff-proposed time, proposal review, completed). It is one shared route; management is the scroll/focus state below the result.
+
+**Applicable Locked Decisions:** 9, 10, 14, 70, 112, 113, 140–147, 186, 200, 203, 211, 212.
+
+**Status:** Approved (2026-10-09).
+
+**Spec 02 is not superseded:** the approved `Booking confirmed` and `Request sent` outcomes and the tenant header stay authoritative at the top of the shared route. Spec 03 management sits below them.
+
+**Supporting Approved UX patterns:** `spec-03/critical-states/` boards (live connection, refresh failure, stale revision, offline, cutoff and restriction, unavailable replacement, proposal expiry, invalid terminal transitions, checked-in, delayed, in-service, completed progress) are state patterns, not routes. `spec-03/comparisons/` and `spec-03/review/` are review-only artifacts.
+
+**Does not lock:** sample shop names, prices, times, booking IDs and customer data; raster fallback fonts; backend or database structure; resource, capacity or buffer detail; customer self-check-in or deposits.
+
+For the per-image route/state, locks, exclusions and implementation notes, see `spec-03/manifest.md`.
+
 ## Responsive coverage
 
 Desktop and mobile references are separate visual contracts when their compositions materially differ.
@@ -330,6 +378,7 @@ Current approved coverage is incomplete:
 | Customer shop home                                                                                                            | Approved                       | Not yet locked                   |
 | Booking schedule (historical `02`)                                                                                            | Superseded by Spec 02          | Not yet locked                   |
 | Customer booking journey (Spec 02: vehicle, service, schedule, details, email verification, confirm, confirmed, request sent) | Approved (2026-10-08, 390×844) | Approved (2026-10-08, 1600×1000) |
+| Customer booking management (Spec 03: management, cancel, reschedule, proposal, progress, history) | Approved (2026-10-09, 390×844) | Approved (2026-10-09, 1600×1000) |
 | Staff operations                                                                                                              | Not yet locked                 | Approved                         |
 | Conflict resolution                                                                                                           | Not yet locked                 | Approved                         |
 | Owner shell and Settings                                                                                                      | Approved (2026-10-08)          | Approved (2026-10-08)            |
