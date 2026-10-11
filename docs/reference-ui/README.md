@@ -44,7 +44,7 @@ Paths are relative to `docs/reference-ui/`.
 | --------------------------------------------------- | ---------------------------------------------------- | ----------------- | ----------------------------------- | ---------- |
 | `01-customer-shop-home.png`                         | Tenant-branded customer shop home                    | Mobile            | Approved                            | 2026-10-04 |
 | `02-booking-schedule.png`                           | Tenant booking schedule selection                    | Mobile            | Superseded (mobile Schedule visual) | 2026-10-04 |
-| `03-staff-operations-dashboard.png`                 | Staff operational workspace                          | Desktop           | Approved                            | 2026-10-04 |
+| `03-staff-operations-dashboard.png`                 | Staff operational workspace                          | Desktop           | Superseded by Spec 04               | 2026-10-04 |
 | `04-scheduling-conflict-resolution.png`             | Scheduling conflict resolution                       | Desktop           | Approved                            | 2026-10-04 |
 | `05-owner-scheduling-configuration.png`             | Owner scheduling configuration                       | Desktop           | Superseded for Owner Settings       | 2026-10-04 |
 | `spec-02/desktop/01-vehicle.png`                    | Vehicle selection                                    | Desktop 1600×1000 | Approved                            | 2026-10-08 |
@@ -107,6 +107,40 @@ Paths are relative to `docs/reference-ui/`.
 | `spec-03/mobile/13-proposal-accept-review.png`      | Accept proposed time confirmation                    | Mobile 390×844    | Approved                            | 2026-10-09 |
 | `spec-03/desktop/14-completed-history.png`          | Completed booking and history                        | Desktop 1600×1000 | Approved                            | 2026-10-09 |
 | `spec-03/mobile/14-completed-history.png`           | Completed booking and history                        | Mobile 390×844    | Approved                            | 2026-10-09 |
+| `spec-04/desktop/01-overview.png`                   | Operations overview                                  | Desktop 1600×1000 | Approved                            | 2026-10-11 |
+| `spec-04/mobile/01-overview.png`                    | Operations overview                                  | Mobile 390×844    | Approved                            | 2026-10-11 |
+| `spec-04/desktop/02-queue.png`                      | Queue and focused action ordering                    | Desktop 1600×1000 | Approved                            | 2026-10-11 |
+| `spec-04/mobile/02-queue.png`                       | Queue and focused action ordering                    | Mobile 390×844    | Approved                            | 2026-10-11 |
+| `spec-04/desktop/03-booking-details.png`            | Booking context and available actions                | Desktop 1600×1000 | Approved                            | 2026-10-11 |
+| `spec-04/mobile/03-booking-details.png`             | Booking context and available actions                | Mobile 390×844    | Approved                            | 2026-10-11 |
+| `spec-04/desktop/04-check-in.png`                   | Customer arrival and check-in                        | Desktop 1600×1000 | Approved                            | 2026-10-11 |
+| `spec-04/mobile/04-check-in.png`                    | Customer arrival and check-in                        | Mobile 390×844    | Approved                            | 2026-10-11 |
+| `spec-04/desktop/05-resource-assignment.png`        | Assign compatible physical resource                  | Desktop 1600×1000 | Approved                            | 2026-10-11 |
+| `spec-04/mobile/05-resource-assignment.png`         | Assign compatible physical resource                  | Mobile 390×844    | Approved                            | 2026-10-11 |
+| `spec-04/desktop/06-start-service.png`              | Start service after check-in                         | Desktop 1600×1000 | Approved                            | 2026-10-11 |
+| `spec-04/mobile/06-start-service.png`               | Start service after check-in                         | Mobile 390×844    | Approved                            | 2026-10-11 |
+| `spec-04/desktop/07-complete-service.png`           | Complete with protected buffer                       | Desktop 1600×1000 | Approved                            | 2026-10-11 |
+| `spec-04/mobile/07-complete-service.png`            | Complete with protected buffer                       | Mobile 390×844    | Approved                            | 2026-10-11 |
+| `spec-04/desktop/08-create-walk-in.png`             | Create walk-in in earliest safe gap                  | Desktop 1600×1000 | Approved                            | 2026-10-11 |
+| `spec-04/mobile/08-create-walk-in.png`              | Create walk-in in earliest safe gap                  | Mobile 390×844    | Approved                            | 2026-10-11 |
+| `spec-04/desktop/09-create-booking.png`             | Create staff scheduled booking                       | Desktop 1600×1000 | Approved                            | 2026-10-11 |
+| `spec-04/mobile/09-create-booking.png`              | Create staff scheduled booking                       | Mobile 390×844    | Approved                            | 2026-10-11 |
+| `spec-04/desktop/10-reorder-queue.png`              | Audited manual queue reorder                         | Desktop 1600×1000 | Approved                            | 2026-10-11 |
+| `spec-04/mobile/10-reorder-queue.png`               | Audited manual queue reorder                         | Mobile 390×844    | Approved                            | 2026-10-11 |
+| `spec-04/desktop/11-no-show.png`                    | Grace-aware no-show confirmation                     | Desktop 1600×1000 | Approved                            | 2026-10-11 |
+| `spec-04/mobile/11-no-show.png`                     | Grace-aware no-show confirmation                     | Mobile 390×844    | Approved                            | 2026-10-11 |
+| `spec-04/desktop/12-block-resource.png`             | Block bay and review affected scheduling             | Desktop 1600×1000 | Approved                            | 2026-10-11 |
+| `spec-04/mobile/12-block-resource.png`              | Block bay and review affected scheduling             | Mobile 390×844    | Approved                            | 2026-10-11 |
+| `spec-04/desktop/13-release-block.png`              | Release resource block                               | Desktop 1600×1000 | Approved                            | 2026-10-11 |
+| `spec-04/mobile/13-release-block.png`               | Release resource block                               | Mobile 390×844    | Approved                            | 2026-10-11 |
+| `spec-04/desktop/14-delays-capacity.png`            | Overruns, predictions and capacity                   | Desktop 1600×1000 | Approved                            | 2026-10-11 |
+| `spec-04/mobile/14-delays-capacity.png`             | Overruns, predictions and capacity                   | Mobile 390×844    | Approved                            | 2026-10-11 |
+| `spec-04/desktop/15-notification-recovery.png`      | Notification failure and retry                       | Desktop 1600×1000 | Approved                            | 2026-10-11 |
+| `spec-04/mobile/15-notification-recovery.png`       | Notification failure and retry                       | Mobile 390×844    | Approved                            | 2026-10-11 |
+| `spec-04/desktop/16-realtime-offline-recovery.png`  | Reconnect, stale, offline and recovery               | Desktop 1600×1000 | Approved                            | 2026-10-11 |
+| `spec-04/mobile/16-realtime-offline-recovery.png`   | Reconnect, stale, offline and recovery               | Mobile 390×844    | Approved                            | 2026-10-11 |
+| `spec-04/desktop/17-owner-role-navigation.png`      | Role-aware shell and mobile navigation               | Desktop 1600×1000 | Approved                            | 2026-10-11 |
+| `spec-04/mobile/17-owner-role-navigation.png`       | Role-aware shell and mobile navigation               | Mobile 390×844    | Approved                            | 2026-10-11 |
 
 The sixteen Spec 02 booking references were reviewed and approved together on 2026-10-08 under Decision 212; they are canonical under `spec-02/`.
 
@@ -188,9 +222,11 @@ Scheduling behavior remains governed by Locked Decisions and scheduling ADRs.
 
 **Viewport:** Desktop
 
-**Status:** Approved
+**Status:** Superseded
 
-**Locks:**
+**Superseded by:** `spec-04/desktop/01-overview.png` (approved 2026-10-11) for the full-page Operations composition. The dark sidebar, blue primary action, queue-first hierarchy, status text, capacity and attention visual language below carry forward into Spec 04.
+
+**Historical locks (no longer the implementation baseline):**
 
 - Dark desktop tenant sidebar visual language
 - Operational workspace visual hierarchy
@@ -367,6 +403,28 @@ For the per-image route/state, viewport, lock and exclusion record, see `spec-02
 
 For the per-image route/state, locks, exclusions and implementation notes, see `spec-03/manifest.md`.
 
+## Spec 04. Staff operates bookings and walk-ins (approved 2026-10-11)
+
+**Approval:** User approved all 34 core references (17 desktop 1600×1000, 17 mobile 390×844) together on 2026-10-11 under Decision 212; they are canonical under `spec-04/`.
+
+**Files:** `spec-04/desktop/01-overview.png` through `17-owner-role-navigation.png` and the corresponding seventeen `spec-04/mobile/` PNGs.
+
+**Product surface:** the Operations workspace and its operational actions (check-in, assignment, start, completion, walk-in, staff booking, reorder, no-show, resource blocks, failure retry), realtime/offline recovery states, and the role-aware shared Owner/Staff shell. Desktop remains one consolidated Operations workspace; mobile may use focused Dashboard, Queue, Bookings, Walk-in and More views or anchors over the same domain without adding desktop top-level routes. `03-booking-details` is a contextual sheet, not a dedicated route.
+
+**Applicable Locked Decisions:** 4, 7, 8, 9, 12, 13, 20, 21, 33–35, 46, 47, 69, 88, 186–196, 201, 206, 208, 210, 211, 212.
+
+**Status:** Approved (2026-10-11).
+
+**Supersession:** `spec-04/desktop/01-overview.png` supersedes `03-staff-operations-dashboard.png` for the full-page Operations composition. The approved Owner shell references (`owner-settings/desktop/owner-shell-desktop.png`, `owner-settings/mobile/owner-shell-mobile.png`) are **not** superseded; pair 17 applies role-aware composition while preserving them. Specs 02 and 03 remain Approved and unchanged.
+
+**Behavioral boundaries:** Staff never sees Owner-only Billing or Settings destinations, and server-side authorization remains the enforcement point. The no-show screens depict grace-aware confirmation; Decisions 8 and 20 govern the server rule. The realtime/offline screens are target UI only; no transactional action is offered offline.
+
+**Does not lock:** sample names, dates, prices, service catalog, counters and ETA values; backend API or database structure; any new scheduling algorithm, employee assignment, customer self-check-in or speculative status; optional review presentation for check-in and start beyond the smallest needed confirmation change.
+
+**Not in the repository package:** the `review/` boards, comparisons, contact sheet and audit notes listed in `spec-04/manifest.md` were not committed with the package and are not canonical.
+
+For the per-image route/state, locks, exclusions and implementation notes, see `spec-04/manifest.md`.
+
 ## Responsive coverage
 
 Desktop and mobile references are separate visual contracts when their compositions materially differ.
@@ -379,11 +437,11 @@ Current approved coverage is incomplete:
 | Booking schedule (historical `02`)                                                                                            | Superseded by Spec 02          | Not yet locked                   |
 | Customer booking journey (Spec 02: vehicle, service, schedule, details, email verification, confirm, confirmed, request sent) | Approved (2026-10-08, 390×844) | Approved (2026-10-08, 1600×1000) |
 | Customer booking management (Spec 03: management, cancel, reschedule, proposal, progress, history) | Approved (2026-10-09, 390×844) | Approved (2026-10-09, 1600×1000) |
-| Staff operations                                                                                                              | Not yet locked                 | Approved                         |
+| Staff operations (Spec 04: overview, queue, actions, walk-in, blocks, recovery, role-aware shell) | Approved (2026-10-11, 390×844) | Approved (2026-10-11, 1600×1000) |
 | Conflict resolution                                                                                                           | Not yet locked                 | Approved                         |
 | Owner shell and Settings                                                                                                      | Approved (2026-10-08)          | Approved (2026-10-08)            |
 
-Owner Settings coverage is limited to the shell, the Settings index, and the seven pages at the viewports listed above. Owner surfaces outside Settings (Operations, Booking Requests, Conflicts, Billing) have no approved Owner-specific reference.
+Owner Settings coverage is limited to the shell, the Settings index, and the seven pages at the viewports listed above. Owner Operations follows the shared Spec 04 references (including role-aware pair 17). Other Owner surfaces outside Settings (Booking Requests, Conflicts, Billing) have no approved Owner-specific reference.
 
 An uncovered viewport must follow:
 
