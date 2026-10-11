@@ -737,7 +737,9 @@ components:
       description: >
           Dialog that confirms a consequential state change (archive, unpublish,
           decline a booking request) and then posts it to the server. An optional
-          reason field is posted as `reason` when `reasonLabel` is set.
+          reason field is posted as `reason` when `reasonLabel` is set. `disabled`
+          blocks both the trigger and the confirmation (for example while offline),
+          and `onSettled` runs once the request has settled, successfully or not.
       props:
           - name: label
             type: string
@@ -775,9 +777,17 @@ components:
           - name: disabled
             type: boolean
             required: false
-            description: Disables the trigger until a required choice is made (for example a replacement time)
+            description: Disables the trigger and the confirm button, for example until a required choice is made or while the Operations board is offline
+          - name: onSettled
+            type: "() => void"
+            required: false
+            description: Called when the request settles, successfully or not (for example to close the sheet the action was opened from)
+          - name: returnFocus
+            type: "() => HTMLElement | null"
+            required: false
+            description: Stable element that receives focus when the dialog closes, for a trigger that the action removes (for example a Retry control replaced by a status)
       accessibility:
-          - Focus is trapped in the dialog and restored to the trigger
+          - Focus is trapped in the dialog and restored to the trigger, or to the returnFocus target when the trigger is removed by the action
           - Trigger has an accessible name that says what is affected
           - Confirm button is disabled and aria-busy while submitting
       responsive: Dialog is centered and constrained to the viewport
@@ -1067,11 +1077,11 @@ components:
       category: component
       path: resources/js/components/operations/operation-stat-card.tsx
       description: >
-          One operations counter from the staff dashboard (reference 03): a muted
-          label over a large tabular figure, with an optional one-line hint such as
-          "3 not arrived". The tone (info, warning, success, neutral) only
-          reinforces the label; the number and text carry the meaning.
-      reference_design: "03-staff-operations-dashboard.png"
+          One operations counter from the staff dashboard (Spec 04 references 01
+          and 14): a muted label over a large tabular figure, with an optional
+          one-line hint such as "8 not arrived". The tone (info, warning, success,
+          neutral) only reinforces the label; the number and text carry the meaning.
+      reference_design: "spec-04/desktop/01-overview.png, spec-04/mobile/01-overview.png"
       props:
           - name: label
             type: string
@@ -1244,19 +1254,21 @@ compositions:
       category: composition
       path: resources/js/components/operations/operation-queue-row.tsx
       description: >
-          One entry of the staff operations queue (reference 03): appointment time,
-          customer and vehicle, a status chip with its text label (Booked, Checked
-          in, In service, Completed, No-show), the assigned resource, the projected
-          finish and lateness while in service, and the one routine next action
-          (Check in, Start, Complete). Consequential actions use ConfirmAction with a
-          required reason (no-show, move up the queue, free the bay now); assignment
-          opens a contextual sheet (bottom sheet on phones, side drawer from sm up).
-          The server supplies which actions exist and re-validates every one.
-      reference_design: "03-staff-operations-dashboard.png"
+          One entry of the staff operations queue (Spec 04 references 01 and 02).
+          Desktop lays it out as a table row (time, customer and vehicle, status,
+          bay, estimated finish, action) under a column header; phones show the
+          same facts as a card. It carries a status chip with its text label
+          (Booked, Checked in, In service, Completed, No-show), the grace state of
+          an unarrived booking, a late-arrival mark, the projected finish and
+          lateness while in service, and only the one routine next action (Check
+          in, Start, Complete). The customer name opens BookingDetailsSheet, which
+          holds the secondary actions. Every transaction is disabled while the
+          board is offline. The server supplies which actions exist and
+          re-validates every one.
+      reference_design: "spec-04/desktop/01-overview.png, spec-04/desktop/02-queue.png, spec-04/mobile/01-overview.png, spec-04/mobile/02-queue.png"
       uses:
-          - Card
           - StatusChip
-          - ConfirmAction
+          - BookingDetailsSheet
           - Sheet
           - FormField
           - Button
@@ -1277,252 +1289,81 @@ compositions:
           - name: moveBefore
             type: QueueRowData | null
             required: true
+          - name: now
+            type: string
+            required: true
       accessibility:
+          - The customer name is a button whose name says it opens that booking's details
           - Row actions have accessible names that include the customer
-          - Status is text in a chip, with the resource and ETA as text
-          - Pending actions are disabled with aria-busy and a named spinner label
-          - Dialog and sheet focus is managed by the Radix dialog primitive
+          - Status is text in a chip, with the bay and estimated finish as text (screen-reader labels on the table cells)
+          - The decorative column header is hidden from assistive technology
+          - Pending actions are disabled with aria-busy and a named spinner label, with stable button geometry
           - Action buttons keep 44 px height on small screens
-      responsive: Time, details and actions share one row from sm up and stack on phones
-      status: stable
-
-    - id: service-card
-      name: ShopServiceCard
-      category: composition
-      path: resources/js/components/shop/shop-service-card.tsx
-      description: >
-          Public storefront card showing a service with its description,
-          duration range, compatible vehicle types, a "From" price derived only
-          from complete, available variants and a Select action that opens the
-          booking wizard with the service preselected.
-      reference_design: "01-customer-shop-home.png"
-      uses:
-          - Card
-          - Button
-      props:
-          - name: service
-            type: object
-            required: true
-          - name: selectUrl
-            type: string
-            required: false
-            description: Omitted when the shop cannot take online bookings
-      accessibility:
-          - Semantic heading per service
-          - Decorative icon area is aria-hidden
-          - Select is a link whose accessible name includes the service name
-      responsive: Full width cards in a single column
-      status: stable
-
-    - id: config-form
-      name: ConfigForm
-      category: composition
-      path: resources/js/components/owner/config-form.tsx
-      description: >
-          Small form driven by a field list (text, number, money, textarea, select,
-          checkbox, date, time). Owns submission state and shows server validation
-          errors beside their fields. Money fields are entered in pesos and
-          submitted as integer centavos.
-      uses:
-          - FormField
-          - Button
-          - Spinner
-      props:
-          - name: method
-            type: enum
-            required: true
-          - name: url
-            type: string
-            required: true
-          - name: fields
-            type: array
-            required: true
-          - name: initial
-            type: object
-            required: true
-          - name: submitLabel
-            type: string
-            required: true
-          - name: title
-            type: string
-            required: true
-      accessibility:
-          - Form has an accessible name
-          - Submit is disabled and aria-busy while processing
-          - Server errors are linked to their fields
-      responsive: Single column; the inline layout wraps fields in a responsive grid
-      status: stable
-
-    - id: readiness-checklist
-      name: ReadinessChecklist
-      category: composition
-      path: resources/js/components/owner/readiness-checklist.tsx
-      description: >
-          Authoritative readiness checklist. Each item shows an icon and a
-          Passed or Needs attention badge, its detail text and, when failing, a
-          link to the tab that fixes it.
-      uses:
-          - Badge
-      props:
-          - name: items
-            type: array
-            required: true
-          - name: baseUrl
-            type: string
-            required: true
-      accessibility:
-          - Pass and fail are conveyed by text and icon, never color alone
-          - List has an accessible name
-      responsive: Full width list
-      status: stable
-
-    - id: weekly-intervals-editor
-      name: WeeklyIntervalsEditor
-      category: composition
-      path: resources/js/components/owner/weekly-intervals-editor.tsx
-      description: >
-          Edits weekly local-time intervals (weekday, start, end) with several
-          intervals per day as a flat list. Used for service windows. Business
-          hours use DayHoursEditor.
-      uses:
-          - FormField
-          - Button
-      props:
-          - name: value
-            type: array
-            required: true
-          - name: onChange
-            type: callback
-            required: true
-          - name: errorPrefix
-            type: string
-            required: true
-      accessibility:
-          - Every control has a visible label naming its day
-          - Remove buttons are labelled with day and position
-          - Errors are announced with the field they belong to
-      responsive: Four-column row on sm and above, stacked on mobile
-      status: stable
-
-    - id: day-hours-editor
-      name: DayHoursEditor
-      category: composition
-      path: resources/js/components/owner/day-hours-editor.tsx
-      description: >
-          Weekly hours grouped by day for Owner Settings Hours: each of the seven
-          days has an Open/Closed switch and its own intervals with a per-day
-          "+ interval". The value stays the flat interval list the server
-          expects, so server error keys address the right row.
-      reference_design:
-          - "docs/reference-ui/owner-settings/desktop/hours-desktop.png"
-          - "docs/reference-ui/owner-settings/mobile/hours-mobile.png"
-      uses:
-          - Input
-          - Button
-      props:
-          - name: value
-            type: array
-            required: true
-          - name: onChange
-            type: callback
-            required: true
-          - name: errorPrefix
-            type: string
-            required: true
-      accessibility:
-          - Each day has a native checkbox with role switch with the stable name "<Day> open"; state is carried by checked, and the off track uses the muted-foreground token for 3:1 non-text contrast
-          - Time inputs and remove buttons carry day and position in their accessible names
-          - On small screens the summary is a button with aria-expanded and aria-controls
-          - A day with a server error is expanded so the error is visible
-          - Closed state is text, not color alone
-      responsive: >
-          From md up it is a Day / Status / Intervals list with every day's
-          intervals visible. Below md each day is a compact row with its summary
-          and switch; selecting the summary reveals that day's intervals.
+      responsive: Table row from lg; card below lg
       status: stable
       notes: >
-          Registers the reusable weekly editor, not the Hours page. Date overrides
-          remain page-local.
+          Replaces the earlier row that showed every secondary action inline;
+          assignment, move up, early buffer release and no-show now live in the
+          details sheet (reference 03). Booking-details content is read-only
+          presentation of fields already in the Operations read model.
 
-    - id: owner-editor-panel
-      name: EditorPanel
+    - id: booking-details-sheet
+      name: BookingDetailsSheet
       category: composition
-      path: resources/js/components/owner/editor-panel.tsx
+      path: resources/js/components/operations/booking-details-sheet.tsx
       description: >
-          The editing region that opens beneath a list or table when a row's Edit
-          or Add action is used (Owner Settings Services and Resources).
+          Read-only booking context (Spec 04 reference 03) in a contextual sheet:
+          a bottom sheet on phones and a side drawer from sm. It shows the customer,
+          phone, vehicle, plate, service, scheduled start, booked resource type and
+          current resource, a status chip, the grace-period state of an unarrived
+          booking, and the secondary actions (assign a resource, move up the queue,
+          complete and free the bay now, confirm a no-show) beside the routine next
+          action. It closes once an action settles so a rejection is visible on the
+          page.
+      reference_design: "spec-04/desktop/03-booking-details.png, spec-04/mobile/03-booking-details.png"
       uses:
-          - Button
-      props:
-          - name: title
-            type: string
-            required: true
-          - name: onClose
-            type: callback
-            required: true
-          - name: headingLevel
-            type: "'h2' | 'h3'"
-            required: false
-      accessibility:
-          - A labelled section whose heading receives focus when the panel opens or its subject changes
-          - Close returns focus to the control that opened the panel when it still exists
-          - Presentation only; saves are authorized by the server
-      responsive: Full width of its grid; fields wrap with the inline form layout
-      status: stable
-
-    - id: owner-record-table
-      name: RecordTable
-      category: composition
-      path: resources/js/components/owner/record-table.tsx
-      description: >
-          A columnar record list (named resources, service variants) exposed as an
-          ARIA table. From md up it reads as a table with a header row; below md
-          each row stacks into a card-like block.
-      reference_design:
-          - "docs/reference-ui/owner-settings/desktop/resources-desktop.png"
-          - "docs/reference-ui/owner-settings/mobile/resources-mobile.png"
-          - "docs/reference-ui/owner-settings/desktop/services-desktop.png"
-      props:
-          - name: label
-            type: string
-            required: true
-          - name: columns
-            type: array
-            required: true
-          - name: rows
-            type: array
-            required: true
-          - name: gridClassName
-            type: string
-            required: true
-      accessibility:
-          - Explicit table, row, columnheader and cell roles keep semantics through the responsive layout
-          - The header row is visually hidden but exposed below md
-          - Action columns keep a screen-reader-only header
-          - State is text in a chip, never color alone
-      responsive: Header and columns from md up; stacked rows below md
-      status: stable
-
-    - id: tenant-shop-shell
-      name: TenantShopShell
-      category: composition
-      path: resources/js/layouts/tenant-shop-shell.tsx
-      description: >
-          Public tenant-branded shell: Rinquo wordmark with the shop name
-          beneath it (and logo when present), an OPEN NOW or CLOSED NOW chip,
-          a quiet page background, and the tenant brand color exposed as one CSS
-          variable with a readable foreground computed from its luminance.
-      reference_design: "01-customer-shop-home.png"
-      uses:
+          - Sheet
+          - ConfirmAction
           - StatusChip
+          - Button
       accessibility:
-          - Open/closed is text, not color alone
-          - Brand foreground is chosen for readable contrast
-      responsive: Content constrained to max-w-5xl with responsive gutters
+          - Only one sheet is active: Assign resource closes this sheet and hands off to the row's assignment sheet
+          - Radix dialog traps focus and returns it to the customer name that opened it
+          - Fields are a description list with visible terms
+          - Every action is disabled while the board is offline
+      responsive: Bottom sheet below sm, side drawer from sm
       status: stable
-      notes: >
-          The tenant brand color is tenant data, not a design token; everything
-          else uses canonical tokens. Unavailable shops render the neutral shell.
+
+    - id: list-pagination
+      name: ListPagination
+      category: component
+      path: resources/js/components/operations/list-pagination.tsx
+      description: >
+          States the exact visible range of a bounded list ("Showing 201-205 of
+          205 bookings") with Previous page and Next page buttons, so a capped list
+          never hides records. It renders nothing when the whole result fits one
+          page. The caller keeps the date, view and the other lists' pages in the
+          URL.
+      props:
+          - name: noun
+            type: string
+            required: true
+          - name: info
+            type: PageInfo
+            required: true
+          - name: onPage
+            type: "(page: number) => void"
+            required: true
+          - name: disabled
+            type: boolean
+            required: false
+      accessibility:
+          - A labelled nav landmark per list
+          - The range is a polite live region
+          - Buttons keep 44 px height on small screens
+      status: stable
+      dependencies:
+          - Button
 
     - id: operations-stat-card
       name: OperationsStatCard
@@ -1531,7 +1372,7 @@ compositions:
           Card displaying a key metric for operations dashboard
           (Appointments, Checked in, In service, Conflicts).
           Simple card with large number and label.
-      reference_design: "03-staff-operations-dashboard.png"
+      reference_design: "spec-04/desktop/01-overview.png"
       uses:
           - Card
       props:
@@ -1922,13 +1763,15 @@ patterns:
               - 211
               - 212
           references:
-              - "docs/reference-ui/03-staff-operations-dashboard.png"
+              - "docs/reference-ui/spec-04/desktop/01-overview.png"
+              - "docs/reference-ui/spec-04/desktop/17-owner-role-navigation.png"
               - "docs/reference-ui/owner-settings/desktop/owner-shell-desktop.png"
           notes: >
               Owner desktop treatment comes from the approved Owner Settings
               desktop shell reference (2026-10-08), which supersedes the Owner
               Settings portions of 05-owner-scheduling-configuration.png. Staff
-              desktop treatment comes from reference 03. Mobile behavior is
+              desktop treatment comes from Spec 04 references 01 and 17, which
+              supersede the historical 03-staff-operations-dashboard.png. Mobile behavior is
               defined by Locked Decisions and the approved mobile references,
               not inferred from desktop screenshots.
       components:
@@ -1952,8 +1795,10 @@ patterns:
               - Billing
               - Settings
           staff_behavior: >
-              Show only operational destinations authorized for the authenticated
-              Staff member.
+              Staff see Operations, Booking Requests and Conflicts only; Billing
+              and Settings are shown only when the server-derived viewer role is
+              Owner (a narrow `viewer` prop from OwnerPage). Policies still
+              authorize every request, so a forged Staff request is denied.
       mobile:
           presentation: bottom navigation (see tenant-mobile-bottom-navigation)
       accessibility:
@@ -1980,10 +1825,13 @@ patterns:
       category: pattern
       description: >
           Native-style bottom navigation for Owner and Staff tenant surfaces on
-          mobile: Dashboard, Queue, Bookings, Walk-in and More. Owner-only
-          destinations (Settings and Billing) are reached through More. The bar
-          stays visible on the Settings index and on every Settings section page,
-          with More shown as the active destination.
+          mobile: Dashboard, Queue, Bookings, Walk-in and More. The first five
+          are URL-backed focused views (?view=) of the one Operations page, so
+          each is a real deep link and the tab matching the view is current. More
+          is also a view: it lists Booking Requests and Conflicts for everyone and
+          Billing and Settings only for an Owner. The bar stays visible on the
+          Settings index and every Settings section page (and on Booking Requests,
+          Conflicts and Billing), with More shown as the active destination.
       authority:
           decisions:
               - 46
@@ -1995,6 +1843,8 @@ patterns:
               - 212
           references:
               - "docs/reference-ui/owner-settings/mobile/owner-shell-mobile.png"
+              - "docs/reference-ui/spec-04/mobile/01-overview.png"
+              - "docs/reference-ui/spec-04/mobile/17-owner-role-navigation.png"
               - "docs/reference-ui/01-customer-shop-home.png"
           notes: >
               The Owner Settings mobile references show the bar with More active
@@ -2025,6 +1875,36 @@ patterns:
           Implemented for Owner in owner-shell.tsx. The generic
           Sidebar primitive stays valid for contextual drawers and is not
           deprecated by this entry.
+
+    - id: operations-connection-states
+      name: Operations Connection States
+      category: pattern
+      description: >
+          How the Operations board tells apart the conditions that limit it (Spec 04
+          reference 16). Offline is a persistent, announced banner ("Connection
+          lost. Actions require internet.") and every transaction is disabled;
+          nothing is queued or claimed as saved. Back online shows a status while
+          one catch-up reload settles, and actions return only after it. A stale
+          revision is a separate warning ("Queue may have changed") with a Refresh
+          action, because it is a server conflict, not a connectivity problem. A
+          failed refresh says the queue may be out of date and offers Try again,
+          and paused live updates say so without blocking work. A private-channel
+          nudge only triggers a partial reload of server data; the payload is never
+          rendered.
+      reference_design: "spec-04/desktop/16-realtime-offline-recovery.png, spec-04/mobile/16-realtime-offline-recovery.png"
+      components:
+          - OperationsBanners (screen-local)
+          - useOperationsLive (hook)
+          - Alert
+          - Button
+      accessibility:
+          - Offline and stale use role alert; reconnecting and paused live updates use role status
+          - Meaning is in the text, with an icon, never colour alone
+          - Disabled transactions keep their labels so the limitation is discoverable
+      status: stable
+      notes: >
+          Screen-local banners are deliberately not registered as components; this
+          pattern records the interaction contract for any future live board.
 
     - id: capacity-aware-booking
       name: Capacity-Aware Booking

@@ -1459,7 +1459,7 @@
                         <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">confirm-action</div>
-                    <p class="registry-description">Dialog that confirms an archive, unpublish or decline and then posts it to the server. An optional reason field is posted as reason; dismissLabel renames the dismiss button.</p>
+                    <p class="registry-description">Dialog that confirms an archive, unpublish or decline and then posts it to the server. An optional reason field is posted as reason; dismissLabel renames the dismiss button; disabled blocks the trigger and the confirmation (for example while offline) and onSettled runs once the request settles; returnFocus names a stable element to focus on close when the action removes the trigger.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Path:</span>
@@ -1678,7 +1678,7 @@
                         <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">operation-stat-card</div>
-                    <p class="registry-description">Operations counter from the staff dashboard: a muted label over a large tabular figure with an optional one-line hint. Tone only reinforces the label; the number and text carry the meaning.</p>
+                    <p class="registry-description">Operations counter from the staff dashboard (Spec 04): a muted label over a large tabular figure with an optional one-line hint. Tone only reinforces the label; the number and text carry the meaning.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Path:</span>
@@ -1686,7 +1686,7 @@
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Reference:</span>
-                            <span class="registry-meta-value">03-staff-operations-dashboard.png</span>
+                            <span class="registry-meta-value">spec-04/desktop/01-overview.png, spec-04/mobile/01-overview.png</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Uses:</span>
@@ -1705,7 +1705,7 @@
                         <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">operation-queue-row</div>
-                    <p class="registry-description">Staff queue entry: time, customer and vehicle, a text status chip, assigned resource, projected finish and lateness while in service, and the one routine next action. No-show, move up and early buffer release use ConfirmAction with a required reason; assignment opens a contextual sheet.</p>
+                    <p class="registry-description">Staff queue entry: a table row from lg (time, customer and vehicle, status, bay, estimated finish, action) and a card on phones. It shows a text status chip, the grace state of an unarrived booking, a late-arrival mark, projected finish and lateness, and only the one routine next action; the customer name opens the booking details sheet. Transactions are disabled while offline.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Path:</span>
@@ -1713,15 +1713,65 @@
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Reference:</span>
-                            <span class="registry-meta-value">03-staff-operations-dashboard.png</span>
+                            <span class="registry-meta-value">spec-04/desktop/01-overview.png, spec-04/desktop/02-queue.png, spec-04/mobile/02-queue.png</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Uses:</span>
-                            <span class="registry-meta-value">Card, StatusChip, ConfirmAction, Sheet, FormField, Button, Spinner</span>
+                            <span class="registry-meta-value">StatusChip, BookingDetailsSheet, Sheet, FormField, Button, Spinner</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Category:</span>
                             <span class="registry-meta-value">Composition</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="booking-details-sheet" data-registry-id="booking-details-sheet" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">BookingDetailsSheet</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">booking-details-sheet</div>
+                    <p class="registry-description">Read-only booking context in a contextual sheet (bottom sheet on phones, side drawer from sm): customer, phone, vehicle, plate, service, scheduled start, booked resource type, current resource, status and grace state, with the secondary actions (assign, move up, complete and free the bay now, no-show) beside the routine next action. Closes once an action settles.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/operations/booking-details-sheet.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-04/desktop/03-booking-details.png, spec-04/mobile/03-booking-details.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">Sheet, ConfirmAction, StatusChip, Button</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Composition</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="list-pagination" data-registry-id="list-pagination" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">ListPagination</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">list-pagination</div>
+                    <p class="registry-description">States the exact visible range of a bounded list with Previous page and Next page buttons so a capped list never hides records. Renders nothing when the result fits one page; the caller keeps the page in the URL.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/operations/list-pagination.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">Button</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
                         </div>
                     </div>
                 </article>
@@ -2269,6 +2319,29 @@
                     </div>
                 </article>
 
+                <article id="operations-connection-states" data-registry-id="operations-connection-states" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Operations Connection States</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">operations-connection-states</div>
+                    <p class="registry-description">Offline is a persistent announced banner with every transaction disabled and nothing queued; back online shows a status until one catch-up settles; a stale revision is a separate warning with Refresh; a failed refresh says the queue may be out of date; a private-channel nudge only triggers a partial reload.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-04/desktop/16-realtime-offline-recovery.png, spec-04/mobile/16-realtime-offline-recovery.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">Alert, Button</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Pattern</span>
+                        </div>
+                    </div>
+                </article>
+
                 <article id="capacity-aware-booking" data-registry-id="capacity-aware-booking" data-status="experimental" class="registry-card">
                     <div class="registry-header">
                         <h3 class="registry-title">Capacity-Aware Booking</h3>
@@ -2380,11 +2453,11 @@
                         <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">tenant-application-navigation</div>
-                    <p class="registry-description">Role-aware application navigation for Owner and Staff. Desktop uses the dark sidebar; mobile uses bottom navigation, never a hamburger or collapsed sidebar.</p>
+                    <p class="registry-description">Role-aware application navigation for Owner and Staff. Desktop uses the dark sidebar: Staff see Operations, Booking Requests and Conflicts, and only an Owner (server-derived viewer role) also sees Billing and Settings. Mobile uses bottom navigation, never a hamburger or collapsed sidebar.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">References:</span>
-                            <span class="registry-meta-value">03-staff-operations-dashboard.png, owner-settings/desktop/owner-shell-desktop.png, owner-settings/mobile/owner-shell-mobile.png</span>
+                            <span class="registry-meta-value">spec-04/desktop/01-overview.png, spec-04/desktop/17-owner-role-navigation.png, owner-settings/desktop/owner-shell-desktop.png, owner-settings/mobile/owner-shell-mobile.png</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Decisions:</span>
@@ -2407,11 +2480,11 @@
                         <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">tenant-mobile-bottom-navigation</div>
-                    <p class="registry-description">Native-style bottom navigation: Dashboard, Queue, Bookings, Walk-in and More. Owner Settings and Billing are reached through More, which stays active inside Settings.</p>
+                    <p class="registry-description">Native-style bottom navigation: Dashboard, Queue, Bookings, Walk-in and More. The five are URL-backed focused views of the one Operations page; More lists Booking Requests and Conflicts for everyone and Billing and Settings for an Owner only, and stays active inside Settings.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">References:</span>
-                            <span class="registry-meta-value">owner-settings/mobile/owner-shell-mobile.png</span>
+                            <span class="registry-meta-value">owner-settings/mobile/owner-shell-mobile.png, spec-04/mobile/17-owner-role-navigation.png</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Prohibited:</span>
