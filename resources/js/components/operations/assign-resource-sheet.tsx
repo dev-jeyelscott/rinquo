@@ -1,4 +1,5 @@
 import { router, usePage } from '@inertiajs/react';
+import { useOperationsLocked } from '@/components/operations/operations-lock';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { SelectField } from '@/components/owner/form-field';
@@ -9,7 +10,6 @@ import {
     SheetDescription,
     SheetHeader,
     SheetTitle,
-    SheetTrigger,
 } from '@/components/ui/sheet';
 import { Spinner } from '@/components/ui/spinner';
 import { uuid } from '@/lib/booking-format';
@@ -19,6 +19,9 @@ type Props = {
     row: QueueRowData;
     url: string;
     resources: ResourceOption[];
+    /** Controlled by the row: the booking details sheet closes first, so only one sheet is ever active. */
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
 };
 
 /**
@@ -27,8 +30,14 @@ type Props = {
  * compatible, in-use resources are offered, but the server re-validates blocks,
  * capacity and tenant ownership and answers with a specific reason.
  */
-export function AssignResourceSheet({ row, url, resources }: Props) {
-    const [open, setOpen] = useState(false);
+export function AssignResourceSheet({
+    row,
+    url,
+    resources,
+    open,
+    onOpenChange,
+}: Props) {
+    const locked = useOperationsLocked();
     const [pending, setPending] = useState(false);
     const [resourceId, setResourceId] = useState(String(row.resource.id));
     const { props } = usePage<{ errors?: Record<string, string> }>();
@@ -56,23 +65,13 @@ export function AssignResourceSheet({ row, url, resources }: Props) {
                 preserveScroll: true,
                 onStart: () => setPending(true),
                 onFinish: () => setPending(false),
-                onSuccess: () => setOpen(false),
+                onSuccess: () => onOpenChange(false),
             },
         );
     }
 
     return (
-        <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    className="max-sm:h-11"
-                    aria-label={`Assign resource for ${row.customerName}`}
-                >
-                    Assign resource
-                </Button>
-            </SheetTrigger>
+        <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent className="max-sm:inset-x-0 max-sm:top-auto max-sm:bottom-0 max-sm:h-auto max-sm:max-h-[92%] max-sm:w-full max-sm:rounded-t-2xl max-sm:border-t max-sm:border-l-0 sm:w-[40vw] sm:max-w-md sm:min-w-80">
                 <form onSubmit={submit} className="grid gap-4 p-4" noValidate>
                     <SheetHeader className="p-0">
@@ -105,6 +104,7 @@ export function AssignResourceSheet({ row, url, resources }: Props) {
                         className="max-sm:h-11"
                         disabled={
                             pending ||
+                            locked ||
                             options.length < 2 ||
                             resourceId === String(row.resource.id)
                         }

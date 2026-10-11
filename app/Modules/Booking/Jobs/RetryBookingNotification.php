@@ -2,6 +2,7 @@
 
 namespace App\Modules\Booking\Jobs;
 
+use App\Modules\Booking\Events\OperationsChanged;
 use App\Modules\Booking\Models\Booking;
 use App\Modules\Booking\Models\NotificationFailure;
 use Illuminate\Bus\Queueable;
@@ -42,6 +43,7 @@ final class RetryBookingNotification implements ShouldQueue
 
         Mail::to($email)->sendNow($failure->mailable());
         $failure->forceFill(['status' => NotificationFailure::RESOLVED, 'resolved_at' => now()])->save();
+        OperationsChanged::for($failure->organization_id);
     }
 
     public function failed(Throwable $exception): void
@@ -53,5 +55,9 @@ final class RetryBookingNotification implements ShouldQueue
     {
         NotificationFailure::query()->whereKey($this->failureId)->where('status', NotificationFailure::RETRYING)
             ->update(['status' => NotificationFailure::FAILED, 'error_class' => Str::limit($errorClass, 160, ''), 'failed_at' => now(), 'updated_at' => now()]);
+        $organizationId = NotificationFailure::query()->whereKey($this->failureId)->value('organization_id');
+        if ($organizationId !== null) {
+            OperationsChanged::for((int) $organizationId);
+        }
     }
 }

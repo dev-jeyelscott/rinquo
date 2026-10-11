@@ -29,6 +29,18 @@ test('the fixture can seed a confirmed booking for a known customer', function (
     $this->getJson('/__testing/bookings?slug=fixture-booked')->assertOk()->assertExactJson(['count' => 1]);
 });
 
+test('the fixture can seed a booking that started minutes ago and filler bookings for the paged queue', function () {
+    $this->travelTo(now()->startOfDay()->addHours(12));
+    $past = $this->postJson('/__testing/shop', ['slug' => 'fixture-past', 'booking_minutes_ago' => 40])->assertOk();
+    $booking = Booking::query()->where('public_id', $past->json('bookingId'))->sole();
+    expect($booking->scheduled_start_at->equalTo(now()->subMinutes(40)))->toBeTrue()
+        ->and($booking->lateArrivalGraceMinutes())->toBe(15)
+        ->and($booking->noShowEligibleAt()->isPast())->toBeTrue();
+
+    $this->postJson('/__testing/shop', ['slug' => 'fixture-filled', 'filler_bookings' => 7])->assertOk();
+    $this->getJson('/__testing/bookings?slug=fixture-filled')->assertOk()->assertExactJson(['count' => 7]);
+});
+
 test('the fixture can seed a restricted or closed shop through the real entitlement tables', function () {
     $this->postJson('/__testing/shop', ['slug' => 'fixture-restricted', 'entitlement' => 'restricted'])->assertOk();
     $this->postJson('/__testing/shop', ['slug' => 'fixture-closed', 'entitlement' => 'closed'])->assertOk();

@@ -24,6 +24,7 @@ class BookingPolicyController extends Controller
                 'minNoticeMinutes' => $policy->min_notice_minutes,
                 'horizonDays' => $policy->horizon_days,
                 'approvalWindowMinutes' => $policy->approval_window_minutes,
+                'lateArrivalGraceMinutes' => $policy->late_arrival_grace_minutes,
             ],
         ]);
     }

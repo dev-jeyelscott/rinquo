@@ -34,14 +34,33 @@ final class OperateBooking
 {
     public function __construct(private readonly Occupancy $occupancy) {}
 
+    /**
+     * Early and on-time arrivals keep their appointment and queue position. An
+     * arrival from the snapshotted grace deadline on stays confirmed, records
+     * the late arrival, releases the missed planned claim (see {@see Occupancy})
+     * and joins the queue after the work already waiting; assignment and start
+     * then revalidate a safe span from the present.
+     */
     public function checkIn(Organization $organization, int $bookingId, User $actor, int $revision, string $key): Booking
     {
-        return $this->run($organization, $bookingId, $actor, $revision, $key, 'check_in', [], function (Booking $booking, CarbonImmutable $now): array {
+        return $this->run($organization, $bookingId, $actor, $revision, $key, 'check_in', [], function (Booking $booking, CarbonImmutable $now) use ($organization): array {
             $this->requireState($booking, [Booking::SCHEDULED], 'Only a booked, not yet arrived customer can be checked in.');
             $this->requireToday($booking, $now, 'Check-in opens on the day of the appointment.');
             $booking->forceFill(['operational_state' => Booking::CHECKED_IN, 'checked_in_at' => $now]);
 
-            return ['early_minutes' => max(0, (int) floor($now->diffInMinutes($booking->scheduled_start_at, false)))];
+            if ($now < $booking->noShowEligibleAt()) {
+                return ['early_minutes' => max(0, (int) floor($now->diffInMinutes($booking->scheduled_start_at, false)))];
+            }
+
+            $day = BranchCalendar::localDate($booking->scheduled_start_at);
+            $waiting = Booking::query()->where('organization_id', $organization->id)->where('status', Booking::CONFIRMED)
+                ->where('operational_state', Booking::CHECKED_IN)->where('id', '!=', $booking->id)
+                ->where('scheduled_start_at', '>=', $day->utc())->where('scheduled_start_at', '<', $day->addDay()->utc())
+                ->lockForUpdate()->get();
+            $after = $waiting->map(fn (Booking $b): CarbonImmutable => $b->queueKey())->push($now)->max();
+            $booking->forceFill(['late_arrival_at' => $now, 'queue_priority_at' => $after->addSecond()]);
+
+            return ['late_arrival' => true, 'late_minutes' => max(0, (int) floor($booking->scheduled_start_at->diffInMinutes($now, false)))];
         });
     }
 
@@ -79,8 +98,10 @@ final class OperateBooking
             $projectedEnd = $now->addMinutes($booking->serviceMinutes() + $booking->buffer_minutes);
             $claims = $this->occupancy->claims($organization->id, [$resourceId], $now, $projectedEnd, $now, null, null, $booking->id)[$resourceId] ?? [];
             $blocks = array_values(array_filter($claims, fn ($claim): bool => $claim->units === Occupancy::BLOCK_UNITS));
-            $occupiedNow = ResourceFeasibility::fits($resource->capacity, $booking->consumption_units, $now, $now->addMinute(), $claims);
-            if ($blocks !== [] || ! $occupiedNow) {
+            // A late arrival gave up its planned claim, so it needs the whole span from now; anyone else only needs the bay free right now.
+            $until = $booking->late_arrival_at !== null ? $projectedEnd : $now->addMinute();
+            $fits = ResourceFeasibility::fits($resource->capacity, $booking->consumption_units, $now, $until, $claims);
+            if ($blocks !== [] || ! $fits) {
                 throw ValidationException::withMessages(['resource_id' => "{$resource->name} is blocked or still occupied. Assign another resource or wait."]);
             }
 
@@ -116,13 +137,14 @@ final class OperateBooking
         });
     }
 
-    /** A no-show frees capacity only now, when staff confirm it after the appointment time. */
+    /** A no-show frees capacity only now, when staff confirm it once the snapshotted grace period has passed. */
     public function markNoShow(Organization $organization, int $bookingId, User $actor, int $revision, string $key, string $reason): Booking
     {
         return $this->run($organization, $bookingId, $actor, $revision, $key, 'no_show', ['reason' => trim($reason)], function (Booking $booking, CarbonImmutable $now) use ($reason): array {
             $this->requireState($booking, [Booking::SCHEDULED], 'Only a booking that has not arrived can be marked as a no-show.');
-            if ($now < $booking->scheduled_start_at) {
-                throw ValidationException::withMessages(['booking' => 'A no-show can only be confirmed once the appointment time has passed.']);
+            if ($now < $booking->noShowEligibleAt()) {
+                $until = $booking->noShowEligibleAt()->setTimezone($booking->branch_timezone)->format('g:i A');
+                throw ValidationException::withMessages(['booking' => "A no-show can only be confirmed after the {$booking->lateArrivalGraceMinutes()}-minute grace period, from {$until}."]);
             }
             $booking->forceFill(['operational_state' => Booking::NO_SHOW, 'no_show_at' => $now, 'capacity_release_at' => $now]);
             BookingNotifier::queueIfAddressed($booking->contact_email, new BookingNoShowMail($booking->id));
@@ -167,7 +189,7 @@ final class OperateBooking
             foreach ($order as $item) {
                 $keyAt = $item->id === $booking->id ? ($last ?? $target->queueKey()->subSecond()) : $item->queueKey();
                 if ($last !== null && $keyAt <= $last) {
-                    $keyAt = $last->addMicrosecond();
+                    $keyAt = $last->addSecond();
                 }
                 if ($item->id === $booking->id) {
                     $booking->forceFill(['queue_priority_at' => $keyAt]);
@@ -239,7 +261,7 @@ final class OperateBooking
      */
     private function neededSpan(Booking $booking, CarbonImmutable $now): array
     {
-        if ($booking->scheduled_start_at >= $now) {
+        if ($booking->scheduled_start_at >= $now && $booking->late_arrival_at === null) {
             return [$booking->scheduled_start_at, $booking->occupied_end_at];
         }
 

@@ -25,6 +25,7 @@ final class BookingLifecycleChanged implements ShouldBroadcast, ShouldDispatchAf
     public static function for(Booking $booking): void
     {
         self::dispatch($booking->public_id);
+        OperationsChanged::for($booking->organization_id);
     }
 
     public function broadcastOn(): PrivateChannel

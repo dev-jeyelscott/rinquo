@@ -66,7 +66,7 @@ test('instant confirmation creates one confirmed booking with the full snapshot'
         ->and($booking->occupied_end_at->equalTo(Shop::at('2026-10-06 11:30')))->toBeTrue()
         ->and($booking->branch_timezone)->toBe('Asia/Manila')
         ->and($booking->approval_mode)->toBe('auto_confirm')
-        ->and($booking->policy_snapshot)->toEqual(['slot_interval_minutes' => 15, 'min_notice_minutes' => 60, 'horizon_days' => 30, 'approval_window_minutes' => 120])
+        ->and($booking->policy_snapshot)->toEqual(['slot_interval_minutes' => 15, 'min_notice_minutes' => 60, 'horizon_days' => 30, 'approval_window_minutes' => 120, 'late_arrival_grace_minutes' => 15])
         ->and($booking->contact_name)->toBe('Ana Cruz')
         ->and($booking->contact_email)->toBe($customer->email)
         ->and($booking->contact_phone)->toBe('+63 912 345 6789')

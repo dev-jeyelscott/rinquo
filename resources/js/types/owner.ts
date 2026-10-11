@@ -51,9 +51,20 @@ export type Entitlement = {
     allowsConfigurationWrites: boolean;
 };
 
+/**
+ * The signed-in member's role in this organization, derived on the server.
+ * It only decides which destinations are presented; every request is still
+ * authorized by policy.
+ */
+export type Viewer = {
+    role: 'owner' | 'staff';
+    canManageOwnerAreas: boolean;
+};
+
 /** Props every Owner settings page receives from OwnerPage::render(). */
 export type OwnerPageProps = {
     organization: OrganizationSummary;
+    viewer: Viewer;
     readiness: { isReady: boolean; items: ReadinessItem[] };
     entitlement: Entitlement;
 };

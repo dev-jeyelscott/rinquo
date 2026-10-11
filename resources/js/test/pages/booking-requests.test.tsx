@@ -1,7 +1,11 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import BookingRequests from '@/pages/owner/booking-requests';
-import { ACTIVE_ENTITLEMENT, BILLING_URL } from '@/test/fixtures/entitlement';
+import {
+    ACTIVE_ENTITLEMENT,
+    OWNER_VIEWER,
+    BILLING_URL,
+} from '@/test/fixtures/entitlement';
 import { inertia, resetInertia } from '@/test/inertia';
 import type { BookingRequest } from '@/types/booking';
 import type { OwnerPageProps } from '@/types/owner';
@@ -26,6 +30,7 @@ const owner: OwnerPageProps = {
     },
     readiness: { isReady: true, items: [] },
     entitlement: ACTIVE_ENTITLEMENT,
+    viewer: OWNER_VIEWER,
 };
 
 const request: BookingRequest = {

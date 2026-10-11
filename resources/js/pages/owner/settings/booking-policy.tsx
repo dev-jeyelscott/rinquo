@@ -17,6 +17,7 @@ type Props = OwnerPageProps & {
         minNoticeMinutes: number;
         horizonDays: number;
         approvalWindowMinutes: number;
+        lateArrivalGraceMinutes: number;
     };
 };
 
@@ -62,6 +63,7 @@ export default function BookingPolicy({ organization, policy }: Props) {
         notice_minutes: String(policy.minNoticeMinutes % 60),
         horizon_days: String(policy.horizonDays),
         approval_window_minutes: String(policy.approvalWindowMinutes),
+        late_arrival_grace_minutes: String(policy.lateArrivalGraceMinutes),
     });
     const errors = form.errors as Record<string, string | undefined>;
 
@@ -75,6 +77,7 @@ export default function BookingPolicy({ organization, policy }: Props) {
                 Number(data.notice_minutes || 0),
             horizon_days: Number(data.horizon_days),
             approval_window_minutes: Number(data.approval_window_minutes),
+            late_arrival_grace_minutes: Number(data.late_arrival_grace_minutes),
         }));
         form.put(`${organization.baseUrl}/booking-policy`, {
             preserveScroll: true,
@@ -241,6 +244,37 @@ export default function BookingPolicy({ organization, policy }: Props) {
                         </fieldset>
                     </SectionCard>
                 </div>
+
+                <SectionCard
+                    title="Late arrival and no-show"
+                    description="Staff can only confirm a no-show once this grace period after the appointment time has passed."
+                    contentClassName="grid gap-4"
+                >
+                    <div className="sm:max-w-sm">
+                        <TextField
+                            label="Late-arrival grace (minutes)"
+                            type="number"
+                            inputMode="numeric"
+                            min={1}
+                            max={120}
+                            required
+                            hint="From 1 to 120 minutes; the default is 15. A customer who arrives after it is checked in as a late arrival, keeps the booking and joins the queue after the work already waiting."
+                            value={form.data.late_arrival_grace_minutes}
+                            onChange={(event) =>
+                                form.setData(
+                                    'late_arrival_grace_minutes',
+                                    event.target.value,
+                                )
+                            }
+                            error={errors.late_arrival_grace_minutes}
+                        />
+                    </div>
+                    <p className="max-w-[66ch] text-sm text-muted-foreground">
+                        Each booking keeps the grace in force when it was
+                        confirmed, so changing this never moves the deadline of
+                        an existing booking.
+                    </p>
+                </SectionCard>
 
                 <SectionCard
                     title="Cancellation and rescheduling"

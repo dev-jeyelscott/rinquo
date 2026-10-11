@@ -55,7 +55,7 @@ final class ExpireBookings
                     ->orderBy('id')
                     ->limit(self::BOOKINGS_PER_ORGANIZATION)
                     ->lockForUpdate()
-                    ->get(['id', 'public_id', 'contact_email']);
+                    ->get(['id', 'organization_id', 'public_id', 'contact_email']);
 
                 foreach ($stale as $booking) {
                     $changed = Booking::query()
@@ -66,7 +66,7 @@ final class ExpireBookings
 
                     if ($changed === 1) {
                         $requests++;
-                        BookingLifecycleChanged::dispatch($booking->public_id);
+                        BookingLifecycleChanged::for($booking);
                         BookingNotifier::queue($booking->contact_email, new BookingRequestExpiredMail($booking->id));
                     }
                 }

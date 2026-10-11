@@ -1,7 +1,11 @@
 import { render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import OwnerShell from '@/layouts/owner-shell';
-import { ACTIVE_ENTITLEMENT, BILLING_URL } from '@/test/fixtures/entitlement';
+import {
+    ACTIVE_ENTITLEMENT,
+    BILLING_URL,
+    OWNER_VIEWER,
+} from '@/test/fixtures/entitlement';
 import { resetInertia } from '@/test/inertia';
 import type { Entitlement } from '@/types/owner';
 
@@ -29,6 +33,7 @@ const base = {
         billingUrl: BILLING_URL,
     },
     readiness: { isReady: true, items: [] },
+    viewer: OWNER_VIEWER,
 };
 
 function shell(

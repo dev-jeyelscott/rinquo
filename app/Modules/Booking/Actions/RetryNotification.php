@@ -2,6 +2,7 @@
 
 namespace App\Modules\Booking\Actions;
 
+use App\Modules\Booking\Events\OperationsChanged;
 use App\Modules\Booking\Jobs\RetryBookingNotification;
 use App\Modules\Booking\Models\Booking;
 use App\Modules\Booking\Models\NotificationFailure;
@@ -39,6 +40,7 @@ final class RetryNotification
             $failure->forceFill(['status' => NotificationFailure::RETRYING, 'retry_count' => $failure->retry_count + 1, 'last_retried_at' => now(), 'last_retried_by_user_id' => $actor->id])->save();
             (new AuditTrail($locked, $actor))->record('notification.retry', 'notification_failure', $failure->id, ['status' => NotificationFailure::FAILED], ['status' => NotificationFailure::RETRYING, 'mail_type' => $failure->mail_type, 'retry_count' => $failure->retry_count]);
             RetryBookingNotification::dispatch($failure->id)->afterCommit();
+            OperationsChanged::for($locked->id);
 
             return $failure;
         });

@@ -3,6 +3,7 @@
 namespace App\Modules\Booking\Actions;
 
 use App\Modules\Booking\Availability\Occupancy;
+use App\Modules\Booking\Events\OperationsChanged;
 use App\Modules\Booking\Models\ResourceBlock;
 use App\Modules\Identity\Models\User;
 use App\Modules\Scheduling\Models\PhysicalResource;
@@ -51,6 +52,7 @@ final class ManageResourceBlocks
             $audit->record('resource_block.create', 'resource_block', $block->id, null, [
                 'resource_id' => $resource->id, 'starts_at' => $startsAt->utc()->toIso8601String(), 'ends_at' => $endsAt->utc()->toIso8601String(), 'reason' => $block->reason,
             ]);
+            OperationsChanged::for($locked->id);
 
             return $block;
         }, assessImpact: true, configurationWrite: false); // a day-of operational control, not subscription-gated configuration
@@ -66,6 +68,7 @@ final class ManageResourceBlocks
             }
             $block->forceFill(['released_at' => now(), 'released_by_user_id' => $actor->id])->save();
             (new AuditTrail($locked, $actor))->record('resource_block.release', 'resource_block', $block->id, ['released' => false], ['released' => true]);
+            OperationsChanged::for($locked->id);
 
             return $block;
         });

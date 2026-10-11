@@ -211,7 +211,7 @@ test('configuration writes are refused by the common action boundary while restr
     $this->patch(route('owner.settings.profile.update', $shop->organization), ['name' => 'Renamed', 'tagline' => 'x', 'description' => 'y', 'brand_color' => '#112233', 'branch_name' => 'Main branch', 'address_line' => '1 Rizal Ave', 'city' => 'Manila'])->assertSessionHasErrors('access');
     $this->post(route('owner.settings.unpublish', $shop->organization))->assertSessionHasErrors('access');
     $this->put(route('owner.settings.directory.update', $shop->organization), ['directory_opted_in' => true])->assertSessionHasErrors('access');
-    $this->put(route('owner.settings.booking-policy.update', $shop->organization), ['approval_mode' => 'staff_approval', 'slot_interval_minutes' => 15, 'min_notice_minutes' => 60, 'horizon_days' => 30, 'approval_window_minutes' => 120])->assertSessionHasErrors('access');
+    $this->put(route('owner.settings.booking-policy.update', $shop->organization), ['approval_mode' => 'staff_approval', 'slot_interval_minutes' => 15, 'min_notice_minutes' => 60, 'horizon_days' => 30, 'approval_window_minutes' => 120, 'late_arrival_grace_minutes' => 15])->assertSessionHasErrors('access');
 
     expect(BranchWeeklyHour::query()->count())->toBe($weeklyBefore)->and($shop->organization->fresh()->name)->toBe('Shine')
         ->and($shop->organization->fresh()->published_at)->not->toBeNull();

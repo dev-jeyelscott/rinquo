@@ -8,7 +8,11 @@ import {
     vi,
 } from 'vite-plus/test';
 import SchedulingConflicts from '@/pages/owner/scheduling-conflicts';
-import { ACTIVE_ENTITLEMENT, BILLING_URL } from '@/test/fixtures/entitlement';
+import {
+    ACTIVE_ENTITLEMENT,
+    OWNER_VIEWER,
+    BILLING_URL,
+} from '@/test/fixtures/entitlement';
 import { inertia, resetInertia } from '@/test/inertia';
 import type { ConflictRowData, ConflictsPageData } from '@/types/conflicts';
 import type { OwnerPageProps } from '@/types/owner';
@@ -33,6 +37,7 @@ const owner: OwnerPageProps = {
     },
     readiness: { isReady: true, items: [] },
     entitlement: ACTIVE_ENTITLEMENT,
+    viewer: OWNER_VIEWER,
 };
 
 function row(overrides: Partial<ConflictRowData> = {}): ConflictRowData {

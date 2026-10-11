@@ -19,6 +19,7 @@ function policyPayload(array $overrides = []): array
         'min_notice_minutes' => 120,
         'horizon_days' => 14,
         'approval_window_minutes' => 60,
+        'late_arrival_grace_minutes' => 20,
     ];
 }
 
@@ -33,7 +34,8 @@ test('the owner reads the policy with defaults', function () {
             ->where('policy.slotIntervalMinutes', 15)
             ->where('policy.minNoticeMinutes', 60)
             ->where('policy.horizonDays', 30)
-            ->where('policy.approvalWindowMinutes', 120));
+            ->where('policy.approvalWindowMinutes', 120)
+            ->where('policy.lateArrivalGraceMinutes', 15));
 });
 
 test('the owner updates the policy, the change is audited in the same transaction and takes effect', function () {
@@ -44,11 +46,11 @@ test('the owner updates the policy, the change is audited in the same transactio
 
     $policy = $shop->organization->bookingPolicy()->firstOrFail();
     expect($policy->approval_mode)->toBe('staff_approval')->and($policy->slot_interval_minutes)->toBe(30)
-        ->and($policy->min_notice_minutes)->toBe(120)->and($policy->horizon_days)->toBe(14)->and($policy->approval_window_minutes)->toBe(60);
+        ->and($policy->min_notice_minutes)->toBe(120)->and($policy->horizon_days)->toBe(14)->and($policy->approval_window_minutes)->toBe(60)->and($policy->late_arrival_grace_minutes)->toBe(20);
 
     $event = AuditEvent::query()->where('action', 'booking_policy.updated')->sole();
     expect($event->actor_user_id)->toBe($shop->owner->id)
-        ->and($event->before)->toEqual(['approval_mode' => 'auto_confirm', 'slot_interval_minutes' => 15, 'min_notice_minutes' => 60, 'horizon_days' => 30, 'approval_window_minutes' => 120])
+        ->and($event->before)->toEqual(['approval_mode' => 'auto_confirm', 'slot_interval_minutes' => 15, 'min_notice_minutes' => 60, 'horizon_days' => 30, 'approval_window_minutes' => 120, 'late_arrival_grace_minutes' => 15])
         ->and($event->after)->toEqual(policyPayload());
 
     // New availability follows the new policy: 30 minute grid.
@@ -59,7 +61,7 @@ test('the owner updates the policy, the change is audited in the same transactio
 
 test('saving an unchanged policy writes no audit event', function () {
     $shop = Shop::make();
-    $current = ['approval_mode' => 'auto_confirm', 'slot_interval_minutes' => 15, 'min_notice_minutes' => 60, 'horizon_days' => 30, 'approval_window_minutes' => 120];
+    $current = ['approval_mode' => 'auto_confirm', 'slot_interval_minutes' => 15, 'min_notice_minutes' => 60, 'horizon_days' => 30, 'approval_window_minutes' => 120, 'late_arrival_grace_minutes' => 15];
 
     $this->actingAs($shop->owner)->put(route('owner.settings.booking-policy.update', $shop->organization), $current)->assertSessionHasNoErrors();
 
@@ -84,8 +86,8 @@ test('every range and enum boundary is validated', function (array $overrides, ?
 
     $invalid === null ? $response->assertSessionHasNoErrors() : $response->assertSessionHasErrors($invalid);
 })->with([
-    'valid minimums' => [['min_notice_minutes' => 0, 'horizon_days' => 1, 'approval_window_minutes' => 15, 'slot_interval_minutes' => 5], null],
-    'valid maximums' => [['min_notice_minutes' => 10080, 'horizon_days' => 365, 'approval_window_minutes' => 1440, 'slot_interval_minutes' => 60], null],
+    'valid minimums' => [['min_notice_minutes' => 0, 'horizon_days' => 1, 'approval_window_minutes' => 15, 'slot_interval_minutes' => 5, 'late_arrival_grace_minutes' => 1], null],
+    'valid maximums' => [['min_notice_minutes' => 10080, 'horizon_days' => 365, 'approval_window_minutes' => 1440, 'slot_interval_minutes' => 60, 'late_arrival_grace_minutes' => 120], null],
     'unknown approval mode' => [['approval_mode' => 'maybe'], 'approval_mode'],
     'interval not allowed' => [['slot_interval_minutes' => 25], 'slot_interval_minutes'],
     'negative notice' => [['min_notice_minutes' => -1], 'min_notice_minutes'],
@@ -94,6 +96,9 @@ test('every range and enum boundary is validated', function (array $overrides, ?
     'horizon above a year' => [['horizon_days' => 366], 'horizon_days'],
     'window below 15' => [['approval_window_minutes' => 14], 'approval_window_minutes'],
     'window above a day' => [['approval_window_minutes' => 1441], 'approval_window_minutes'],
+    'grace zero' => [['late_arrival_grace_minutes' => 0], 'late_arrival_grace_minutes'],
+    'grace above two hours' => [['late_arrival_grace_minutes' => 121], 'late_arrival_grace_minutes'],
+    'grace missing' => [['late_arrival_grace_minutes' => null], 'late_arrival_grace_minutes'],
     'non integer' => [['horizon_days' => 'soon'], 'horizon_days'],
 ]);
 
@@ -110,6 +115,8 @@ test('the database itself rejects invalid direct writes', function (string $colu
     ['horizon_days', 366],
     ['approval_window_minutes', 14],
     ['approval_window_minutes', 1441],
+    ['late_arrival_grace_minutes', 0],
+    ['late_arrival_grace_minutes', 121],
 ]);
 
 test('there is exactly one policy per organization, from onboarding and from the backfill', function () {

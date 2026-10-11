@@ -2,6 +2,7 @@
 
 namespace App\Modules\Booking\Models;
 
+use App\Modules\Scheduling\Models\BookingPolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -24,6 +25,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property ?CarbonImmutable $started_at
  * @property ?CarbonImmutable $completed_at
  * @property ?CarbonImmutable $no_show_at
+ * @property ?CarbonImmutable $late_arrival_at
  * @property ?int $actual_resource_id
  * @property ?CarbonImmutable $capacity_release_at
  * @property ?CarbonImmutable $queue_priority_at
@@ -110,6 +112,7 @@ class Booking extends Model
             'started_at' => 'immutable_datetime',
             'completed_at' => 'immutable_datetime',
             'no_show_at' => 'immutable_datetime',
+            'late_arrival_at' => 'immutable_datetime',
             'capacity_release_at' => 'immutable_datetime',
             'queue_priority_at' => 'immutable_datetime',
         ];
@@ -171,6 +174,28 @@ class Booking extends Model
         }
 
         return $this->occupied_end_at;
+    }
+
+    /** The grace the Owner had set when this booking was confirmed; an older snapshot without the key means the locked default. */
+    public function lateArrivalGraceMinutes(): int
+    {
+        return (int) ($this->policy_snapshot['late_arrival_grace_minutes'] ?? BookingPolicy::DEFAULT_LATE_ARRIVAL_GRACE_MINUTES);
+    }
+
+    /**
+     * The one eligibility instant: the appointment time plus the snapshotted
+     * grace. A no-show can be confirmed from here on, and a customer who checks
+     * in from here on is a late arrival. Board and server both read this.
+     */
+    public function noShowEligibleAt(): CarbonImmutable
+    {
+        return $this->scheduled_start_at->addMinutes($this->lateArrivalGraceMinutes());
+    }
+
+    /** A late arrival that has not started yet no longer holds its missed planned claim. */
+    public function holdsPlannedClaim(): bool
+    {
+        return $this->late_arrival_at === null || $this->started_at !== null;
     }
 
     /** The queue ordering key: manual priority when set, otherwise the appointment time. */

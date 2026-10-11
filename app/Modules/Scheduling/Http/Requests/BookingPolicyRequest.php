@@ -17,6 +17,7 @@ class BookingPolicyRequest extends ConfigurationRequest
             'min_notice_minutes' => ['required', 'integer', 'between:0,10080'],
             'horizon_days' => ['required', 'integer', 'between:1,365'],
             'approval_window_minutes' => ['required', 'integer', 'between:15,1440'],
+            'late_arrival_grace_minutes' => ['required', 'integer', 'between:1,120'],
         ];
     }
 

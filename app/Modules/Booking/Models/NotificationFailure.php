@@ -2,6 +2,7 @@
 
 namespace App\Modules\Booking\Models;
 
+use App\Modules\Booking\Events\OperationsChanged;
 use App\Modules\Booking\Mail\BookingApprovedMail;
 use App\Modules\Booking\Mail\BookingCompletedMail;
 use App\Modules\Booking\Mail\BookingConfirmedMail;
@@ -92,6 +93,7 @@ class NotificationFailure extends Model
             $failure->public_id = (string) Str::uuid();
         }
         $failure->forceFill(['status' => self::FAILED, 'error_class' => Str::limit($exception::class, 160, ''), 'failed_at' => now(), 'resolved_at' => null])->save();
+        OperationsChanged::for((int) $organizationId);
 
         return $failure;
     }

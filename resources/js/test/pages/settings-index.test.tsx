@@ -1,7 +1,11 @@
 import { render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import SettingsIndex from '@/pages/owner/settings/index';
-import { ACTIVE_ENTITLEMENT, BILLING_URL } from '@/test/fixtures/entitlement';
+import {
+    ACTIVE_ENTITLEMENT,
+    OWNER_VIEWER,
+    BILLING_URL,
+} from '@/test/fixtures/entitlement';
 import { resetInertia } from '@/test/inertia';
 import type { OwnerPageProps } from '@/types/owner';
 
@@ -41,6 +45,7 @@ function ownerProps(isReady: boolean, failingTab?: string): OwnerPageProps {
                 : [],
         },
         entitlement: ACTIVE_ENTITLEMENT,
+        viewer: OWNER_VIEWER,
     };
 }
 

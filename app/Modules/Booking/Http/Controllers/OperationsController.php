@@ -16,6 +16,7 @@ use App\Modules\Tenancy\Models\Organization;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Response;
 
 /**
@@ -26,16 +27,32 @@ use Inertia\Response;
  */
 class OperationsController extends Controller
 {
+    /** The focused mobile views of the one Operations domain; desktop shows them all at once. */
+    public const VIEWS = ['dashboard', 'queue', 'bookings', 'walk-in', 'more'];
+
     public function index(Request $request, Organization $organization, OperationsBoard $board): Response
     {
         $now = CarbonImmutable::now();
-        $date = $request->validate(['date' => ['nullable', 'date_format:Y-m-d']])['date'] ?? null;
+        $query = $request->validate([
+            'date' => ['nullable', 'date_format:Y-m-d'],
+            'view' => ['nullable', Rule::in(self::VIEWS)],
+            'filter' => ['nullable', Rule::in(array_keys(OperationsBoard::FILTERS))],
+            'queue_page' => ['nullable', 'integer', 'min:1', 'max:100000'],
+            'blocks_page' => ['nullable', 'integer', 'min:1', 'max:100000'],
+            'failures_page' => ['nullable', 'integer', 'min:1', 'max:100000'],
+        ]);
+        $date = $query['date'] ?? null;
         $day = $date === null
             ? $now->setTimezone('Asia/Manila')->startOfDay()
             : CarbonImmutable::createFromFormat('Y-m-d', $date, 'Asia/Manila')->startOfDay();
+        $list = array_map('intval', array_intersect_key($query, array_flip(['queue_page', 'blocks_page', 'failures_page'])));
+        if (isset($query['filter'])) {
+            $list['filter'] = $query['filter'];
+        }
         $base = route('owner.operations.index', $organization, absolute: false);
 
-        return OwnerPage::render('owner/operations', $organization, $board->build($organization, $day, $now) + [
+        return OwnerPage::render('owner/operations', $organization, $board->build($organization, $day, $now, $list) + [
+            'view' => $query['view'] ?? 'dashboard',
             'urls' => [
                 'operations' => $base,
                 'bookings' => $base.'/bookings',
@@ -59,9 +76,11 @@ class OperationsController extends Controller
     {
         $data = $this->common($request);
         $record = $this->find($organization, $booking);
-        $operate->checkIn($organization, $record->id, $request->user(), $data['revision'], $data['idempotency_key']);
+        $updated = $operate->checkIn($organization, $record->id, $request->user(), $data['revision'], $data['idempotency_key']);
 
-        return back()->with('status', "Checked in {$record->contact_name}. Their appointment time and queue position are unchanged.");
+        return back()->with('status', $updated->late_arrival_at !== null
+            ? "Checked in {$record->contact_name} as a late arrival. The booking stays confirmed at its original time and they join the queue after the work already waiting."
+            : "Checked in {$record->contact_name}. Their appointment time and queue position are unchanged.");
     }
 
     public function assign(Request $request, Organization $organization, string $booking, OperateBooking $operate): RedirectResponse
@@ -114,10 +133,16 @@ class OperationsController extends Controller
     public function block(Request $request, Organization $organization, ManageResourceBlocks $blocks): RedirectResponse
     {
         $data = $request->validate([
-            'resource_id' => ['required', 'integer'],
+            'resource_id' => ['required', 'integer', 'min:1'],
             'starts_at' => ['required', 'date'],
             'ends_at' => ['required', 'date', 'after:starts_at'],
             'reason' => ['required', 'string', 'max:500'],
+        ], [
+            'resource_id.min' => 'The resource field is required.',
+        ], [
+            'resource_id' => 'resource',
+            'starts_at' => 'from time',
+            'ends_at' => 'until time',
         ]);
         $block = $blocks->block($organization, $request->user(), (int) $data['resource_id'], CarbonImmutable::parse($data['starts_at'])->utc(), CarbonImmutable::parse($data['ends_at'])->utc(), $data['reason']);
 

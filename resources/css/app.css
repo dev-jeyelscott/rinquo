@@ -234,3 +234,17 @@
         scroll-padding-bottom: calc(7rem + env(safe-area-inset-bottom));
     }
 }
+
+/*
+ * Sheet and dialog slide, zoom and fade motion is interaction-triggered, so it
+ * is removed for people who ask for reduced motion (WCAG 2.3.3).
+ */
+@media (prefers-reduced-motion: reduce) {
+    [data-slot='sheet-content'],
+    [data-slot='sheet-overlay'],
+    [data-slot='dialog-content'],
+    [data-slot='dialog-overlay'] {
+        animation: none !important;
+        transition: none !important;
+    }
+}

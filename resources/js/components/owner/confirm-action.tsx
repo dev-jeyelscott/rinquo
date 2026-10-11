@@ -31,12 +31,16 @@ type Props = {
     confirmVariant?: 'destructive' | 'default';
     /** Visible trigger style. */
     triggerVariant?: 'outline' | 'default';
-    /** Disables the trigger, for example until a required choice is made. */
+    /** Disables the trigger and the confirmation, for example until a required choice is made or while offline. */
     disabled?: boolean;
     /** Extra fields to post; a function is evaluated when the action is confirmed (for example to issue an idempotency key). */
     data?:
         | Record<string, string | number>
         | (() => Record<string, string | number>);
+    /** Called when the request has settled, successfully or not (for example to close a surface the action was opened from). */
+    onSettled?: () => void;
+    /** Where focus goes when the dialog closes, for a trigger that the action removes; the trigger keeps focus when absent or null. */
+    returnFocus?: () => HTMLElement | null;
 };
 
 /**
@@ -60,6 +64,8 @@ export function ConfirmAction({
     triggerVariant = 'outline',
     disabled = false,
     data = {},
+    onSettled,
+    returnFocus,
 }: Props) {
     const [open, setOpen] = useState(false);
     const [processing, setProcessing] = useState(false);
@@ -78,6 +84,7 @@ export function ConfirmAction({
                 onFinish: () => {
                     setProcessing(false);
                     setOpen(false);
+                    onSettled?.();
                 },
             },
         );
@@ -96,7 +103,16 @@ export function ConfirmAction({
                     {label}
                 </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent
+                onCloseAutoFocus={(event) => {
+                    const target = returnFocus?.();
+
+                    if (target) {
+                        event.preventDefault();
+                        target.focus();
+                    }
+                }}
+            >
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
                     <DialogDescription>{description}</DialogDescription>
@@ -119,6 +135,7 @@ export function ConfirmAction({
                         onClick={confirm}
                         disabled={
                             processing ||
+                            disabled ||
                             (reasonRequired && reason.trim() === '')
                         }
                         aria-busy={processing}

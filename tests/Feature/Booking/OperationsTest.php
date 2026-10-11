@@ -439,3 +439,26 @@ test('the dashboard exposes only the requested day and a bounded queue', functio
     $this->actingAs($shop->owner)->get(route('owner.operations.index', [$shop->organization, 'date' => 'nope']))->assertSessionHasErrors('date');
     expect(PhysicalResource::query()->count())->toBeGreaterThan(0);
 });
+
+test('validation messages use the labels staff see on the block and walk-in forms', function () {
+    $shop = Shop::make();
+    $staff = $shop->member(Membership::STAFF);
+
+    $this->actingAs($staff)->post(route('owner.operations.blocks.store', $shop->organization), [])
+        ->assertSessionHasErrors(['starts_at' => 'The from time field is required.', 'ends_at' => 'The until time field is required.']);
+
+    walkIn($shop, ['contact_name' => ''])->assertSessionHasErrors(['contact_name' => 'The customer name field is required.']);
+});
+
+test('an unchosen or non-positive select id is rejected with the label staff see', function () {
+    $shop = Shop::make();
+    $staff = $shop->member(Membership::STAFF);
+    $window = ['starts_at' => '2030-01-01T01:00:00Z', 'ends_at' => '2030-01-01T02:00:00Z', 'reason' => 'Repair'];
+
+    foreach ([null, 0, -3] as $id) {
+        $this->actingAs($staff)->post(route('owner.operations.blocks.store', $shop->organization), $window + ['resource_id' => $id])
+            ->assertSessionHasErrors(['resource_id' => 'The resource field is required.']);
+        walkIn($shop, ['vehicle_type_id' => $id, 'service_id' => $id])
+            ->assertSessionHasErrors(['vehicle_type_id' => 'The vehicle field is required.', 'service_id' => 'The service field is required.']);
+    }
+});

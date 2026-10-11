@@ -1,4 +1,9 @@
 import { useForm } from '@inertiajs/react';
+import { useOperationsLocked } from '@/components/operations/operations-lock';
+import {
+    SheetFormFooter,
+    useSubmitFailureFocus,
+} from '@/components/operations/sheet-form';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import {
@@ -29,6 +34,7 @@ type Props = { url: string; resources: ResourceOption[]; timezone: string };
  * conflicts for staff, so a block never silently overbooks or strands anyone.
  */
 export function BlockResourceSheet({ url, resources, timezone }: Props) {
+    const locked = useOperationsLocked();
     const [open, setOpen] = useState(false);
     const form = useForm({
         resource_id: '',
@@ -37,17 +43,20 @@ export function BlockResourceSheet({ url, resources, timezone }: Props) {
         reason: '',
     });
     const errors = form.errors as Record<string, string | undefined>;
+    const focus = useSubmitFailureFocus();
 
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         form.transform((data) => ({
-            resource_id: Number(data.resource_id),
+            resource_id:
+                data.resource_id === '' ? null : Number(data.resource_id),
             starts_at: wallTimeToInstant(data.starts_local, timezone),
             ends_at: wallTimeToInstant(data.ends_local, timezone),
             reason: data.reason,
         }));
         form.post(url, {
             preserveScroll: true,
+            onError: focus.failed,
             onSuccess: () => {
                 form.reset();
                 setOpen(false);
@@ -58,12 +67,18 @@ export function BlockResourceSheet({ url, resources, timezone }: Props) {
     return (
         <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-                <Button variant="outline" size="sm" className="max-sm:h-11">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="max-sm:h-11"
+                    disabled={locked}
+                >
                     Block a resource
                 </Button>
             </SheetTrigger>
             <SheetContent className="overflow-y-auto max-sm:inset-x-0 max-sm:top-auto max-sm:bottom-0 max-sm:h-auto max-sm:max-h-[92%] max-sm:w-full max-sm:rounded-t-2xl max-sm:border-t max-sm:border-l-0 sm:w-[40vw] sm:max-w-md sm:min-w-80">
                 <form
+                    ref={focus.form}
                     onSubmit={submit}
                     aria-label="Block a resource"
                     noValidate
@@ -121,17 +136,22 @@ export function BlockResourceSheet({ url, resources, timezone }: Props) {
                             form.setData('reason', event.target.value)
                         }
                     />
-                    <Button
-                        type="submit"
-                        className="max-sm:h-11"
-                        disabled={form.processing}
-                        aria-busy={form.processing}
-                    >
-                        {form.processing ? (
-                            <Spinner role="presentation" aria-hidden="true" />
-                        ) : null}
-                        {form.processing ? 'Blocking…' : 'Block resource'}
-                    </Button>
+                    <SheetFormFooter alertRef={focus.alert}>
+                        <Button
+                            type="submit"
+                            className="max-sm:h-11"
+                            disabled={form.processing || locked}
+                            aria-busy={form.processing}
+                        >
+                            {form.processing ? (
+                                <Spinner
+                                    role="presentation"
+                                    aria-hidden="true"
+                                />
+                            ) : null}
+                            {form.processing ? 'Blocking…' : 'Block resource'}
+                        </Button>
+                    </SheetFormFooter>
                 </form>
             </SheetContent>
         </Sheet>

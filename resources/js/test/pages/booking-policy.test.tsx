@@ -1,7 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import BookingPolicy from '@/pages/owner/settings/booking-policy';
-import { ACTIVE_ENTITLEMENT, BILLING_URL } from '@/test/fixtures/entitlement';
+import {
+    ACTIVE_ENTITLEMENT,
+    OWNER_VIEWER,
+    BILLING_URL,
+} from '@/test/fixtures/entitlement';
 import { inertia, resetInertia } from '@/test/inertia';
 import type { OwnerPageProps } from '@/types/owner';
 
@@ -26,6 +30,7 @@ const owner: OwnerPageProps = {
     },
     readiness: { isReady: true, items: [] },
     entitlement: ACTIVE_ENTITLEMENT,
+    viewer: OWNER_VIEWER,
 };
 
 const policy = {
@@ -34,6 +39,7 @@ const policy = {
     minNoticeMinutes: 90,
     horizonDays: 30,
     approvalWindowMinutes: 120,
+    lateArrivalGraceMinutes: 15,
 };
 
 describe('Booking policy settings', () => {
@@ -132,6 +138,7 @@ describe('Booking policy settings', () => {
                 min_notice_minutes: 135,
                 horizon_days: 30,
                 approval_window_minutes: 120,
+                late_arrival_grace_minutes: 15,
             },
         });
     });
@@ -187,5 +194,50 @@ describe('Booking policy settings', () => {
         const busy = screen.getByRole('button', { name: /Saving/ });
         expect(busy).toBeDisabled();
         expect(busy).toHaveAttribute('aria-busy', 'true');
+    });
+
+    it('edits the late-arrival grace with its consequence and submits whole minutes', () => {
+        render(<BookingPolicy {...owner} policy={policy} />);
+
+        expect(
+            screen.getByRole('heading', {
+                level: 2,
+                name: 'Late arrival and no-show',
+            }),
+        ).toBeInTheDocument();
+        const grace = screen.getByLabelText(/Late-arrival grace/);
+        expect(grace).toHaveValue(15);
+        expect(
+            screen.getByText(/never moves the deadline of an existing booking/),
+        ).toBeInTheDocument();
+
+        fireEvent.change(grace, { target: { value: '25' } });
+        fireEvent.click(
+            screen.getByRole('button', { name: 'Save booking policy' }),
+        );
+
+        expect(inertia.calls[0]).toMatchObject({
+            method: 'put',
+            data: { late_arrival_grace_minutes: 25 },
+        });
+    });
+
+    it('shows the server error for an out-of-range grace', () => {
+        inertia.nextErrors = {
+            late_arrival_grace_minutes:
+                'The late arrival grace minutes field must be between 1 and 120.',
+        };
+        render(<BookingPolicy {...owner} policy={policy} />);
+
+        fireEvent.change(screen.getByLabelText(/Late-arrival grace/), {
+            target: { value: '500' },
+        });
+        fireEvent.click(
+            screen.getByRole('button', { name: 'Save booking policy' }),
+        );
+
+        expect(
+            screen.getByLabelText(/Late-arrival grace/),
+        ).toHaveAccessibleDescription(/between 1 and 120/);
     });
 });

@@ -24,8 +24,8 @@ class StaffBookingRequest extends FormRequest
             'mode' => ['required', Rule::in(['walk_in', 'scheduled'])],
             'start_at' => ['required_if:mode,scheduled', 'nullable', 'date'],
             'policy_exception_reason' => ['nullable', 'string', 'max:500'],
-            'vehicle_type_id' => ['required', 'integer'],
-            'service_id' => ['required', 'integer'],
+            'vehicle_type_id' => ['required', 'integer', 'min:1'],
+            'service_id' => ['required', 'integer', 'min:1'],
             'add_on_ids' => ['present', 'array', 'max:20'],
             'add_on_ids.*' => ['integer', 'distinct'],
             'contact_name' => ['required', 'string', 'max:120'],
@@ -33,6 +33,31 @@ class StaffBookingRequest extends FormRequest
             'contact_email' => ['nullable', 'email:rfc', 'max:254'],
             'vehicle_plate' => ['nullable', 'string', 'max:20'],
             'customer_notes' => ['nullable', 'string', 'max:1000'],
+        ];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'vehicle_type_id.min' => 'The vehicle field is required.',
+            'service_id.min' => 'The service field is required.',
+        ];
+    }
+
+    /** @return array<string, string> */
+    public function attributes(): array
+    {
+        return [
+            'vehicle_type_id' => 'vehicle',
+            'service_id' => 'service',
+            'start_at' => 'start time',
+            'contact_name' => 'customer name',
+            'contact_phone' => 'phone',
+            'contact_email' => 'email',
+            'vehicle_plate' => 'plate number',
+            'customer_notes' => 'notes',
+            'policy_exception_reason' => 'reason',
         ];
     }
 

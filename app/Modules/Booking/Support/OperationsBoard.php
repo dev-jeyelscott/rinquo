@@ -11,6 +11,7 @@ use App\Modules\Booking\Models\ResourceBlock;
 use App\Modules\Scheduling\Models\PhysicalResource;
 use App\Modules\Tenancy\Models\Organization;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 /**
@@ -19,7 +20,10 @@ use Illuminate\Support\Collection;
  * load right now, active blocks and the tenant's open notification failures.
  * Every query is organization-scoped and bounded; the action flags and
  * compatible resources are server truth, which the operation endpoints then
- * re-validate.
+ * re-validate. The queue is ordered by PostgreSQL and the queue, blocks and
+ * failures are each paged (validated, URL-backed pages), so no actionable
+ * record is silently omitted: counters and page metadata describe the whole
+ * result, not the page.
  */
 final class OperationsBoard
 {
@@ -27,45 +31,81 @@ final class OperationsBoard
 
     private const LIST_LIMIT = 50;
 
+    /** Queue filters (the mobile Queue tabs); each maps to one operational state. */
+    public const FILTERS = ['all' => null, 'checked_in' => Booking::CHECKED_IN, 'in_service' => Booking::IN_SERVICE, 'booked' => Booking::SCHEDULED];
+
     public function __construct(private readonly Occupancy $occupancy, private readonly BookingCatalog $catalog) {}
 
-    /** @return array<string, mixed> */
-    public function build(Organization $organization, CarbonImmutable $day, CarbonImmutable $now): array
+    /**
+     * @param  array{queue_page?: int, blocks_page?: int, failures_page?: int, filter?: string}  $query  validated list state
+     * @return array<string, mixed>
+     */
+    public function build(Organization $organization, CarbonImmutable $day, CarbonImmutable $now, array $query = []): array
     {
         $isToday = $day->equalTo(BranchCalendar::localDate($now));
-        $bookings = Booking::query()
+        $filter = $query['filter'] ?? 'all';
+        $dayBookings = fn () => Booking::query()
             ->where('organization_id', $organization->id)
             ->where('status', Booking::CONFIRMED)
             ->where('scheduled_start_at', '>=', $day->utc())
-            ->where('scheduled_start_at', '<', $day->addDay()->utc())
-            ->with('addOns')
-            ->get();
+            ->where('scheduled_start_at', '<', $day->addDay()->utc());
 
         $resources = PhysicalResource::query()->where('organization_id', $organization->id)->where('is_active', true)->whereNull('archived_at')->orderBy('name')->orderBy('id')->get();
         $byId = $resources->keyBy('id');
-        $order = [Booking::IN_SERVICE => 0, Booking::CHECKED_IN => 1, Booking::SCHEDULED => 2, Booking::COMPLETED => 3, Booking::NO_SHOW => 3];
-        $queue = $bookings
-            ->sortBy(fn (Booking $b): array => [$order[$b->operational_state] ?? 4, $b->queueKey()->getTimestamp(), $b->queueKey()->micro, $b->id])
-            ->take(self::QUEUE_LIMIT)
-            ->map(fn (Booking $b): array => $this->row($b, $byId, $resources, $isToday, $now))
-            ->values()->all();
 
-        $count = fn (string $state): int => $bookings->where('operational_state', $state)->count();
+        /** @var array<string, int> $counts */
+        $counts = $dayBookings()->selectRaw('operational_state, count(*) as total')->groupBy('operational_state')->pluck('total', 'operational_state')->map(fn ($total): int => (int) $total)->all();
+        $count = fn (string $state): int => $counts[$state] ?? 0;
+        $delayed = $dayBookings()->where('operational_state', Booking::IN_SERVICE)->get()->filter(fn (Booking $b): bool => $b->projectedServiceEnd() > $b->service_end_at)->count();
+
+        $queueQuery = $dayBookings()->when(self::FILTERS[$filter] ?? null, fn ($q, string $state) => $q->where('operational_state', $state))
+            ->orderByRaw("CASE operational_state WHEN 'in_service' THEN 0 WHEN 'checked_in' THEN 1 WHEN 'scheduled' THEN 2 ELSE 3 END")
+            ->orderByRaw('COALESCE(queue_priority_at, scheduled_start_at)')
+            ->orderBy('id');
+        [$bookings, $queuePage] = $this->page($queueQuery, $query['queue_page'] ?? 1, self::QUEUE_LIMIT, fn ($q) => $q->with('addOns'));
+        $queue = $bookings->map(fn (Booking $b): array => $this->row($b, $byId, $resources, $isToday, $now))->values()->all();
+
+        [$blocks, $blocksPage] = $this->blocks($organization, $byId, $now, $query['blocks_page'] ?? 1);
+        [$attention, $failuresPage] = $this->attention($organization, $query['failures_page'] ?? 1);
 
         return [
             'day' => ['date' => $day->toDateString(), 'isToday' => $isToday, 'timezone' => 'Asia/Manila', 'previous' => $day->subDay()->toDateString(), 'next' => $day->addDay()->toDateString(), 'today' => BranchCalendar::localDate($now)->toDateString()],
             'now' => $now->utc()->toIso8601String(),
             'stats' => [
-                'appointments' => $bookings->count(), 'waiting' => $count(Booking::SCHEDULED), 'checkedIn' => $count(Booking::CHECKED_IN),
+                'appointments' => array_sum($counts), 'waiting' => $count(Booking::SCHEDULED), 'checkedIn' => $count(Booking::CHECKED_IN),
                 'inService' => $count(Booking::IN_SERVICE), 'completed' => $count(Booking::COMPLETED), 'noShow' => $count(Booking::NO_SHOW),
+                'delayed' => $delayed,
             ],
+            'filter' => $filter,
             'queue' => $queue,
+            'pages' => ['queue' => $queuePage, 'blocks' => $blocksPage, 'failures' => $failuresPage],
             'capacity' => $this->capacity($organization, $resources, $now),
-            'blocks' => $this->blocks($organization, $byId, $now),
-            'attention' => $this->attention($organization),
+            'blocks' => $blocks,
+            'attention' => $attention,
             'resources' => $resources->map(fn (PhysicalResource $r): array => ['id' => $r->id, 'name' => $r->name, 'typeId' => $r->resource_type_id, 'capacity' => $r->capacity])->values()->all(),
             'catalog' => $this->catalog->build($organization),
         ];
+    }
+
+    /**
+     * One bounded, stably ordered page. A page past the end resolves to the
+     * nearest valid (last) page, so a mutation that empties a page never strands
+     * the member on a blank one.
+     *
+     * @template TModel of \Illuminate\Database\Eloquent\Model
+     *
+     * @param  Builder<TModel>  $query
+     * @return array{0: Collection<int, TModel>, 1: array{page: int, perPage: int, total: int, lastPage: int, from: int, to: int}}
+     */
+    private function page($query, int $requested, int $perPage, ?callable $with = null): array
+    {
+        $total = (clone $query)->reorder()->count();
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = min(max(1, $requested), $lastPage);
+        $items = ($with !== null ? $with($query) : $query)->forPage($page, $perPage)->get();
+        $from = $items->isEmpty() ? 0 : ($page - 1) * $perPage + 1;
+
+        return [$items, ['page' => $page, 'perPage' => $perPage, 'total' => $total, 'lastPage' => $lastPage, 'from' => $from, 'to' => $items->isEmpty() ? 0 : $from + $items->count() - 1]];
     }
 
     /**
@@ -90,6 +130,7 @@ final class OperationsBoard
             'serviceName' => $booking->service_name,
             'addOns' => $booking->addOns->pluck('name')->all(),
             'notes' => $booking->customer_notes,
+            'resourceTypeName' => $booking->resource_type_name,
             'startAt' => $booking->scheduled_start_at->utc()->toIso8601String(),
             'serviceEndAt' => $booking->service_end_at->utc()->toIso8601String(),
             'etaAt' => $eta?->utc()->toIso8601String(),
@@ -102,11 +143,14 @@ final class OperationsBoard
                 ? $resources->filter(fn (PhysicalResource $r): bool => $r->resource_type_id === $booking->resource_type_id && $r->capacity >= $booking->consumption_units)->pluck('id')->values()->all()
                 : [],
             'revision' => $booking->operation_revision,
+            'graceMinutes' => $booking->lateArrivalGraceMinutes(),
+            'noShowEligibleAt' => $booking->noShowEligibleAt()->utc()->toIso8601String(),
+            'lateArrivalAt' => $booking->late_arrival_at?->utc()->toIso8601String(),
             'actions' => [
                 'checkIn' => $isToday && $state === Booking::SCHEDULED,
                 'start' => $isToday && $state === Booking::CHECKED_IN,
                 'complete' => $inService,
-                'noShow' => $state === Booking::SCHEDULED && $now >= $booking->scheduled_start_at,
+                'noShow' => $state === Booking::SCHEDULED && $now >= $booking->noShowEligibleAt(),
                 'assign' => $queued,
                 'reorder' => $queued,
             ],
@@ -130,28 +174,37 @@ final class OperationsBoard
 
     /**
      * @param  Collection<int, PhysicalResource>  $byId
-     * @return list<array<string, mixed>>
+     * @return array{0: list<array<string, mixed>>, 1: array{page: int, perPage: int, total: int, lastPage: int, from: int, to: int}}
      */
-    private function blocks(Organization $organization, Collection $byId, CarbonImmutable $now): array
+    private function blocks(Organization $organization, Collection $byId, CarbonImmutable $now, int $requested): array
     {
-        return array_values(ResourceBlock::query()->where('organization_id', $organization->id)->whereNull('released_at')->where('ends_at', '>', $now)
-            ->orderBy('starts_at')->limit(self::LIST_LIMIT)->get()
-            ->map(fn (ResourceBlock $block): array => [
-                'id' => $block->public_id, 'resourceId' => $block->physical_resource_id, 'resourceName' => $byId->has($block->physical_resource_id) ? $byId->get($block->physical_resource_id)->name : 'Resource',
-                'startsAt' => $block->starts_at->utc()->toIso8601String(), 'endsAt' => $block->ends_at->utc()->toIso8601String(), 'reason' => $block->reason,
-            ])->all());
+        [$items, $page] = $this->page(
+            ResourceBlock::query()->where('organization_id', $organization->id)->whereNull('released_at')->where('ends_at', '>', $now)->orderBy('starts_at')->orderBy('id'),
+            $requested,
+            self::LIST_LIMIT,
+        );
+
+        return [array_values($items->map(fn (ResourceBlock $block): array => [
+            'id' => $block->public_id, 'resourceId' => $block->physical_resource_id, 'resourceName' => $byId->has($block->physical_resource_id) ? $byId->get($block->physical_resource_id)->name : 'Resource',
+            'startsAt' => $block->starts_at->utc()->toIso8601String(), 'endsAt' => $block->ends_at->utc()->toIso8601String(), 'reason' => $block->reason,
+        ])->all()), $page];
     }
 
-    /** @return list<array<string, mixed>> */
-    private function attention(Organization $organization): array
+    /**
+     * @return array{0: list<array<string, mixed>>, 1: array{page: int, perPage: int, total: int, lastPage: int, from: int, to: int}}
+     */
+    private function attention(Organization $organization, int $requested): array
     {
-        $failures = NotificationFailure::query()->where('organization_id', $organization->id)->whereIn('status', [NotificationFailure::FAILED, NotificationFailure::RETRYING])
-            ->orderByDesc('failed_at')->limit(self::LIST_LIMIT)->get();
+        [$failures, $page] = $this->page(
+            NotificationFailure::query()->where('organization_id', $organization->id)->whereIn('status', [NotificationFailure::FAILED, NotificationFailure::RETRYING])->orderByDesc('failed_at')->orderByDesc('id'),
+            $requested,
+            self::LIST_LIMIT,
+        );
         $names = Booking::query()->where('organization_id', $organization->id)->whereIn('id', $failures->pluck('booking_id'))->pluck('contact_name', 'id');
 
-        return array_values($failures->map(fn (NotificationFailure $failure): array => [
+        return [array_values($failures->map(fn (NotificationFailure $failure): array => [
             'id' => $failure->public_id, 'label' => $failure->label(), 'customerName' => $names[$failure->booking_id] ?? 'Customer',
             'status' => $failure->status, 'retryCount' => $failure->retry_count, 'failedAt' => $failure->failed_at->utc()->toIso8601String(),
-        ])->all());
+        ])->all()), $page];
     }
 }

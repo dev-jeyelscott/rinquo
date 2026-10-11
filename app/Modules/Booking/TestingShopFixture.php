@@ -61,6 +61,10 @@ final class TestingShopFixture
             'approval_mode' => ['nullable', 'in:auto_confirm,staff_approval'],
             'staff' => ['nullable', 'boolean'],
             'booking_in_minutes' => ['nullable', 'integer', 'between:30,2880'],
+            // A confirmed booking that started this many minutes ago (late-arrival and no-show journeys; the caller keeps it inside the local day).
+            'booking_minutes_ago' => ['nullable', 'integer', 'between:1,600'],
+            // Extra confirmed bookings across today, to exercise the paged queue.
+            'filler_bookings' => ['nullable', 'integer', 'between:1,260'],
             // Starts the shop already restricted (trial and grace ended) or explicitly closed by its Owner.
             'entitlement' => ['nullable', 'in:restricted,closed'],
         ]);
@@ -108,8 +112,14 @@ final class TestingShopFixture
 
             // An optional confirmed online booking for a known customer, for the scheduling-conflict journey.
             $booking = isset($data['booking_in_minutes'])
-                ? self::seedBooking($organization, $variant, $type, $vehicle, $service, $slug, (int) $data['booking_in_minutes'])
+                ? self::seedBooking($organization, $variant, $type, $vehicle, $service, $slug, now()->addMinutes((int) $data['booking_in_minutes']), true)
                 : null;
+            if (isset($data['booking_minutes_ago'])) {
+                $booking = self::seedBooking($organization, $variant, $type, $vehicle, $service, $slug, now()->subMinutes((int) $data['booking_minutes_ago']), false);
+            }
+            for ($number = 1; $number <= (int) ($data['filler_bookings'] ?? 0); $number++) {
+                self::seedBooking($organization, $variant, $type, $vehicle, $service, $slug, CarbonImmutable::now('Asia/Manila')->startOfDay()->addMinutes($number), false, 'Filler '.str_pad((string) $number, 3, '0', STR_PAD_LEFT));
+            }
 
             self::applyEntitlement($organization, $owner, $data['entitlement'] ?? null);
 
@@ -138,11 +148,16 @@ final class TestingShopFixture
         }
     }
 
-    /** A confirmed online booking on the shop's only resource, starting on the next quarter hour after the offset. */
-    private static function seedBooking(Organization $organization, Model $variant, Model $type, Model $vehicle, Model $service, string $slug, int $minutes): Booking
+    /**
+     * A confirmed online booking on the shop's only resource. A future booking starts on the next
+     * quarter hour; a past one starts exactly where asked. The snapshot carries the locked 15-minute grace.
+     */
+    private static function seedBooking(Organization $organization, Model $variant, Model $type, Model $vehicle, Model $service, string $slug, \DateTimeInterface $at, bool $roundUp, string $name = 'Casey Customer'): Booking
     {
-        $customer = User::query()->create(['email' => $slug.'-customer@example.test']);
-        $start = CarbonImmutable::createFromTimestampUTC((int) (ceil(now()->addMinutes($minutes)->getTimestamp() / 900) * 900));
+        $customer = User::query()->firstOrCreate(['email' => $slug.'-customer@example.test']);
+        $start = $roundUp
+            ? CarbonImmutable::createFromTimestampUTC((int) (ceil($at->getTimestamp() / 900) * 900))
+            : CarbonImmutable::createFromTimestampUTC($at->getTimestamp());
         $resource = PhysicalResource::query()->where('organization_id', $organization->id)->orderBy('id')->firstOrFail();
         $hold = new Hold;
         $hold->forceFill([
@@ -159,8 +174,8 @@ final class TestingShopFixture
             'variant_price_centavos' => 35000, 'variant_duration_minutes' => 60, 'buffer_minutes' => 10, 'add_ons_price_centavos' => 0, 'add_ons_duration_minutes' => 0, 'total_price_centavos' => 35000,
             'resource_type_id' => $type->getKey(), 'resource_type_name' => 'Wash bay', 'consumption_units' => 1,
             'scheduled_start_at' => $start, 'service_end_at' => $start->addMinutes(60), 'occupied_end_at' => $start->addMinutes(70), 'branch_timezone' => 'Asia/Manila',
-            'approval_mode' => 'auto_confirm', 'policy_snapshot' => ['slot_interval_minutes' => 15, 'min_notice_minutes' => 60, 'horizon_days' => 30, 'approval_window_minutes' => 120],
-            'contact_name' => 'Casey Customer', 'contact_email' => $customer->email, 'physical_resource_id' => $resource->id, 'confirmed_at' => now(),
+            'approval_mode' => 'auto_confirm', 'policy_snapshot' => ['slot_interval_minutes' => 15, 'min_notice_minutes' => 60, 'horizon_days' => 30, 'approval_window_minutes' => 120, 'late_arrival_grace_minutes' => 15],
+            'contact_name' => $name, 'contact_email' => $customer->email, 'physical_resource_id' => $resource->id, 'confirmed_at' => now(),
         ])->save();
 
         return $booking;

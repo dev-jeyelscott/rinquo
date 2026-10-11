@@ -9,6 +9,26 @@ export type OperationalState =
 
 export type BookingSource = 'online' | 'staff' | 'walk_in';
 
+/** The focused mobile views of the one Operations domain; desktop shows them together. */
+export type OperationsView =
+    | 'dashboard'
+    | 'queue'
+    | 'bookings'
+    | 'walk-in'
+    | 'more';
+
+export type QueueFilter = 'all' | 'checked_in' | 'in_service' | 'booked';
+
+/** Server-authoritative page metadata of one bounded list. */
+export type PageInfo = {
+    page: number;
+    perPage: number;
+    total: number;
+    lastPage: number;
+    from: number;
+    to: number;
+};
+
 export type QueueRowData = {
     id: string;
     customerName: string;
@@ -16,6 +36,8 @@ export type QueueRowData = {
     vehicleName: string;
     vehiclePlate: string | null;
     serviceName: string;
+    /** Snapshotted resource type the booking was made for. */
+    resourceTypeName: string;
     addOns: string[];
     notes: string | null;
     /** UTC instant of the confirmed appointment; never changed by operations. */
@@ -30,6 +52,12 @@ export type QueueRowData = {
     units: number;
     compatibleResourceIds: number[];
     revision: number;
+    /** Late-arrival grace snapshotted when the booking was confirmed. */
+    graceMinutes: number;
+    /** UTC instant from which no-show may be confirmed (appointment plus grace). */
+    noShowEligibleAt: string;
+    /** UTC instant of a late check-in; null for early and on-time arrivals. */
+    lateArrivalAt: string | null;
     actions: {
         checkIn: boolean;
         start: boolean;
@@ -90,7 +118,12 @@ export type OperationsPageData = {
         inService: number;
         completed: number;
         noShow: number;
+        /** In-service work projected past its planned finish. */
+        delayed: number;
     };
+    view: OperationsView;
+    filter: QueueFilter;
+    pages: { queue: PageInfo; blocks: PageInfo; failures: PageInfo };
     queue: QueueRowData[];
     capacity: CapacityRowData[];
     blocks: BlockRowData[];

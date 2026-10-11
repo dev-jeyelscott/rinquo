@@ -18,7 +18,7 @@ use Carbon\CarbonImmutable;
  * effective resource (actual assignment, else planned) until its effective
  * capacity end ({@see Booking::capacityEndsAt()}): an overrun keeps the
  * resource until completion, completion keeps only the buffer, and a
- * confirmed no-show releases it. The immutable plan is never rewritten. Expiry is a time predicate, so capacity frees at
+ * confirmed no-show releases it, and a late arrival that has not started yet holds none until it does. The immutable plan is never rewritten. Expiry is a time predicate, so capacity frees at
  * the expiry instant even when the sweeper has not run. Both queries are
  * bounded by organization, resource ids and the window. A browser session's
  * own holds can be excluded (by token hash) for read-only availability, since
@@ -83,7 +83,14 @@ final class Occupancy
             ->get();
 
         foreach ($bookings as $booking) {
-            $start = $booking->started_at !== null ? $booking->scheduled_start_at->min($booking->started_at) : $booking->scheduled_start_at;
+            if (! $booking->holdsPlannedClaim()) {
+                continue; // a late arrival waiting for a safe place: the missed planned claim is released
+            }
+            $start = match (true) {
+                $booking->started_at === null => $booking->scheduled_start_at,
+                $booking->late_arrival_at !== null => $booking->started_at,
+                default => $booking->scheduled_start_at->min($booking->started_at),
+            };
             $end = $booking->capacityEndsAt($now);
             if ($start < $to && $end > $from) {
                 $claims[$booking->claimedResourceId()][] = new Claim($start, $end, $booking->consumption_units);

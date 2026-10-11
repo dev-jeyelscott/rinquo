@@ -1,4 +1,4 @@
-import type { Entitlement } from '@/types/owner';
+import type { Entitlement, Viewer } from '@/types/owner';
 
 /** A paid, unrestricted organization: what most page tests render with. */
 export const ACTIVE_ENTITLEMENT: Entitlement = {
@@ -13,3 +13,13 @@ export const ACTIVE_ENTITLEMENT: Entitlement = {
 };
 
 export const BILLING_URL = '/owner/organizations/1/settings/billing';
+
+/** The server-derived role of an Owner and of Staff, as every Owner and Staff page receives it. */
+export const OWNER_VIEWER: Viewer = {
+    role: 'owner',
+    canManageOwnerAreas: true,
+};
+export const STAFF_VIEWER: Viewer = {
+    role: 'staff',
+    canManageOwnerAreas: false,
+};

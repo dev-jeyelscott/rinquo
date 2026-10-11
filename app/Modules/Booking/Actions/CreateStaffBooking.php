@@ -5,6 +5,7 @@ namespace App\Modules\Booking\Actions;
 use App\Modules\Booking\Availability\Assignment;
 use App\Modules\Booking\Availability\AvailabilitySearch;
 use App\Modules\Booking\Availability\BranchCalendar;
+use App\Modules\Booking\Events\OperationsChanged;
 use App\Modules\Booking\Mail\BookingConfirmedMail;
 use App\Modules\Booking\Models\Booking;
 use App\Modules\Booking\Models\BookingAddOn;
@@ -72,6 +73,7 @@ final class CreateStaffBooking
             ], fn ($value): bool => $value !== null));
             OperationJournal::remember($locked, $actor, $booking, $key, 'create', $hash);
             BookingNotifier::queueIfAddressed($booking->contact_email, new BookingConfirmedMail($booking->id));
+            OperationsChanged::for($locked->id);
 
             return $booking;
         });

@@ -3,6 +3,7 @@
 namespace App\Modules\Booking\Actions;
 
 use App\Modules\Booking\Availability\AvailabilitySearch;
+use App\Modules\Booking\Events\OperationsChanged;
 use App\Modules\Booking\Mail\BookingConfirmedMail;
 use App\Modules\Booking\Mail\BookingRequestReceivedMail;
 use App\Modules\Booking\Models\Booking;
@@ -160,6 +161,7 @@ final class ConfirmBooking
                 $customer->email,
                 $pending ? new BookingRequestReceivedMail($booking->id) : new BookingConfirmedMail($booking->id),
             );
+            OperationsChanged::for($booking->organization_id);
 
             return $booking;
         });

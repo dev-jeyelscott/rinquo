@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import type { APIRequestContext, Page } from '@playwright/test';
+import type { APIRequestContext, Browser, Page } from '@playwright/test';
 
 /**
  * Staff journey against the running stack: a Staff member signs in with an
@@ -12,16 +12,40 @@ import type { APIRequestContext, Page } from '@playwright/test';
  * skip with a clear message when they are absent.
  */
 
-type Seed = { slug: string; organizationId: number; staffEmail: string };
+type Seed = {
+    slug: string;
+    organizationId: number;
+    staffEmail: string;
+    bookingId: string | null;
+};
 
-async function seedShop(request: APIRequestContext): Promise<Seed> {
+async function seedShop(
+    request: APIRequestContext,
+    extra: Record<string, number> = {},
+): Promise<Seed> {
     const slug = `e2e-ops-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const response = await request.post('/__testing/shop', {
-        data: { slug, capacity: 1, staff: true },
+        data: { slug, capacity: 1, staff: true, ...extra },
     });
     expect(response.ok()).toBe(true);
 
     return (await response.json()) as Seed;
+}
+
+const ownerEmail = (seed: Seed) => `${seed.slug}-owner@example.test`;
+
+/** Minutes since local midnight in Manila: a past booking must still be today to be operable. */
+function manilaMinutesSinceMidnight(): number {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Manila',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+    }).formatToParts(new Date());
+    const value = (type: string) =>
+        Number(parts.find((part) => part.type === type)?.value ?? 0);
+
+    return (value('hour') % 24) * 60 + value('minute');
 }
 
 async function readCode(page: Page, email: string): Promise<string> {
@@ -117,9 +141,9 @@ test('staff run a walk-in from arrival to completion and review the impact of bl
     ).toBeVisible();
 
     await addWalkIn(page, 'Walk-in Wally');
-    await expect(page.getByRole('status')).toContainText(
-        'Added walk-in for Walk-in Wally',
-    );
+    await expect(
+        page.getByRole('status').filter({ hasText: 'Added walk-in' }),
+    ).toContainText('Added walk-in for Walk-in Wally');
     const queue = page.getByRole('list', { name: 'Queue' });
     await expect(queue).toContainText('Walk-in Wally');
     await expect(queue).toContainText('Booked');
@@ -132,7 +156,7 @@ test('staff run a walk-in from arrival to completion and review the impact of bl
         .getByRole('button', { name: 'Start Walk-in Wally', exact: true })
         .click();
     await expect(queue).toContainText('In service');
-    await expect(queue).toContainText('Expected finish');
+    await expect(queue).toContainText('Estimated finish');
     await page
         .getByRole('button', { name: 'Complete Walk-in Wally', exact: true })
         .click();
@@ -182,4 +206,253 @@ test('staff run a walk-in from arrival to completion and review the impact of bl
     await expect(page.getByRole('navigation', { name: 'Main' })).toContainText(
         'Conflicts',
     );
+});
+
+test('a customer who arrives after the grace period is checked in late and keeps the booking', async ({
+    page,
+    request,
+}) => {
+    test.setTimeout(120_000);
+    test.skip(
+        manilaMinutesSinceMidnight() < 50,
+        'The past booking would fall on the previous Manila day.',
+    );
+    const seed = await seedShop(request, { booking_minutes_ago: 40 });
+    await signIn(page, seed.staffEmail);
+    await page.goto(`/owner/organizations/${seed.organizationId}/operations`);
+
+    const queue = page.getByRole('list', { name: 'Queue' });
+    await page
+        .getByRole('button', { name: 'Booking details for Casey Customer' })
+        .click();
+    const details = page.getByRole('dialog', { name: 'Booking details' });
+    await expect(details).toContainText('15-minute grace period ended');
+    await expect(details).toContainText('checked in as a late arrival');
+    await details.getByRole('button', { name: 'Check in' }).click();
+
+    await expect(
+        page.getByRole('status').filter({ hasText: 'late arrival' }),
+    ).toBeVisible();
+    await expect(queue).toContainText('Checked in');
+    await expect(queue).toContainText('Late arrival at');
+    await expect(queue).not.toContainText('No-show');
+});
+
+test('staff confirm a no-show only after the grace period, with a reason', async ({
+    page,
+    request,
+}) => {
+    test.setTimeout(120_000);
+    test.skip(
+        manilaMinutesSinceMidnight() < 50,
+        'The past booking would fall on the previous Manila day.',
+    );
+    const seed = await seedShop(request, { booking_minutes_ago: 40 });
+    await signIn(page, seed.staffEmail);
+    await page.goto(`/owner/organizations/${seed.organizationId}/operations`);
+
+    await page
+        .getByRole('button', { name: 'Booking details for Casey Customer' })
+        .click();
+    await page
+        .getByRole('button', { name: 'Mark Casey Customer as a no-show' })
+        .click();
+    const confirm = page.getByRole('dialog', { name: /no-show/ });
+    await expect(confirm).toContainText(
+        'The 15-minute grace period has passed',
+    );
+    await expect(
+        confirm.getByRole('button', { name: 'Confirm no-show' }),
+    ).toBeDisabled();
+    await confirm.getByLabel(/Reason/).fill('Did not arrive or call');
+    await confirm.getByRole('button', { name: 'Confirm no-show' }).click();
+
+    await expect(page.getByRole('list', { name: 'Queue' })).toContainText(
+        'No-show',
+    );
+});
+
+test('no-show is not offered while a booking is still inside its grace period', async ({
+    page,
+    request,
+}) => {
+    test.setTimeout(120_000);
+    test.skip(
+        manilaMinutesSinceMidnight() < 10,
+        'The past booking would fall on the previous Manila day.',
+    );
+    const seed = await seedShop(request, { booking_minutes_ago: 5 });
+    await signIn(page, seed.staffEmail);
+    await page.goto(`/owner/organizations/${seed.organizationId}/operations`);
+
+    await expect(page.getByRole('list', { name: 'Queue' })).toContainText(
+        'In grace period until',
+    );
+    await page
+        .getByRole('button', { name: 'Booking details for Casey Customer' })
+        .click();
+    const details = page.getByRole('dialog', { name: 'Booking details' });
+    await expect(details).toContainText('No-show can be confirmed from');
+    await expect(
+        details.getByRole('button', { name: /as a no-show/ }),
+    ).toHaveCount(0);
+});
+
+async function signedInPage(browser: Browser, email: string) {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await signIn(page, email);
+
+    return { context, page };
+}
+
+test('a second session updates without a reload and offline disables every transaction until reconnect', async ({
+    browser,
+    request,
+}) => {
+    test.setTimeout(180_000);
+    const seed = await seedShop(request);
+    const staff = await signedInPage(browser, seed.staffEmail);
+    const owner = await signedInPage(browser, ownerEmail(seed));
+    const url = `/owner/organizations/${seed.organizationId}/operations`;
+    await staff.page.goto(url);
+    await owner.page.goto(url);
+    await expect(
+        staff.page.getByRole('heading', { name: 'Nothing booked today' }),
+    ).toBeVisible();
+
+    await addWalkIn(owner.page, 'Walk-in Willa');
+    await expect(staff.page.getByRole('list', { name: 'Queue' })).toContainText(
+        'Walk-in Willa',
+        { timeout: 15_000 },
+    );
+
+    await staff.context.setOffline(true);
+    await expect(staff.page.getByRole('alert')).toContainText(
+        'Connection lost.',
+    );
+    await expect(
+        staff.page.getByRole('button', { name: 'Check in Walk-in Willa' }),
+    ).toBeDisabled();
+    await expect(
+        staff.page.getByRole('button', { name: 'Add walk-in' }),
+    ).toBeDisabled();
+
+    await staff.context.setOffline(false);
+    await expect(
+        staff.page.getByRole('button', { name: 'Check in Walk-in Willa' }),
+    ).toBeEnabled({ timeout: 20_000 });
+    await expect(staff.page.getByText('Connection lost.')).toHaveCount(0);
+
+    await staff.context.close();
+    await owner.context.close();
+});
+
+test('a day with more than one page of bookings keeps every booking reachable', async ({
+    page,
+    request,
+}) => {
+    test.setTimeout(180_000);
+    const seed = await seedShop(request, { filler_bookings: 205 });
+    await signIn(page, seed.staffEmail);
+    await page.goto(`/owner/organizations/${seed.organizationId}/operations`);
+
+    const pager = page.getByRole('navigation', { name: 'bookings pages' });
+    await expect(pager).toContainText('Showing 1–200 of 205 bookings');
+    await expect(page.getByRole('list', { name: 'Queue' })).not.toContainText(
+        'Filler 205',
+    );
+
+    await pager.getByRole('button', { name: 'Next page' }).click();
+    await expect(page).toHaveURL(/queue_page=2/);
+    await expect(pager).toContainText('Showing 201–205 of 205 bookings');
+    await page
+        .getByRole('button', { name: 'Check in Filler 205', exact: true })
+        .click();
+    await expect(
+        page.getByRole('status').filter({ hasText: 'Checked in Filler 205' }),
+    ).toBeVisible();
+});
+
+test('Staff see only operational destinations on a phone and an Owner also sees Billing and Settings', async ({
+    browser,
+    request,
+}) => {
+    test.setTimeout(180_000);
+    const seed = await seedShop(request);
+    const url = `/owner/organizations/${seed.organizationId}/operations`;
+
+    const staff = await signedInPage(browser, seed.staffEmail);
+    await staff.page.setViewportSize({ width: 390, height: 844 });
+    await staff.page.goto(url);
+    const tabs = staff.page.getByRole('navigation', { name: 'Primary mobile' });
+    await expect(tabs.getByRole('link')).toHaveText([
+        'Dashboard',
+        'Queue',
+        'Bookings',
+        'Walk-in',
+        'More',
+    ]);
+    await tabs.getByRole('link', { name: 'More' }).click();
+    await expect(staff.page).toHaveURL(/view=more/);
+    const more = staff.page.getByRole('navigation', {
+        name: 'More destinations',
+    });
+    await expect(
+        more.getByRole('link', { name: 'Booking Requests' }),
+    ).toBeVisible();
+    await expect(more.getByRole('link', { name: /Conflicts/ })).toBeVisible();
+    await expect(more.getByRole('link', { name: /Billing/ })).toHaveCount(0);
+    await expect(more.getByRole('link', { name: /Settings/ })).toHaveCount(0);
+    // A forged request is still denied by the server.
+    const forged = await staff.page.request.get(
+        `/owner/organizations/${seed.organizationId}/settings/billing`,
+    );
+    expect(forged.status()).toBe(403);
+    await staff.context.close();
+
+    const owner = await signedInPage(browser, ownerEmail(seed));
+    await owner.page.setViewportSize({ width: 390, height: 844 });
+    await owner.page.goto(`${url}?view=more`);
+    const ownerMore = owner.page.getByRole('navigation', {
+        name: 'More destinations',
+    });
+    await expect(
+        ownerMore.getByRole('link', { name: /Billing/ }),
+    ).toBeVisible();
+    await expect(
+        ownerMore.getByRole('link', { name: /Settings/ }),
+    ).toBeVisible();
+    await owner.context.close();
+});
+
+test('an Owner changes the late-arrival grace and Staff cannot', async ({
+    browser,
+    request,
+}) => {
+    test.setTimeout(180_000);
+    const seed = await seedShop(request);
+    const owner = await signedInPage(browser, ownerEmail(seed));
+    const policy = `/owner/organizations/${seed.organizationId}/settings/booking-policy`;
+    await owner.page.goto(policy);
+
+    const grace = owner.page.getByLabel(/Late-arrival grace/);
+    await expect(grace).toHaveValue('15');
+    await grace.fill('30');
+    await owner.page
+        .getByRole('button', { name: 'Save booking policy' })
+        .click();
+    await expect(
+        owner.page
+            .getByRole('status')
+            .filter({ hasText: 'Booking policy saved.' }),
+    ).toBeVisible();
+    await owner.page.reload();
+    await expect(owner.page.getByLabel(/Late-arrival grace/)).toHaveValue('30');
+    await owner.context.close();
+
+    const staff = await signedInPage(browser, seed.staffEmail);
+    const response = await staff.page.request.get(policy);
+    expect(response.status()).toBe(403);
+    await staff.context.close();
 });

@@ -2,6 +2,7 @@
 
 use App\Modules\Booking\Actions\ConfirmBooking;
 use App\Modules\Booking\Actions\ExpireConflictProposals;
+use App\Modules\Booking\Actions\OperateBooking;
 use App\Modules\Booking\Actions\PlaceHold;
 use App\Modules\Booking\Actions\ProposeReschedule;
 use App\Modules\Booking\Actions\RespondToProposal;
@@ -417,4 +418,25 @@ test('parallel closure requests produce one closure and recovery racing the dead
 
     expect(summarize($results))->toBe(['won' => 1, 'rejected' => 3, 'error' => 0])
         ->and(OrganizationClosure::query()->sole()->recovered_at)->not->toBeNull();
+});
+
+test('two late arrivals racing for the same freed bay cannot both start', function () {
+    $shop = Shop::make(capacity: 1);
+    $staff = $shop->member(Membership::STAFF);
+    $first = $shop->booking('2026-10-05 10:00');
+    $second = $shop->booking('2026-10-05 11:30');
+    $this->travelTo(Shop::at('2026-10-05 12:00'));   // both are past their grace, so checking in releases both planned claims
+    $operate = app(OperateBooking::class);
+    foreach ([$first, $second] as $booking) {
+        $operate->checkIn($shop->organization, $booking->id, $staff, 1, (string) Str::uuid());
+    }
+    commitFixtures();
+
+    $results = race(array_map(
+        fn (Booking $booking) => fn () => app(OperateBooking::class)->start($shop->organization, $booking->id, $staff, 2, (string) Str::uuid())->operational_state,
+        [$first, $second],
+    ));
+
+    expect(summarize($results))->toBe(['won' => 1, 'rejected' => 1, 'error' => 0])
+        ->and(Booking::query()->where('operational_state', Booking::IN_SERVICE)->count())->toBe(1);
 });

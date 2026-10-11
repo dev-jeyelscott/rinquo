@@ -5,13 +5,15 @@ namespace App\Modules\Tenancy\Http;
 use App\Modules\Booking\Support\ConflictBoard;
 use App\Modules\Scheduling\Readiness\ReadinessEvaluator;
 use App\Modules\Subscription\Support\BillingPresenter;
+use App\Modules\Tenancy\Models\Membership;
 use App\Modules\Tenancy\Models\Organization;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
  * Renders an Owner settings page with the props every tab shares: the
- * organization summary and the authoritative readiness checklist. Authorization
+ * organization summary, the authoritative readiness checklist and the viewer's
+ * role (so Staff are never shown Owner-only destinations). Authorization
  * has already happened in the route's policy middleware.
  */
 final class OwnerPage
@@ -20,6 +22,13 @@ final class OwnerPage
     public static function render(string $component, Organization $organization, array $props = []): Response
     {
         $readiness = app(ReadinessEvaluator::class)->evaluate($organization);
+        // Presentation only: the destinations a role may see. Policies still authorize every request.
+        $isOwner = Membership::query()
+            ->where('organization_id', $organization->id)
+            ->where('user_id', auth()->id())
+            ->where('is_active', true)
+            ->where('role', Membership::OWNER)
+            ->exists();
 
         return Inertia::render($component, [
             'organization' => [
@@ -37,6 +46,7 @@ final class OwnerPage
                 'baseUrl' => route('owner.settings.index', $organization, absolute: false),
                 'billingUrl' => route('owner.settings.billing', $organization, absolute: false),
             ],
+            'viewer' => ['role' => $isOwner ? Membership::OWNER : Membership::STAFF, 'canManageOwnerAreas' => $isOwner],
             'entitlement' => app(BillingPresenter::class)->summary($organization),
             'readiness' => [
                 'isReady' => $readiness->isReady(),

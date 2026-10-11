@@ -1,8 +1,13 @@
 import { readFileSync } from 'node:fs';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import OwnerShell from '@/layouts/owner-shell';
-import { ACTIVE_ENTITLEMENT, BILLING_URL } from '@/test/fixtures/entitlement';
+import {
+    ACTIVE_ENTITLEMENT,
+    BILLING_URL,
+    OWNER_VIEWER,
+    STAFF_VIEWER,
+} from '@/test/fixtures/entitlement';
 import { inertia, resetInertia } from '@/test/inertia';
 
 vi.mock('@inertiajs/react', async () =>
@@ -28,6 +33,7 @@ const props = {
         billingUrl: BILLING_URL,
     },
     entitlement: ACTIVE_ENTITLEMENT,
+    viewer: OWNER_VIEWER,
     readiness: {
         isReady: false,
         items: [
@@ -46,6 +52,15 @@ const SETTINGS = '/owner/organizations/1/settings';
 
 describe('Owner shell', () => {
     beforeEach(() => resetInertia(props, `${SETTINGS}/hours`));
+
+    it('offers a skip link that moves focus to the main content', () => {
+        render(<OwnerShell>page</OwnerShell>);
+
+        const skip = screen.getByRole('link', { name: 'Skip to main content' });
+        fireEvent.click(skip);
+
+        expect(screen.getByRole('main')).toHaveFocus();
+    });
 
     it('shows the five desktop destinations in the approved order with Settings active', () => {
         render(<OwnerShell>page</OwnerShell>);
@@ -70,9 +85,10 @@ describe('Owner shell', () => {
         ).not.toHaveAttribute('aria-current');
     });
 
-    it('offers native-style bottom navigation with More active inside Settings', () => {
+    it('offers five URL-backed bottom tabs over the one Operations page, with More active inside Settings', () => {
         render(<OwnerShell>page</OwnerShell>);
         const bar = screen.getByRole('navigation', { name: 'Primary mobile' });
+        const ops = '/owner/organizations/1/operations';
         const links = within(bar).getAllByRole('link');
 
         expect(links.map((link) => link.textContent)).toEqual([
@@ -82,23 +98,70 @@ describe('Owner shell', () => {
             'Walk-in',
             'More',
         ]);
+        expect(links.map((link) => link.getAttribute('href'))).toEqual([
+            ops,
+            `${ops}?view=queue`,
+            `${ops}?view=bookings`,
+            `${ops}?view=walk-in`,
+            `${ops}?view=more`,
+        ]);
         expect(within(bar).getByRole('link', { name: 'More' })).toHaveAttribute(
             'aria-current',
             'page',
         );
-        expect(within(bar).getByRole('link', { name: 'More' })).toHaveAttribute(
-            'href',
-            SETTINGS,
-        );
-        expect(
-            within(bar).getByRole('link', { name: 'Queue' }),
-        ).toHaveAttribute(
-            'href',
-            '/owner/organizations/1/operations#queue-heading',
-        );
         expect(
             within(bar).getByRole('link', { name: 'Dashboard' }),
         ).not.toHaveAttribute('aria-current');
+    });
+
+    it.each([
+        ['', 'Dashboard'],
+        ['?view=queue', 'Queue'],
+        ['?view=bookings', 'Bookings'],
+        ['?view=walk-in', 'Walk-in'],
+        ['?view=more', 'More'],
+        ['?date=2026-10-04&view=queue&queue_page=2', 'Queue'],
+    ])('marks exactly the %s focused view as current', (query, active) => {
+        resetInertia(props, `/owner/organizations/1/operations${query}`);
+        render(<OwnerShell>page</OwnerShell>);
+        const bar = screen.getByRole('navigation', { name: 'Primary mobile' });
+
+        for (const link of within(bar).getAllByRole('link')) {
+            if (link.textContent === active) {
+                expect(link).toHaveAttribute('aria-current', 'page');
+            } else {
+                expect(link).not.toHaveAttribute('aria-current');
+            }
+        }
+    });
+
+    it('shows Staff only operational destinations, never Billing or Settings', () => {
+        resetInertia(
+            { ...props, viewer: STAFF_VIEWER },
+            '/owner/organizations/1/operations',
+        );
+        render(<OwnerShell>page</OwnerShell>);
+        const sidebar = screen.getByRole('navigation', { name: 'Main' });
+
+        expect(
+            within(sidebar)
+                .getAllByRole('link')
+                .map((link) => link.textContent),
+        ).toEqual(['Operations', 'Booking Requests', 'Conflicts']);
+        expect(
+            screen.queryByRole('link', { name: 'Billing' }),
+        ).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole('link', { name: 'Settings' }),
+        ).not.toBeInTheDocument();
+        expect(screen.getByText('Staff workspace')).toBeInTheDocument();
+    });
+
+    it('labels an Owner workspace', () => {
+        resetInertia(props, '/owner/organizations/1/operations');
+        render(<OwnerShell>page</OwnerShell>);
+
+        expect(screen.getByText('Owner workspace')).toBeInTheDocument();
     });
 
     it('keeps More active on the Settings index and moves the active item with the route', () => {
@@ -198,11 +261,15 @@ describe('Owner shell', () => {
         expect(
             screen.getByRole('heading', { level: 1, name: 'Booking requests' }),
         ).toBeInTheDocument();
+        // Booking Requests is a secondary destination reached through More on a phone.
+        const bar = screen.getByRole('navigation', { name: 'Primary mobile' });
+        expect(within(bar).getByRole('link', { name: 'More' })).toHaveAttribute(
+            'aria-current',
+            'page',
+        );
         expect(
-            within(
-                screen.getByRole('navigation', { name: 'Primary mobile' }),
-            ).getByRole('link', { name: 'Bookings' }),
-        ).toHaveAttribute('aria-current', 'page');
+            within(bar).getByRole('link', { name: 'Bookings' }),
+        ).not.toHaveAttribute('aria-current');
     });
 
     it('treats Billing as a primary destination, outside Settings', () => {
@@ -230,23 +297,6 @@ describe('Owner shell', () => {
             name: 'Branch and publication',
         });
         expect(within(context).queryByRole('link')).not.toBeInTheDocument();
-    });
-
-    it('reaches Conflicts and Billing on small screens through More destinations', () => {
-        render(<OwnerShell>page</OwnerShell>);
-        const more = screen.getByRole('navigation', {
-            name: 'More destinations',
-        });
-
-        expect(
-            within(more).getByRole('link', { name: 'Conflicts' }),
-        ).toHaveAttribute(
-            'href',
-            '/owner/organizations/1/scheduling-conflicts',
-        );
-        expect(
-            within(more).getByRole('link', { name: 'Billing' }),
-        ).toHaveAttribute('href', BILLING_URL);
     });
 
     it('announces a success message in a status region', () => {
@@ -280,14 +330,8 @@ describe('Owner shell', () => {
     it('uses the full-strength ring token for shell link focus (3:1 on light surfaces)', () => {
         render(<OwnerShell>page</OwnerShell>);
         const bar = screen.getByRole('navigation', { name: 'Primary mobile' });
-        const more = screen.getByRole('navigation', {
-            name: 'More destinations',
-        });
 
-        for (const link of [
-            ...within(bar).getAllByRole('link'),
-            ...within(more).getAllByRole('link'),
-        ]) {
+        for (const link of within(bar).getAllByRole('link')) {
             expect(link.className).toContain('focus-visible:ring-ring');
             expect(link.className).not.toContain('ring-ring/50');
         }

@@ -1,4 +1,9 @@
 import { useForm } from '@inertiajs/react';
+import { useOperationsLocked } from '@/components/operations/operations-lock';
+import {
+    SheetFormFooter,
+    useSubmitFailureFocus,
+} from '@/components/operations/sheet-form';
 import { PlusIcon } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
@@ -8,10 +13,10 @@ import {
     TextareaField,
     TextField,
 } from '@/components/owner/form-field';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
     Sheet,
+    SheetClose,
     SheetContent,
     SheetDescription,
     SheetHeader,
@@ -20,7 +25,6 @@ import {
 } from '@/components/ui/sheet';
 import { Spinner } from '@/components/ui/spinner';
 import { uuid, wallTimeToInstant } from '@/lib/booking-format';
-import { ALERT_TONES } from '@/lib/tones';
 import type { CatalogVehicle } from '@/types/booking';
 
 type Props = {
@@ -29,6 +33,8 @@ type Props = {
     timezone: string;
     /** Set when the shop takes no new bookings (restricted or closed): the control is disabled and says why. */
     unavailableReason?: string | null;
+    /** Opens the sheet on arrival (the mobile Walk-in view). */
+    initiallyOpen?: boolean;
 };
 
 type Mode = 'walk_in' | 'scheduled';
@@ -44,8 +50,10 @@ export function WalkInSheet({
     catalog,
     timezone,
     unavailableReason = null,
+    initiallyOpen = false,
 }: Props) {
-    const [open, setOpen] = useState(false);
+    const locked = useOperationsLocked();
+    const [open, setOpen] = useState(initiallyOpen);
     const [key, setKey] = useState(uuid);
     const form = useForm({
         mode: 'walk_in' as Mode,
@@ -68,14 +76,18 @@ export function WalkInSheet({
         (candidate) => String(candidate.id) === form.data.service_id,
     );
     const scheduled = form.data.mode === 'scheduled';
+    const focus = useSubmitFailureFocus();
 
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         form.transform((data) => ({
             idempotency_key: key,
             mode: data.mode,
-            vehicle_type_id: Number(data.vehicle_type_id),
-            service_id: Number(data.service_id),
+            vehicle_type_id:
+                data.vehicle_type_id === ''
+                    ? null
+                    : Number(data.vehicle_type_id),
+            service_id: data.service_id === '' ? null : Number(data.service_id),
             add_on_ids: data.add_on_ids,
             contact_name: data.contact_name,
             contact_phone: data.contact_phone || null,
@@ -90,6 +102,7 @@ export function WalkInSheet({
         }));
         form.post(url, {
             preserveScroll: true,
+            onError: focus.failed,
             onSuccess: () => {
                 form.reset();
                 setKey(uuid());
@@ -104,7 +117,7 @@ export function WalkInSheet({
                 <SheetTrigger asChild>
                     <Button
                         className="max-sm:h-11"
-                        disabled={unavailableReason !== null}
+                        disabled={unavailableReason !== null || locked}
                         aria-describedby={
                             unavailableReason
                                 ? 'walk-in-unavailable'
@@ -117,6 +130,7 @@ export function WalkInSheet({
                 </SheetTrigger>
                 <SheetContent className="overflow-y-auto max-sm:inset-x-0 max-sm:top-auto max-sm:bottom-0 max-sm:h-auto max-sm:max-h-[92%] max-sm:w-full max-sm:rounded-t-2xl max-sm:border-t max-sm:border-l-0 sm:w-[40vw] sm:max-w-md sm:min-w-80">
                     <form
+                        ref={focus.form}
                         onSubmit={submit}
                         aria-label="Add walk-in or booking"
                         noValidate
@@ -130,20 +144,6 @@ export function WalkInSheet({
                                     : 'The first free gap today is chosen for you, including its cleaning buffer.'}
                             </SheetDescription>
                         </SheetHeader>
-
-                        {errors.mode ||
-                        errors.idempotency_key ||
-                        errors.access ? (
-                            <Alert className={ALERT_TONES.error} role="alert">
-                                <AlertDescription>
-                                    <p>
-                                        {errors.access ??
-                                            errors.mode ??
-                                            errors.idempotency_key}
-                                    </p>
-                                </AlertDescription>
-                            </Alert>
-                        ) : null}
 
                         <SelectField
                             label="Type"
@@ -322,24 +322,43 @@ export function WalkInSheet({
                             }
                         />
 
-                        <Button
-                            type="submit"
-                            className="max-sm:h-11"
-                            disabled={form.processing}
-                            aria-busy={form.processing}
+                        <SheetFormFooter
+                            alertRef={focus.alert}
+                            error={
+                                errors.access ??
+                                errors.mode ??
+                                errors.idempotency_key ??
+                                null
+                            }
                         >
-                            {form.processing ? (
-                                <Spinner
-                                    role="presentation"
-                                    aria-hidden="true"
-                                />
-                            ) : null}
-                            {form.processing
-                                ? 'Adding…'
-                                : scheduled
-                                  ? 'Add booking'
-                                  : 'Add walk-in'}
-                        </Button>
+                            <SheetClose asChild>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="max-sm:h-11"
+                                >
+                                    Cancel
+                                </Button>
+                            </SheetClose>
+                            <Button
+                                type="submit"
+                                className="max-sm:h-11"
+                                disabled={form.processing || locked}
+                                aria-busy={form.processing}
+                            >
+                                {form.processing ? (
+                                    <Spinner
+                                        role="presentation"
+                                        aria-hidden="true"
+                                    />
+                                ) : null}
+                                {form.processing
+                                    ? 'Adding…'
+                                    : scheduled
+                                      ? 'Add booking'
+                                      : 'Add walk-in'}
+                            </Button>
+                        </SheetFormFooter>
                     </form>
                 </SheetContent>
             </Sheet>

@@ -1,29 +1,19 @@
 import { router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AssignResourceSheet } from '@/components/operations/assign-resource-sheet';
-import { ConfirmAction } from '@/components/owner/confirm-action';
+import { BookingDetailsSheet } from '@/components/operations/booking-details-sheet';
+import { OPERATION_STATE } from '@/components/operations/operation-state';
+import { useOperationsLocked } from '@/components/operations/operations-lock';
 import { StatusChip } from '@/components/owner/status-chip';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { useOperationKey } from '@/hooks/use-operation-key';
 import { formatTime } from '@/lib/booking-format';
-import type {
-    OperationalState,
-    QueueRowData,
-    ResourceOption,
-} from '@/types/operations';
+import type { QueueRowData, ResourceOption } from '@/types/operations';
 
-const STATE: Record<
-    OperationalState,
-    { label: string; tone: 'info' | 'success' | 'warning' | 'neutral' }
-> = {
-    scheduled: { label: 'Booked', tone: 'neutral' },
-    checked_in: { label: 'Checked in', tone: 'info' },
-    in_service: { label: 'In service', tone: 'success' },
-    completed: { label: 'Completed', tone: 'neutral' },
-    no_show: { label: 'No-show', tone: 'warning' },
-};
+/** Desktop table columns: time, customer and vehicle, status, bay, estimated finish, action. */
+export const QUEUE_COLUMNS =
+    'xl:grid-cols-[5.5rem_minmax(0,1fr)_7.5rem_7rem_5rem_7.5rem] xl:gap-x-3';
 
 type Props = {
     row: QueueRowData;
@@ -33,31 +23,55 @@ type Props = {
     resources: ResourceOption[];
     /** The queued row directly above this one, when "Move up" makes sense. */
     moveBefore: QueueRowData | null;
+    /** The server's current instant, to say whether a booking is inside its grace period. */
+    now: string;
 };
 
-type Primary = { path: string; label: string; busy: string };
+export type PrimaryAction = {
+    path: string;
+    label: string;
+    detailLabel: string;
+    busy: string;
+};
 
-function primaryAction(row: QueueRowData): Primary | null {
+export function primaryAction(row: QueueRowData): PrimaryAction | null {
     if (row.actions.checkIn) {
-        return { path: 'check-in', label: 'Check in', busy: 'Checking in…' };
+        return {
+            path: 'check-in',
+            label: 'Check in',
+            detailLabel: 'Check in',
+            busy: 'Checking in…',
+        };
     }
     if (row.actions.start) {
-        return { path: 'start', label: 'Start', busy: 'Starting…' };
+        return {
+            path: 'start',
+            label: 'Start',
+            detailLabel: 'Start service',
+            busy: 'Starting…',
+        };
     }
     if (row.actions.complete) {
-        return { path: 'complete', label: 'Complete', busy: 'Completing…' };
+        return {
+            path: 'complete',
+            label: 'Complete',
+            detailLabel: 'Complete service',
+            busy: 'Completing…',
+        };
     }
 
     return null;
 }
 
 /**
- * One queue entry (reference screen 03): time, customer and vehicle, a status
- * chip with its text label, the assigned resource and ETA, and the one routine
- * next action. Consequential choices (no-show, early buffer release, moving up
- * the queue) go through a confirmation dialog with a reason; assignment opens a
- * contextual sheet. The server decides which actions exist and re-validates
- * every one, so this row only presents them.
+ * One queue entry (Spec 04 references 01 and 02). Desktop lays the booking out
+ * as a table row (time, customer and vehicle, status, bay, estimated finish,
+ * action); phones show the same facts as a card. The customer name opens a
+ * read-only contextual details sheet that holds the secondary actions
+ * (assignment, move up, early buffer release, no-show). The row itself carries
+ * only the one routine next action. The server decides which actions exist and
+ * re-validates every one, so this row only presents them, and every
+ * transaction is disabled while the board is offline.
  */
 export function OperationQueueRow({
     row,
@@ -65,10 +79,16 @@ export function OperationQueueRow({
     timezone,
     resources,
     moveBefore,
+    now,
 }: Props) {
+    const locked = useOperationsLocked();
     const [pending, setPending] = useState(false);
+    const [detailsOpen, setDetailsOpen] = useState(false);
+    const [assignOpen, setAssignOpen] = useState(false);
+    const item = useRef<HTMLLIElement>(null);
+    const refocus = useRef(false);
     const primary = primaryAction(row);
-    const state = STATE[row.state];
+    const state = OPERATION_STATE[row.state];
     const url = (path: string) => `${baseUrl}/${row.id}/${path}`;
     // A fresh key per revision: a retried click replays, a changed booking never reuses it.
     const issueKey = useOperationKey(`${row.revision}:${row.state}`);
@@ -76,141 +96,158 @@ export function OperationQueueRow({
         revision: row.revision,
         idempotency_key: issueKey(),
     });
-    const queued = row.actions.assign;
+    const inGrace =
+        row.state === 'scheduled' &&
+        !row.actions.noShow &&
+        new Date(now).getTime() >= new Date(row.startAt).getTime();
+
+    // The pressed control is disabled while the request runs, which drops focus
+    // to the document. Once it settles, return to the row's next action, or to
+    // its details control when no action remains, so keyboard users keep their place.
+    useEffect(() => {
+        if (pending || !refocus.current) {
+            return;
+        }
+        refocus.current = false;
+        const next =
+            item.current?.querySelector<HTMLElement>(
+                '[data-row-primary]:not(:disabled)',
+            ) ?? item.current?.querySelector<HTMLElement>('[data-row-details]');
+        next?.focus();
+    }, [pending]);
+
+    function runPrimary(fromRow = false) {
+        if (primary === null || pending) {
+            return;
+        }
+        refocus.current = fromRow;
+        router.post(url(primary.path), data(), {
+            preserveScroll: true,
+            onStart: () => setPending(true),
+            // Settled either way: a rejection (stale revision, no safe bay) is shown on the page, not behind a sheet.
+            onFinish: () => {
+                setPending(false);
+                setDetailsOpen(false);
+            },
+        });
+    }
 
     return (
-        <li>
-            <Card className="rounded-2xl py-4 shadow-none">
-                <CardContent className="grid gap-3 px-4 sm:grid-cols-[5.5rem_1fr_auto] sm:items-center">
-                    <p className="text-lg font-semibold tabular-nums">
-                        {formatTime(row.startAt, timezone)}
-                    </p>
-                    <div className="grid gap-1">
-                        <h3 className="text-base font-semibold">
-                            {row.customerName}
-                            {row.source === 'walk_in' ? (
-                                <StatusChip className="ml-2" tone="info">
-                                    Walk-in
-                                </StatusChip>
-                            ) : null}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                            {[
-                                row.vehicleName +
-                                    (row.vehiclePlate
-                                        ? ` (${row.vehiclePlate})`
-                                        : ''),
-                                row.serviceName,
-                                ...row.addOns,
-                            ].join(' · ')}
-                        </p>
-                        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                            <StatusChip tone={state.tone}>
-                                {state.label}
-                            </StatusChip>
-                            <span className="tabular-nums">
-                                {row.resource.name}
-                            </span>
-                            {row.etaAt ? (
-                                <span className="tabular-nums">
-                                    Expected finish{' '}
-                                    {formatTime(row.etaAt, timezone)}
-                                </span>
-                            ) : null}
-                            {row.delayMinutes > 0 ? (
-                                <span className="font-semibold text-warning tabular-nums">
-                                    Running {row.delayMinutes} min late
-                                </span>
-                            ) : null}
-                        </p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                        {primary ? (
-                            <Button
-                                type="button"
-                                aria-label={`${primary.label} ${row.customerName}`}
-                                className="max-sm:h-11"
-                                disabled={pending}
-                                aria-busy={pending}
-                                onClick={() =>
-                                    router.post(url(primary.path), data(), {
-                                        preserveScroll: true,
-                                        onStart: () => setPending(true),
-                                        onFinish: () => setPending(false),
-                                    })
-                                }
-                            >
-                                {pending ? (
-                                    <Spinner
-                                        role="presentation"
-                                        aria-hidden="true"
-                                    />
-                                ) : null}
-                                {pending ? primary.busy : primary.label}
-                            </Button>
-                        ) : null}
-                    </div>
-                    {queued || row.actions.complete || row.actions.noShow ? (
-                        <div className="flex flex-wrap items-center gap-2 sm:col-span-3">
-                            {queued ? (
-                                <AssignResourceSheet
-                                    row={row}
-                                    url={url('assign')}
-                                    resources={resources}
-                                />
-                            ) : null}
-                            {row.actions.reorder && moveBefore ? (
-                                <ConfirmAction
-                                    label="Move up"
-                                    ariaLabel={`Move ${row.customerName} ahead of ${moveBefore.customerName}`}
-                                    title={`Move ${row.customerName} ahead of ${moveBefore.customerName}?`}
-                                    description="Only the order of work changes. Appointment times and capacity stay as booked."
-                                    confirmLabel="Move up"
-                                    confirmVariant="default"
-                                    reasonLabel="Reason (kept in the audit log)"
-                                    reasonRequired
-                                    url={url('reorder')}
-                                    data={() => ({
-                                        ...data(),
-                                        before: moveBefore.id,
-                                    })}
-                                />
-                            ) : null}
-                            {row.actions.complete ? (
-                                <ConfirmAction
-                                    label="Complete, free the bay now"
-                                    ariaLabel={`Release the buffer and complete ${row.customerName}`}
-                                    title={`Complete ${row.customerName} and release the buffer?`}
-                                    description="The bay becomes free immediately instead of after its cleaning buffer. This is recorded with your reason."
-                                    confirmLabel="Complete and release"
-                                    confirmVariant="default"
-                                    reasonLabel="Why release the buffer early?"
-                                    reasonRequired
-                                    url={url('complete')}
-                                    data={() => ({
-                                        ...data(),
-                                        release_buffer: 1,
-                                    })}
-                                />
-                            ) : null}
-                            {row.actions.noShow ? (
-                                <ConfirmAction
-                                    label="No-show"
-                                    ariaLabel={`Mark ${row.customerName} as a no-show`}
-                                    title={`Mark ${row.customerName} as a no-show?`}
-                                    description={`This releases ${formatTime(row.startAt, timezone)} on ${row.resource.name} and emails the customer. It cannot be undone.`}
-                                    confirmLabel="Confirm no-show"
-                                    dismissLabel="Keep booking"
-                                    reasonLabel="Reason (kept in the audit log)"
-                                    reasonRequired
-                                    url={url('no-show')}
-                                    data={() => ({ ...data(), confirm: 1 })}
-                                />
-                            ) : null}
-                        </div>
+        <li
+            ref={item}
+            className="max-xl:rounded-2xl max-xl:border max-xl:bg-card xl:border-b xl:last:border-b-0"
+        >
+            <div
+                className={`grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-1 px-4 py-4 xl:px-0 ${QUEUE_COLUMNS}`}
+            >
+                <p className="text-lg font-semibold whitespace-nowrap tabular-nums max-xl:order-1">
+                    {formatTime(row.startAt, timezone)}
+                </p>
+                <div className="grid gap-0.5 max-xl:order-3 max-xl:col-span-2">
+                    <BookingDetailsSheet
+                        row={row}
+                        baseUrl={baseUrl}
+                        timezone={timezone}
+                        moveBefore={moveBefore}
+                        now={now}
+                        open={detailsOpen}
+                        onOpenChange={setDetailsOpen}
+                        data={data}
+                        onAssign={() => {
+                            setDetailsOpen(false);
+                            setAssignOpen(true);
+                        }}
+                        primary={
+                            primary
+                                ? {
+                                      label: primary.detailLabel,
+                                      busy: primary.busy,
+                                      pending,
+                                      onRun: () => runPrimary(),
+                                  }
+                                : null
+                        }
+                    />
+                    {row.actions.assign ? (
+                        <AssignResourceSheet
+                            row={row}
+                            url={url('assign')}
+                            resources={resources}
+                            open={assignOpen}
+                            onOpenChange={setAssignOpen}
+                        />
                     ) : null}
-                </CardContent>
-            </Card>
+                    {row.source === 'walk_in' ? (
+                        <span className="w-fit">
+                            <StatusChip tone="info">Walk-in</StatusChip>
+                        </span>
+                    ) : null}
+                    <p className="text-sm text-muted-foreground">
+                        {[
+                            row.vehicleName +
+                                (row.vehiclePlate
+                                    ? ` (${row.vehiclePlate})`
+                                    : ''),
+                            row.serviceName,
+                            ...row.addOns,
+                        ].join(' · ')}
+                    </p>
+                    {row.lateArrivalAt ? (
+                        <p className="text-xs font-semibold text-warning-text tabular-nums">
+                            Late arrival at{' '}
+                            {formatTime(row.lateArrivalAt, timezone)}
+                        </p>
+                    ) : null}
+                    {inGrace ? (
+                        <p className="text-xs text-muted-foreground tabular-nums">
+                            In grace period until{' '}
+                            {formatTime(row.noShowEligibleAt, timezone)}
+                        </p>
+                    ) : null}
+                    {row.delayMinutes > 0 ? (
+                        <p className="text-xs font-semibold text-warning-text tabular-nums">
+                            Running {row.delayMinutes} min late
+                        </p>
+                    ) : null}
+                </div>
+                <div className="justify-self-end max-xl:order-2 xl:justify-self-start">
+                    <StatusChip tone={state.tone}>{state.label}</StatusChip>
+                </div>
+                <p className="text-sm max-xl:order-4 max-xl:text-muted-foreground">
+                    <span className="sr-only">Bay: </span>
+                    <span className="tabular-nums">{row.resource.name}</span>
+                    {row.etaAt ? (
+                        <span className="tabular-nums xl:hidden">
+                            {' · '}finishes {formatTime(row.etaAt, timezone)}
+                        </span>
+                    ) : null}
+                </p>
+                <p className="text-sm text-muted-foreground tabular-nums max-xl:hidden">
+                    <span className="sr-only">Estimated finish: </span>
+                    {row.etaAt ? formatTime(row.etaAt, timezone) : '—'}
+                </p>
+                <div className="justify-self-end max-xl:order-5">
+                    {primary ? (
+                        <Button
+                            type="button"
+                            data-row-primary
+                            aria-label={`${primary.label} ${row.customerName}`}
+                            className="min-w-[7rem] max-sm:h-11"
+                            disabled={pending || locked}
+                            aria-busy={pending}
+                            onClick={() => runPrimary(true)}
+                        >
+                            {pending ? (
+                                <Spinner
+                                    role="presentation"
+                                    aria-hidden="true"
+                                />
+                            ) : null}
+                            {pending ? primary.busy : primary.label}
+                        </Button>
+                    ) : null}
+                </div>
+            </div>
         </li>
     );
 }

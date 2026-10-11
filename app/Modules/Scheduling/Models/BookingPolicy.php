@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $min_notice_minutes
  * @property int $horizon_days
  * @property int $approval_window_minutes
+ * @property int $late_arrival_grace_minutes
  */
 class BookingPolicy extends Model
 {
@@ -24,10 +25,13 @@ class BookingPolicy extends Model
 
     public const APPROVAL_MODES = [self::AUTO_CONFIRM, self::STAFF_APPROVAL];
 
+    /** Locked default grace (Decisions 8, 20): also what a historical snapshot without the key means. */
+    public const DEFAULT_LATE_ARRIVAL_GRACE_MINUTES = 15;
+
     public const SLOT_INTERVALS = [5, 10, 15, 20, 30, 60];
 
     /** The allowlisted editable values (also the audit and snapshot keys). */
-    public const FIELDS = ['approval_mode', 'slot_interval_minutes', 'min_notice_minutes', 'horizon_days', 'approval_window_minutes'];
+    public const FIELDS = ['approval_mode', 'slot_interval_minutes', 'min_notice_minutes', 'horizon_days', 'approval_window_minutes', 'late_arrival_grace_minutes'];
 
     protected $fillable = self::FIELDS;
 
@@ -38,6 +42,7 @@ class BookingPolicy extends Model
             'min_notice_minutes' => 'integer',
             'horizon_days' => 'integer',
             'approval_window_minutes' => 'integer',
+            'late_arrival_grace_minutes' => 'integer',
         ];
     }
 
@@ -46,7 +51,7 @@ class BookingPolicy extends Model
         return $this->approval_mode === self::STAFF_APPROVAL;
     }
 
-    /** @return array{slot_interval_minutes: int, min_notice_minutes: int, horizon_days: int, approval_window_minutes: int} */
+    /** @return array{slot_interval_minutes: int, min_notice_minutes: int, horizon_days: int, approval_window_minutes: int, late_arrival_grace_minutes: int} */
     public function snapshot(): array
     {
         return [
@@ -54,6 +59,7 @@ class BookingPolicy extends Model
             'min_notice_minutes' => $this->min_notice_minutes,
             'horizon_days' => $this->horizon_days,
             'approval_window_minutes' => $this->approval_window_minutes,
+            'late_arrival_grace_minutes' => $this->late_arrival_grace_minutes,
         ];
     }
 

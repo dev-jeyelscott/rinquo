@@ -19,17 +19,20 @@ import { cn } from '@/lib/utils';
 import type { OwnerPageProps } from '@/types/owner';
 
 /**
- * Shared tenant application shell for Owner pages (Decisions 46, 47, 206-210).
- * Desktop: the dark sidebar with the five primary destinations. Mobile: a
- * header with the business, branch and publication context plus the native-style
- * bottom navigation; Settings is reached through More. Settings pages own their
- * heading and Settings navigation (see SettingsPageHeader); non-Settings pages
- * keep the shell-owned page heading. The shell only presents; the server policy
- * decides who can read or change anything.
+ * Shared tenant application shell for Owner and Staff pages (Decisions 46, 47,
+ * 206-210, Spec 04 reference 17). Desktop: the dark sidebar; Owner and Staff
+ * both see Operations, Booking Requests and Conflicts, and only an Owner also
+ * sees Billing and Settings. Mobile: a header with the business, branch and
+ * publication context plus the five-tab bottom navigation; Dashboard, Queue,
+ * Bookings, Walk-in and More are URL-backed focused views of the one Operations
+ * page, and More lists the secondary destinations the role may see. Settings
+ * pages own their heading and Settings navigation (see SettingsPageHeader);
+ * other pages keep the shell-owned page heading. The shell only presents the
+ * role the server derived; policies decide who can read or change anything.
  */
 export default function OwnerShell({ children }: { children: ReactNode }) {
     const { props, url } = usePage<OwnerPageProps>();
-    const { appName, auth, flash, organization, entitlement } = props;
+    const { appName, auth, flash, organization, entitlement, viewer } = props;
     const timezone = props.displayTimezone ?? 'Asia/Manila';
     const accessError = props.errors?.access;
     const onRequests = url.startsWith(organization.bookingRequestsUrl);
@@ -38,6 +41,11 @@ export default function OwnerShell({ children }: { children: ReactNode }) {
     const onBilling = url.startsWith(organization.billingUrl);
     const onSettings =
         !onRequests && !onOperations && !onConflicts && !onBilling;
+    const mobileView = onOperations
+        ? (new URLSearchParams(url.split('?')[1] ?? '').get('view') ??
+          'dashboard')
+        : null;
+    const isOwner = viewer.canManageOwnerAreas;
     const context = (
         <>
             {organization.branchName ? (
@@ -51,6 +59,16 @@ export default function OwnerShell({ children }: { children: ReactNode }) {
 
     return (
         <div className="min-h-screen bg-secondary/60 text-foreground lg:flex">
+            <a
+                href="#main-content"
+                onClick={(event) => {
+                    event.preventDefault();
+                    document.getElementById('main-content')?.focus();
+                }}
+                className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:ring-[3px] focus:ring-ring focus:outline-none"
+            >
+                Skip to main content
+            </a>
             <aside className="hidden bg-sidebar text-sidebar-foreground lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:shrink-0 lg:flex-col">
                 <div className="grid gap-1 px-6 py-6">
                     <p className="text-3xl font-semibold tracking-tight">
@@ -96,12 +114,22 @@ export default function OwnerShell({ children }: { children: ReactNode }) {
                             count={organization.unresolvedConflicts}
                         />
                     </MainLink>
-                    <MainLink href={organization.billingUrl} active={onBilling}>
-                        Billing
-                    </MainLink>
-                    <MainLink href={organization.baseUrl} active={onSettings}>
-                        Settings
-                    </MainLink>
+                    {isOwner ? (
+                        <>
+                            <MainLink
+                                href={organization.billingUrl}
+                                active={onBilling}
+                            >
+                                Billing
+                            </MainLink>
+                            <MainLink
+                                href={organization.baseUrl}
+                                active={onSettings}
+                            >
+                                Settings
+                            </MainLink>
+                        </>
+                    ) : null}
                 </nav>
                 <div className="mx-4 mt-auto border-t border-sidebar-border px-2 py-4 text-sm">
                     <p className="truncate text-sidebar-foreground/70">
@@ -138,21 +166,30 @@ export default function OwnerShell({ children }: { children: ReactNode }) {
                 </header>
                 {onSettings ? null : (
                     <div className="flex flex-wrap items-center justify-between gap-3 border-b bg-background px-4 py-4 sm:px-8">
-                        <h1 className="text-2xl font-semibold tracking-tight">
-                            {onOperations
-                                ? 'Today’s operations'
-                                : onConflicts
-                                  ? 'Scheduling conflicts'
-                                  : onRequests
-                                    ? 'Booking requests'
-                                    : 'Billing'}
-                        </h1>
+                        <div className="grid gap-0.5">
+                            <h1 className="text-2xl font-semibold tracking-tight">
+                                {onOperations
+                                    ? 'Today’s operations'
+                                    : onConflicts
+                                      ? 'Scheduling conflicts'
+                                      : onRequests
+                                        ? 'Booking requests'
+                                        : 'Billing'}
+                            </h1>
+                            <p className="text-sm text-muted-foreground">
+                                {isOwner ? 'Owner' : 'Staff'} workspace
+                            </p>
+                        </div>
                         <div className="hidden flex-wrap items-center gap-2 lg:flex">
                             {context}
                         </div>
                     </div>
                 )}
-                <main className="flex-1 px-4 pt-6 pb-28 sm:px-8 lg:pt-8 lg:pb-8">
+                <main
+                    id="main-content"
+                    tabIndex={-1}
+                    className="flex-1 px-4 pt-6 pb-28 outline-none sm:px-8 lg:pt-8 lg:pb-8"
+                >
                     <EntitlementBanner
                         entitlement={entitlement}
                         billingUrl={organization.billingUrl}
@@ -199,13 +236,6 @@ export default function OwnerShell({ children }: { children: ReactNode }) {
                         </div>
                     ) : null}
                     {children}
-                    <MoreDestinations
-                        conflictsUrl={organization.conflictsUrl}
-                        unresolved={organization.unresolvedConflicts}
-                        billingUrl={organization.billingUrl}
-                        onConflicts={onConflicts}
-                        onBilling={onBilling}
-                    />
                     <ScheduleImpactDialog />
                 </main>
             </div>
@@ -218,29 +248,31 @@ export default function OwnerShell({ children }: { children: ReactNode }) {
                     href={organization.operationsUrl}
                     label="Dashboard"
                     icon={LayoutDashboardIcon}
-                    active={onOperations}
+                    active={mobileView === 'dashboard'}
                 />
                 <BottomLink
-                    href={`${organization.operationsUrl}#queue-heading`}
+                    href={`${organization.operationsUrl}?view=queue`}
                     label="Queue"
                     icon={ListOrderedIcon}
+                    active={mobileView === 'queue'}
                 />
                 <BottomLink
-                    href={organization.bookingRequestsUrl}
+                    href={`${organization.operationsUrl}?view=bookings`}
                     label="Bookings"
                     icon={CalendarCheckIcon}
-                    active={onRequests}
+                    active={mobileView === 'bookings'}
                 />
                 <BottomLink
-                    href={`${organization.operationsUrl}#walk-in`}
+                    href={`${organization.operationsUrl}?view=walk-in`}
                     label="Walk-in"
                     icon={UserPlusIcon}
+                    active={mobileView === 'walk-in'}
                 />
                 <BottomLink
-                    href={organization.baseUrl}
+                    href={`${organization.operationsUrl}?view=more`}
                     label="More"
                     icon={EllipsisIcon}
-                    active={onSettings || onBilling || onConflicts}
+                    active={mobileView === 'more' || !onOperations}
                 />
             </nav>
         </div>
@@ -259,47 +291,6 @@ function ConflictCount({ count }: { count: number }) {
         >
             {count > 99 ? '99+' : count}
         </span>
-    );
-}
-
-/** Mobile-only secondary destinations that the bottom bar's More stands for. */
-function MoreDestinations({
-    conflictsUrl,
-    unresolved,
-    billingUrl,
-    onConflicts,
-    onBilling,
-}: {
-    conflictsUrl: string;
-    unresolved: number;
-    billingUrl: string;
-    onConflicts: boolean;
-    onBilling: boolean;
-}) {
-    const link =
-        'flex min-h-11 items-center rounded-lg border bg-card px-4 text-sm font-semibold focus-visible:ring-[3px] focus-visible:ring-ring focus-visible:outline-none';
-
-    return (
-        <nav
-            aria-label="More destinations"
-            className="mt-8 grid gap-2 lg:hidden"
-        >
-            <Link
-                href={conflictsUrl}
-                className={link}
-                aria-current={onConflicts ? 'page' : undefined}
-            >
-                Conflicts
-                <ConflictCount count={unresolved} />
-            </Link>
-            <Link
-                href={billingUrl}
-                className={link}
-                aria-current={onBilling ? 'page' : undefined}
-            >
-                Billing
-            </Link>
-        </nav>
     );
 }
 
