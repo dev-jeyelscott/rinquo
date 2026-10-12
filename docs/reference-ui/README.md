@@ -173,6 +173,40 @@ Paths are relative to `docs/reference-ui/`.
 | `spec-05/mobile/15-stale-offline.png` | Stale and offline recovery | Mobile 390×844 | Approved | 2026-10-12 |
 | `spec-05/desktop/16-no-replacement.png` | No eligible replacement | Desktop 1600×1000 | Approved | 2026-10-12 |
 | `spec-05/mobile/16-no-replacement.png` | No eligible replacement | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-06/desktop/01-account-home.png` | Neutral customer Home | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-06/mobile/01-account-home.png` | Neutral customer Home | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-06/desktop/02-email-sign-in.png` | Customer email sign-in | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-06/mobile/02-email-sign-in.png` | Customer email sign-in | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-06/desktop/03-email-otp.png` | Customer sign-in code | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-06/mobile/03-email-otp.png` | Customer sign-in code | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-06/desktop/04-shop-directory.png` | Searchable business directory | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-06/mobile/04-shop-directory.png` | Searchable business directory | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-06/desktop/05-directory-empty.png` | Directory no matching results | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-06/mobile/05-directory-empty.png` | Directory no matching results | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-06/desktop/06-tenant-handoff.png` | Selected shop context (context only) | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-06/mobile/06-tenant-handoff.png` | Selected shop context (context only) | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-06/desktop/07-cross-shop-bookings.png` | Cross-shop booking overview | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-06/mobile/07-cross-shop-bookings.png` | Cross-shop booking overview | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-06/desktop/08-bookings-empty.png` | Verified online bookings empty | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-06/mobile/08-bookings-empty.png` | Verified online bookings empty | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-06/desktop/09-saved-vehicles.png` | Shared saved vehicles | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-06/mobile/09-saved-vehicles.png` | Shared saved vehicles | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-06/desktop/10-add-vehicle.png` | Add customer vehicle | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-06/mobile/10-add-vehicle.png` | Add customer vehicle | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-06/desktop/11-archive-confirmation.png` | Archive vehicle confirmation | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-06/mobile/11-archive-confirmation.png` | Archive vehicle confirmation | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-06/desktop/12-customer-profile.png` | Neutral customer profile | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-06/mobile/12-customer-profile.png` | Neutral customer profile | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-06/desktop/13-edit-profile.png` | Edit shared profile | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-06/mobile/13-edit-profile.png` | Edit shared profile | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-06/desktop/14-email-change-request.png` | Request verified email change | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-06/mobile/14-email-change-request.png` | Request verified email change | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-06/desktop/15-email-change-otp.png` | Verify new email address | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-06/mobile/15-email-change-otp.png` | Verify new email address | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-06/desktop/16-email-change-success.png` | Email change completed | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-06/mobile/16-email-change-success.png` | Email change completed | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-06/desktop/17-email-change-recovery.png` | Email verification failure recovery | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-06/mobile/17-email-change-recovery.png` | Email verification failure recovery | Mobile 390×844 | Approved | 2026-10-12 |
 
 The sixteen Spec 02 booking references were reviewed and approved together on 2026-10-08 under Decision 212; they are canonical under `spec-02/`.
 
@@ -477,6 +511,28 @@ For the per-image route/state, locks, exclusions and implementation notes, see `
 
 **Rendering artifacts:** The “Draft reference” badge, specimen index labels, sample customer data and presentation footers inside screenshots are nonproduction metadata, not visual requirements.
 
+## Spec 06. Customer uses Rinquo across shops (approved 2026-10-12)
+
+**Approval:** User approved all 34 core references (17 desktop 1600×1000 and 17 mobile 390×844) together on 2026-10-12 (Asia/Manila) under Decision 212, and confirmed that approval for registration on 2026-10-12; they are canonical under `spec-06/`.
+
+**Files:** `spec-06/desktop/01-account-home.png` through `17-email-change-recovery.png`, and the matching seventeen `spec-06/mobile/` PNGs. The per-image route/state, applicable decisions, visual contract and implementation boundary are recorded in `spec-06/manifest.md`.
+
+**Product surface:** the neutral Rinquo customer account under `/account/...`: email sign-in and code, Home and Book (two navigation intents over the one `/account/directory` route), directory search, results and valid zero results, cross-shop verified online bookings and their empty state, shared saved vehicles (add and archive confirmation), the shared profile, profile edit, and the verified email change request, code, success and recovery states.
+
+**Applicable Locked Decisions:** 3, 24, 28, 44, 45, 71–80, 169, 203, 211, 212, and ADRs 0002 and 0004.
+
+**Status:** Approved (2026-10-12).
+
+**Locks:** neutral Rinquo branding on every account surface; the desktop header with five text destinations (Home, Book, Bookings, Vehicles, Profile), one current destination, verified-account context and the account avatar; the mobile header plus five icon-only bottom destinations with accessible names and one current destination (Decision 45); the two-panel sign-in and six-digit code composition; directory search by business name and city/municipality, with cards showing logo (or initials), name, city, services, starting price, business hours, View shop and Book; the explicit zero-results state with Clear search; booking rows with shop origin, local date and time, status text and a View booking deep link, plus the cross-business privacy note; saved vehicle rows with archive and the focused archive confirmation that says existing bookings do not change; the profile summary, explicit-save edit, email change request, code entry, success and failure-recovery compositions.
+
+**Context only:** `06-tenant-handoff.png` illustrates the move from the neutral account into an existing tenant-branded `/shops/{slug}` page. It does not redesign or supersede the approved tenant storefront, `01-customer-shop-home.png`, or the Spec 02 and Spec 03 journeys.
+
+**Supersession:** none. Specs 02–05, Owner Settings and every earlier reference keep their status and scope.
+
+**Behavioral boundaries:** no password or social sign-in, no dashboard endpoint for Home, no vehicle editing, no new booking or status lifecycle, no customer self check-in and no linking of activity through an unverified staff-entered email. Directory listing requires Owner opt-in, publication, readiness and acceptance of new bookings (Decisions 74–78). The current account email stays active until the new address is verified, and the old address is notified after the change (Decision 169).
+
+**Does not lock (rendering artifacts and sample data):** the `SPEC 06 · DRAFT REFERENCE · Illustrative data` footer, specimen data (shop, customer, vehicle and booking names, prices, hours, dates), the illustrated car photographs and booking thumbnails, the `Recovery gap to resolve` note in reference 17, raster fonts and exact pixel sizes, and any interaction, loading, offline or retry mechanism the images do not show. Supporting material under `spec-06/review-support/` (boards, comparisons, contact sheet, supplementary states and the repository audit) is review-only and not canonical.
+
 ## Responsive coverage
 
 Desktop and mobile references are separate visual contracts when their compositions materially differ.
@@ -491,6 +547,7 @@ Current approved coverage is incomplete:
 | Customer booking management (Spec 03: management, cancel, reschedule, proposal, progress, history) | Approved (2026-10-09, 390×844) | Approved (2026-10-09, 1600×1000) |
 | Staff operations (Spec 04: overview, queue, actions, walk-in, blocks, recovery, role-aware shell) | Approved (2026-10-11, 390×844) | Approved (2026-10-11, 1600×1000) |
 | Conflict resolution (Spec 05)                                                                                                  | Approved (2026-10-12, 390×844) | Approved (2026-10-12, 1600×1000) |
+| Customer account across shops (Spec 06: sign-in, Home/Book directory, bookings, vehicles, profile, email change) | Approved (2026-10-12, 390×844) | Approved (2026-10-12, 1600×1000) |
 | Owner shell and Settings                                                                                                      | Approved (2026-10-08)          | Approved (2026-10-08)            |
 
 Owner Settings coverage is limited to the shell, the Settings index, and the seven pages at the viewports listed above. Owner Operations follows the shared Spec 04 references (including role-aware pair 17). Other Owner surfaces outside Settings (Booking Requests, Billing) have no approved Owner-specific reference. Conflicts follows the shared Owner/Staff Spec 05 references.
