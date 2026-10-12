@@ -1459,7 +1459,7 @@
                         <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">confirm-action</div>
-                    <p class="registry-description">Dialog that confirms an archive, unpublish or decline and then posts it to the server. An optional reason field is posted as reason; dismissLabel renames the dismiss button; disabled blocks the trigger and the confirmation (for example while offline) and onSettled runs once the request settles; returnFocus names a stable element to focus on close when the action removes the trigger.</p>
+                    <p class="registry-description">Dialog that confirms an archive, unpublish or decline and then posts it to the server. An optional reason field is posted as reason; dismissLabel renames the dismiss button; disabled blocks the trigger and the confirmation (for example while offline) and onSettled runs once the request settles; returnFocus names a stable element to focus on close when the request settled or the trigger is disabled or removed; disabledMessage explains a disabled confirmation inside the open dialog, whose wording stays frozen while open; networkErrorMessage keeps the dialog open with a retry-or-refresh message after a dropped connection; a second activation is ignored while the request is in flight.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Path:</span>
@@ -1678,7 +1678,7 @@
                         <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">operation-stat-card</div>
-                    <p class="registry-description">Operations counter from the staff dashboard (Spec 04): a muted label over a large tabular figure with an optional one-line hint. Tone only reinforces the label; the number and text carry the meaning.</p>
+                    <p class="registry-description">Operations counter from the staff dashboard (Spec 04): a muted label over a large tabular figure with an optional one-line hint (compact fits a row of counters on a phone and hides the hint there). Tone only reinforces the label; the number and text carry the meaning.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Path:</span>
@@ -1809,7 +1809,7 @@
                         <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">conflict-queue-row</div>
-                    <p class="registry-description">One scheduling conflict in the staff queue: customer, the protected original appointment time, service and cause in words, and the state as a text chip. The whole row links to the resolution pane and marks the current conflict with aria-current.</p>
+                    <p class="registry-description">One scheduling conflict in the staff queue: customer, the protected original appointment time, service and cause in words, and the state as a text chip, plus a derived Today or Upcoming chip on unresolved rows (presentation only). The whole row links to the resolution pane and marks the current conflict with aria-current.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Path:</span>
@@ -1817,7 +1817,7 @@
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Reference:</span>
-                            <span class="registry-meta-value">04-scheduling-conflict-resolution.png</span>
+                            <span class="registry-meta-value">spec-05/desktop/02-queue.png, spec-05/mobile/02-queue.png</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Uses:</span>

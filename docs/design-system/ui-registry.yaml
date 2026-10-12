@@ -778,6 +778,14 @@ components:
             type: boolean
             required: false
             description: Disables the trigger and the confirm button, for example until a required choice is made or while the Operations board is offline
+          - name: networkErrorMessage
+            type: string
+            required: false
+            description: When set, a request that fails as a dropped connection keeps the dialog open and shows this message (role alert) so the same action can be retried with the same idempotency key or the page refreshed; without it the dialog closes when the request finishes
+          - name: disabledMessage
+            type: string
+            required: false
+            description: Shown with role alert inside the open dialog while disabled is set, so the reason confirming is unavailable is visible where the user is; the dialog wording is frozen while open
           - name: onSettled
             type: "() => void"
             required: false
@@ -789,7 +797,7 @@ components:
       accessibility:
           - Focus is trapped in the dialog and restored to the trigger, or to the returnFocus target when the trigger is removed by the action
           - Trigger has an accessible name that says what is affected
-          - Confirm button is disabled and aria-busy while submitting
+          - Confirm button is disabled and aria-busy while submitting, and a second activation is ignored while the request is in flight
       responsive: Dialog is centered and constrained to the viewport
       status: stable
       dependencies:
@@ -1095,6 +1103,10 @@ components:
           - name: hint
             type: string
             required: false
+          - name: compact
+            type: boolean
+            required: false
+            description: Smaller figure and padding and no hint below the sm breakpoint, so a set of counters fits one row on a phone (Spec 05 mobile 01)
       accessibility:
           - Meaning is in the label, figure and hint text, never colour alone
           - Callers place cards in a labelled list so the set reads as one group
@@ -1402,10 +1414,12 @@ compositions:
           One scheduling conflict in the staff queue (reference 04): customer, the
           protected original appointment time, service and cause in words, and the
           conflict state as a text chip (Needs proposal, Awaiting reply, Declined or
-          Expired needing staff, Moved at the same time). The whole row is a link that
+          Expired needing staff, Moved at the same time). Unresolved rows may add a
+          derived Today, Upcoming or Start time passed chip when `now` is given; it is
+          presentation only and never a stored status. The whole row is a link that
           opens the conflict in the resolution pane and marks the current one with
           aria-current.
-      reference_design: "04-scheduling-conflict-resolution.png"
+      reference_design: "spec-05/desktop/02-queue.png, spec-05/mobile/02-queue.png"
       uses:
           - StatusChip
       props:
@@ -1421,6 +1435,10 @@ compositions:
           - name: timezone
             type: string
             required: true
+          - name: now
+            type: number
+            required: false
+            description: Current time in ms; when set, unresolved rows show the derived urgency chip
       accessibility:
           - The state is chip text, never colour alone
           - The selected row exposes aria-current
