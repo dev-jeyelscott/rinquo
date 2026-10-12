@@ -1,14 +1,16 @@
 import { Head, router, usePage } from '@inertiajs/react';
 import { CircleAlertIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ConflictDetail } from '@/components/conflicts/conflict-detail';
 import { ConflictQueueRow } from '@/components/conflicts/conflict-queue-row';
 import { OperationStatCard } from '@/components/operations/operation-stat-card';
 import { StatusChip } from '@/components/owner/status-chip';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useNow } from '@/hooks/use-now';
+import { useOnline } from '@/hooks/use-online';
 import { formatDayAndTime } from '@/lib/booking-format';
 import { statusLabel } from '@/lib/conflicts';
 import { ALERT_TONES } from '@/lib/tones';
@@ -16,6 +18,9 @@ import type { ConflictsPageData } from '@/types/conflicts';
 import type { OwnerPageProps } from '@/types/owner';
 
 type Props = OwnerPageProps & ConflictsPageData;
+
+/** Server rejections that mean what the page shows is out of date: nothing may be re-sent until it is refreshed. */
+const STALE_KEYS = ['revision', 'proposal', 'start_at'];
 
 const ERROR_KEYS = [
     'start_at',
@@ -35,6 +40,7 @@ const ERROR_KEYS = [
  * way to refresh instead of being applied.
  */
 export default function SchedulingConflicts({
+    organization,
     timezone,
     counts,
     unresolved,
@@ -46,11 +52,47 @@ export default function SchedulingConflicts({
     const { props } = usePage<{ errors?: Record<string, string> }>();
     const [loading, setLoading] = useState(false);
     const [failed, setFailed] = useState(false);
+    const online = useOnline();
+    const now = useNow(30000);
+    const [needsRefresh, setNeedsRefresh] = useState(false);
+    const [wasOnline, setWasOnline] = useState(online);
+    const headingRef = useRef<HTMLHeadingElement>(null);
     const errors = props.errors ?? {};
     const message = ERROR_KEYS.map((key) => errors[key]).find(Boolean);
     const selected = [...unresolved, ...recent].find(
         (row) => row.id === selectedId,
     );
+
+    // Losing the connection means what is on screen can no longer be vouched for.
+    if (online !== wasOnline) {
+        setWasOnline(online);
+
+        if (!online) {
+            setNeedsRefresh(true);
+        }
+    }
+
+    const stale = STALE_KEYS.some((key) => Boolean(errors[key]));
+    const locked = !online || needsRefresh || loading || failed || stale;
+    const truncated =
+        unresolved.length > 0 &&
+        organization.unresolvedConflicts > unresolved.length;
+
+    // A successful send or withdraw replaces the conflict's revision and remounts the detail pane;
+    // keep keyboard users in the resolution panel instead of at the document start.
+    const revision = selected?.revision;
+    const previous = useRef({ id: selectedId, revision });
+
+    useEffect(() => {
+        if (
+            previous.current.id === selectedId &&
+            previous.current.revision !== revision
+        ) {
+            headingRef.current?.focus();
+        }
+
+        previous.current = { id: selectedId, revision };
+    }, [selectedId, revision]);
 
     function open(id: string | null) {
         router.get(urls.conflicts, id === null ? {} : { conflict: id }, {
@@ -60,59 +102,69 @@ export default function SchedulingConflicts({
                 setLoading(true);
                 setFailed(false);
             },
+            onSuccess: () => {
+                setNeedsRefresh(false);
+                // The control that asked for the refresh may be gone: land on the resolution panel.
+                requestAnimationFrame(() => headingRef.current?.focus());
+            },
             onError: () => setFailed(true),
             onNetworkError: () => setFailed(true),
             onFinish: () => setLoading(false),
         });
     }
 
+    // Back online: read server truth before any proposal action is offered again.
+    useEffect(() => {
+        if (online && needsRefresh) {
+            open(selectedId);
+        }
+        // Reconnection is the trigger; later refreshes are user-driven.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [online]);
+
     return (
         <>
             <Head title="Scheduling conflicts" />
             <div className="grid gap-6">
-                <ul
-                    aria-label="Conflict counts"
-                    className="grid gap-3 sm:grid-cols-3"
-                >
-                    <li>
-                        <OperationStatCard
-                            label="Needs proposal"
-                            value={counts.needsProposal}
-                            tone="warning"
-                            hint="Staff action required"
-                        />
-                    </li>
-                    <li>
-                        <OperationStatCard
-                            label="Awaiting reply"
-                            value={counts.awaitingCustomer}
-                            tone="info"
-                            hint="Proposal sent to customer"
-                        />
-                    </li>
-                    <li>
-                        <OperationStatCard
-                            label="Moved at the same time"
-                            value={counts.reassigned}
-                            tone="success"
-                            hint="Last 14 days, no action needed"
-                        />
-                    </li>
-                </ul>
-
+                {!online ? (
+                    <Alert className={ALERT_TONES.error} role="alert">
+                        <CircleAlertIcon aria-hidden="true" />
+                        <AlertTitle className="line-clamp-none">
+                            Offline: actions paused
+                        </AlertTitle>
+                        <AlertDescription>
+                            <p>
+                                Capacity and proposal availability cannot be
+                                safely verified. Do not send, replace or
+                                withdraw proposals while offline. Nothing is
+                                queued.
+                            </p>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="mt-2 max-sm:h-11"
+                                onClick={() => open(selectedId)}
+                            >
+                                Reconnect and refresh
+                            </Button>
+                        </AlertDescription>
+                    </Alert>
+                ) : null}
                 {message ? (
                     <Alert className={ALERT_TONES.error} role="alert">
                         <CircleAlertIcon aria-hidden="true" />
                         <AlertDescription>
                             <p>{message}</p>
-                            {errors.revision || errors.proposal ? (
+                            {stale ? (
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     className="mt-2 max-sm:h-11"
                                     onClick={() => open(selectedId)}
                                 >
-                                    Refresh the conflict
+                                    {errors.start_at && !errors.revision
+                                        ? 'Refresh available times'
+                                        : 'Refresh the conflict'}
                                 </Button>
                             ) : null}
                         </AlertDescription>
@@ -137,6 +189,39 @@ export default function SchedulingConflicts({
                         </AlertDescription>
                     </Alert>
                 ) : null}
+
+                <ul
+                    aria-label="Conflict counts"
+                    className="grid grid-cols-3 gap-2 sm:gap-3"
+                >
+                    <li>
+                        <OperationStatCard
+                            label="Needs proposal"
+                            value={counts.needsProposal}
+                            tone="warning"
+                            compact
+                            hint="Staff action required"
+                        />
+                    </li>
+                    <li>
+                        <OperationStatCard
+                            label="Awaiting reply"
+                            value={counts.awaitingCustomer}
+                            tone="info"
+                            compact
+                            hint="Proposal sent to customer"
+                        />
+                    </li>
+                    <li>
+                        <OperationStatCard
+                            label="Moved at the same time"
+                            value={counts.reassigned}
+                            tone="success"
+                            compact
+                            hint="Last 14 days, no action needed"
+                        />
+                    </li>
+                </ul>
 
                 <div className="grid items-start gap-6 xl:grid-cols-[22rem_1fr]">
                     <div className="grid gap-6">
@@ -178,10 +263,19 @@ export default function SchedulingConflicts({
                                             href={`${urls.conflicts}?conflict=${row.id}`}
                                             selected={row.id === selectedId}
                                             timezone={timezone}
+                                            now={now}
                                         />
                                     ))}
                                 </ul>
                             )}
+                            {truncated ? (
+                                <p className="text-sm text-muted-foreground tabular-nums">
+                                    Showing the {unresolved.length} soonest of{' '}
+                                    {organization.unresolvedConflicts}{' '}
+                                    unresolved conflicts. Resolve these to see
+                                    the rest.
+                                </p>
+                            ) : null}
                         </section>
 
                         <section
@@ -214,6 +308,12 @@ export default function SchedulingConflicts({
                                     ))}
                                 </ul>
                             )}
+                            {recent.length >= 20 ? (
+                                <p className="text-sm text-muted-foreground">
+                                    Showing the {recent.length} most recent
+                                    resolutions from the last 14 days.
+                                </p>
+                            ) : null}
                         </section>
                     </div>
 
@@ -224,6 +324,8 @@ export default function SchedulingConflicts({
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <h2
                                 id="resolution-heading"
+                                ref={headingRef}
+                                tabIndex={-1}
                                 className="text-xl font-semibold"
                             >
                                 Resolution
@@ -256,6 +358,8 @@ export default function SchedulingConflicts({
                                 candidates={candidates}
                                 timezone={timezone}
                                 conflictsUrl={urls.conflicts}
+                                operationsUrl={urls.operations}
+                                locked={locked}
                             />
                         ) : (
                             <Card className="rounded-2xl py-6 shadow-none">

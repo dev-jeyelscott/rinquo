@@ -12,6 +12,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { useOnline } from '@/hooks/use-online';
 import { formatDayAndTime } from '@/lib/booking-format';
 import { CAUSE_LABELS } from '@/lib/conflicts';
 import { ALERT_TONES } from '@/lib/tones';
@@ -41,6 +42,7 @@ export function ScheduleImpactDialog() {
     const [submission, setSubmission] = useState<Submission | null>(null);
     const [dismissed, setDismissed] = useState<ScheduleImpact | null>(null);
     const [applying, setApplying] = useState(false);
+    const online = useOnline();
 
     // Remember the last write the user attempted so it can be confirmed unchanged.
     useEffect(
@@ -173,6 +175,12 @@ export function ScheduleImpactDialog() {
                     </p>
                 ) : null}
 
+                {!online ? (
+                    <p role="alert" className="text-sm font-semibold">
+                        You are offline. Nothing was applied, and the impact
+                        cannot be confirmed until you reconnect.
+                    </p>
+                ) : null}
                 {submission === null ? (
                     <p role="alert" className="text-sm text-destructive">
                         This review is no longer connected to your change. Close
@@ -191,7 +199,7 @@ export function ScheduleImpactDialog() {
                     <Button
                         className="max-sm:h-11"
                         onClick={apply}
-                        disabled={applying || submission === null}
+                        disabled={applying || submission === null || !online}
                         aria-busy={applying}
                     >
                         {applying ? 'Applying…' : 'Apply changes'}

@@ -22,6 +22,8 @@ export const inertia = {
     hold: false,
     /** Outcome of the next router.get (a partial reload): success by default. */
     nextGet: 'success' as 'success' | 'error' | 'network' | 'pending',
+    /** Outcome of the next router.post: it settles normally by default, or fails as a dropped connection (cleared after use). */
+    nextPost: 'success' as 'success' | 'network',
     /** Props merged into the page after a successful router.get (simulates the server reply). */
     getReply: null as Record<string, unknown> | null,
     /** router.on listeners by event name. */
@@ -36,6 +38,7 @@ export function resetInertia(props: Record<string, unknown> = {}, url = '/') {
     inertia.networkFailure = false;
     inertia.hold = false;
     inertia.nextGet = 'success';
+    inertia.nextPost = 'success';
     inertia.getReply = null;
     inertia.listeners = {};
 }
@@ -172,6 +175,16 @@ export function inertiaModule() {
                         (data ?? {}) as Record<string, unknown>,
                         options,
                     );
+                    (options?.onStart as (() => void) | undefined)?.();
+
+                    if (inertia.nextPost === 'network') {
+                        inertia.nextPost = 'success';
+                        (
+                            options?.onNetworkError as
+                                | ((e: Error) => void)
+                                | undefined
+                        )?.(new Error('offline'));
+                    }
                     (options?.onFinish as (() => void) | undefined)?.();
                 },
             ),

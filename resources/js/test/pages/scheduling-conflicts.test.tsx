@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import {
     afterEach,
     beforeEach,
@@ -351,7 +351,7 @@ describe('Scheduling conflicts dashboard', () => {
 
         expect(
             screen.getByText(
-                'Moved from Wash Bay 2 to Wash Bay 1 at the same time. The customer was not contacted.',
+                /Moved from Wash Bay 2 to Wash Bay 1\..*The customer was not contacted\./,
             ),
         ).toBeInTheDocument();
         expect(
@@ -407,5 +407,381 @@ describe('Scheduling conflicts dashboard', () => {
         expect(
             screen.getByRole('button', { name: 'Try again' }),
         ).toBeInTheDocument();
+    });
+});
+
+function setOnline(value: boolean) {
+    vi.spyOn(window.navigator, 'onLine', 'get').mockReturnValue(value);
+    act(() => {
+        window.dispatchEvent(new Event(value ? 'online' : 'offline'));
+    });
+}
+
+function awaiting(): ConflictRowData {
+    return row({
+        status: 'awaiting_customer',
+        proposal: {
+            id: 'p1',
+            startAt: '2026-10-07T07:30:00+00:00',
+            expiresAt: '2026-10-05T01:28:00+00:00',
+            resource: 'Detailing Bay',
+            lapsed: false,
+        },
+        actions: { propose: true, withdraw: true },
+    });
+}
+
+describe('Scheduling conflicts presentation and recovery', () => {
+    beforeEach(() => {
+        resetInertia();
+        vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] });
+        vi.setSystemTime(new Date('2026-10-05T01:00:00Z'));
+    });
+    afterEach(() => {
+        vi.restoreAllMocks();
+        vi.unstubAllGlobals();
+        vi.useRealTimers();
+    });
+
+    it('derives Today and Upcoming from the appointment without a new status', () => {
+        const today = row({ id: 'c2' });
+        today.booking = {
+            ...today.booking!,
+            startAt: '2026-10-05T06:00:00+00:00',
+        };
+        render(
+            <SchedulingConflicts
+                {...owner}
+                {...data({ unresolved: [today, row()] })}
+            />,
+        );
+
+        const queue = screen.getByRole('list', {
+            name: 'Unresolved conflicts',
+        });
+        const [first, second] = within(queue).getAllByRole('listitem');
+        expect(first).toHaveTextContent('Today');
+        expect(second).toHaveTextContent('Upcoming');
+        expect(first).toHaveTextContent('Needs proposal');
+    });
+
+    it('shows booking status and conflict state as separate chips', () => {
+        render(<SchedulingConflicts {...owner} {...data()} />);
+
+        const card = screen.getByRole('heading', { name: 'Affected booking' })
+            .parentElement as HTMLElement;
+        expect(card).toHaveTextContent('Booking confirmed');
+        expect(card).toHaveTextContent('Conflict: Needs proposal');
+    });
+
+    it('states truthfully that the queue is bounded', () => {
+        render(
+            <SchedulingConflicts
+                {...{
+                    ...owner,
+                    organization: {
+                        ...owner.organization,
+                        unresolvedConflicts: 140,
+                    },
+                }}
+                {...data()}
+            />,
+        );
+
+        expect(
+            screen.getByText(/Showing the 1 soonest of 140 unresolved/),
+        ).toBeInTheDocument();
+    });
+
+    it('states that a same-time move did not change the appointment time', () => {
+        render(
+            <SchedulingConflicts
+                {...owner}
+                {...data({
+                    unresolved: [],
+                    selectedId: 'c9',
+                    candidates: null,
+                    recent: [
+                        row({
+                            id: 'c9',
+                            status: 'resolved',
+                            resolution: 'same_time_reassigned',
+                            reassignedResource: 'Wash Bay 1',
+                            actions: { propose: false, withdraw: false },
+                        }),
+                    ],
+                })}
+            />,
+        );
+
+        expect(
+            screen.getByText(/The appointment time did not change/),
+        ).toBeInTheDocument();
+    });
+
+    it('names the confirmed replacement when the customer accepted', () => {
+        render(
+            <SchedulingConflicts
+                {...owner}
+                {...data({
+                    unresolved: [],
+                    selectedId: 'c9',
+                    candidates: null,
+                    recent: [
+                        row({
+                            id: 'c9',
+                            status: 'resolved',
+                            resolution: 'customer_accepted',
+                            lastOutcome: {
+                                status: 'accepted',
+                                startAt: '2026-10-07T07:30:00+00:00',
+                                respondedAt: '2026-10-05T01:10:00+00:00',
+                            },
+                            actions: { propose: false, withdraw: false },
+                        }),
+                    ],
+                })}
+            />,
+        );
+
+        const alert = screen.getByRole('status');
+        expect(alert).toHaveTextContent(/accepted .*3:30 PM/);
+        expect(alert).toHaveTextContent(/original .* time is released/);
+    });
+
+    it('gives send, replace and withdraw their own consequences', () => {
+        const { unmount } = render(
+            <SchedulingConflicts {...owner} {...data()} />,
+        );
+        fireEvent.click(screen.getByRole('radio', { name: /3:30 PM/ }));
+        fireEvent.click(
+            screen.getByRole('button', {
+                name: 'Send a reschedule proposal to Juan Dela Cruz',
+            }),
+        );
+        expect(screen.getByRole('dialog')).toHaveTextContent(
+            /held temporarily beside their original/,
+        );
+        unmount();
+
+        render(
+            <SchedulingConflicts
+                {...owner}
+                {...data({ unresolved: [awaiting()] })}
+            />,
+        );
+        fireEvent.click(screen.getByRole('radio', { name: /4:00 PM/ }));
+        fireEvent.click(
+            screen.getByRole('button', {
+                name: 'Replace the proposal to Juan Dela Cruz',
+            }),
+        );
+        expect(screen.getByRole('dialog')).toHaveTextContent(
+            /only one proposal can be active/,
+        );
+        fireEvent.click(
+            within(screen.getByRole('dialog')).getByRole('button', {
+                name: 'Cancel',
+            }),
+        );
+        fireEvent.click(
+            screen.getByRole('button', {
+                name: 'Withdraw the proposal to Juan Dela Cruz',
+            }),
+        );
+        expect(screen.getByRole('dialog')).toHaveTextContent(
+            /Only the held proposed time/,
+        );
+    });
+
+    it('offers a manual next step when there are no candidate times', () => {
+        render(
+            <SchedulingConflicts
+                {...owner}
+                {...data({ candidates: { times: [], error: null } })}
+            />,
+        );
+
+        expect(
+            screen.getByRole('link', { name: 'Open Operations' }),
+        ).toHaveAttribute('href', '/owner/organizations/1/operations');
+        expect(screen.getByText(/Nothing was sent/)).toBeInTheDocument();
+    });
+
+    it('pauses actions while offline and refreshes server truth on reconnect', () => {
+        render(
+            <SchedulingConflicts
+                {...owner}
+                {...data({ unresolved: [awaiting()] })}
+            />,
+        );
+        fireEvent.click(screen.getByRole('radio', { name: /4:00 PM/ }));
+
+        setOnline(false);
+
+        expect(screen.getByRole('alert')).toHaveTextContent(
+            'Offline: actions paused',
+        );
+        expect(
+            screen.getByRole('button', {
+                name: 'Replace the proposal to Juan Dela Cruz',
+            }),
+        ).toBeDisabled();
+        expect(
+            screen.getByRole('button', {
+                name: 'Withdraw the proposal to Juan Dela Cruz',
+            }),
+        ).toBeDisabled();
+        expect(inertia.calls).toHaveLength(0);
+
+        // Still locked until the read finishes.
+        inertia.nextGet = 'pending';
+        setOnline(true);
+        expect(inertia.calls[0]).toMatchObject({
+            method: 'get',
+            data: { conflict: 'c1' },
+        });
+        expect(screen.getByText('Loading the conflict')).toBeInTheDocument();
+    });
+
+    it('re-enables actions only after the reconnect refresh succeeds, with the old choice dropped', () => {
+        render(<SchedulingConflicts {...owner} {...data()} />);
+        fireEvent.click(screen.getByRole('radio', { name: /3:30 PM/ }));
+        const send = screen.getByRole('button', {
+            name: 'Send a reschedule proposal to Juan Dela Cruz',
+        });
+        expect(send).toBeEnabled();
+
+        setOnline(false);
+        expect(send).toBeDisabled();
+        setOnline(true);
+
+        const again = screen.getByRole('button', {
+            name: 'Send a reschedule proposal to Juan Dela Cruz',
+        });
+        expect(
+            screen.getByRole('radio', { name: /3:30 PM/ }),
+        ).not.toBeChecked();
+        expect(again).toBeDisabled();
+    });
+
+    it('keeps actions locked when the reconnect refresh fails', () => {
+        render(<SchedulingConflicts {...owner} {...data()} />);
+        fireEvent.click(screen.getByRole('radio', { name: /3:30 PM/ }));
+
+        setOnline(false);
+        inertia.nextGet = 'network';
+        setOnline(true);
+
+        expect(screen.getByText(/could not be loaded/)).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('radio', { name: /3:30 PM/ }));
+        expect(
+            screen.getByRole('button', {
+                name: 'Send a reschedule proposal to Juan Dela Cruz',
+            }),
+        ).toBeDisabled();
+        expect(screen.getByText(/Sending is paused/)).toBeInTheDocument();
+    });
+
+    it('invalidates the chosen time after a capacity rejection until refreshed', () => {
+        resetInertia({
+            errors: { start_at: 'That time is no longer available.' },
+        });
+        render(<SchedulingConflicts {...owner} {...data()} />);
+
+        expect(screen.getByRole('alert')).toHaveTextContent(
+            'no longer available',
+        );
+        fireEvent.click(screen.getByRole('radio', { name: /3:30 PM/ }));
+        expect(
+            screen.getByRole('button', {
+                name: 'Send a reschedule proposal to Juan Dela Cruz',
+            }),
+        ).toBeDisabled();
+        expect(
+            screen.getByRole('button', { name: 'Refresh available times' }),
+        ).toBeInTheDocument();
+    });
+
+    it('keeps the dialog open with a refresh prompt after a dropped connection and retries with the same key', () => {
+        render(<SchedulingConflicts {...owner} {...data()} />);
+        fireEvent.click(screen.getByRole('radio', { name: /3:30 PM/ }));
+        fireEvent.click(
+            screen.getByRole('button', {
+                name: 'Send a reschedule proposal to Juan Dela Cruz',
+            }),
+        );
+
+        inertia.nextPost = 'network';
+        fireEvent.click(
+            within(screen.getByRole('dialog')).getByRole('button', {
+                name: 'Send proposal',
+            }),
+        );
+
+        const dialog = screen.getByRole('dialog');
+        expect(within(dialog).getByRole('alert')).toHaveTextContent(
+            'not known whether this reached the server',
+        );
+
+        fireEvent.click(
+            within(dialog).getByRole('button', { name: 'Send proposal' }),
+        );
+        expect(inertia.calls).toHaveLength(2);
+        expect(inertia.calls[1].data.idempotency_key).toBe(
+            inertia.calls[0].data.idempotency_key,
+        );
+    });
+    it('keeps the chosen time and explains the pause inside an open dialog that goes offline', () => {
+        render(<SchedulingConflicts {...owner} {...data()} />);
+        fireEvent.click(screen.getByRole('radio', { name: /3:30 PM/ }));
+        fireEvent.click(
+            screen.getByRole('button', {
+                name: 'Send a reschedule proposal to Juan Dela Cruz',
+            }),
+        );
+
+        setOnline(false);
+
+        const dialog = screen.getByRole('dialog');
+        expect(dialog).toHaveTextContent(/is emailed .*3:30 PM/);
+        expect(within(dialog).getByRole('alert')).toHaveTextContent(
+            'Actions are paused',
+        );
+        expect(
+            within(dialog).getByRole('button', { name: 'Send proposal' }),
+        ).toBeDisabled();
+    });
+
+    it('moves focus to the resolution heading after a refresh', () => {
+        vi.stubGlobal('requestAnimationFrame', (run: () => void) => {
+            run();
+
+            return 0;
+        });
+        resetInertia({ errors: { revision: 'This conflict changed.' } });
+        render(<SchedulingConflicts {...owner} {...data()} />);
+
+        fireEvent.click(
+            screen.getByRole('button', { name: 'Refresh the conflict' }),
+        );
+
+        expect(document.activeElement).toBe(
+            screen.getByRole('heading', { name: 'Resolution' }),
+        );
+    });
+
+    it('shows the counters in one compact row with the offline alert above them', () => {
+        render(<SchedulingConflicts {...owner} {...data()} />);
+        setOnline(false);
+
+        const counts = screen.getByRole('list', { name: 'Conflict counts' });
+        expect(counts).toHaveClass('grid-cols-3');
+        expect(
+            screen
+                .getByText('Offline: actions paused')
+                .compareDocumentPosition(counts) &
+                Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
     });
 });

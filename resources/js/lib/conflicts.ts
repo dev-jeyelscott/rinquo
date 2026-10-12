@@ -1,3 +1,4 @@
+import { localDateOf } from '@/lib/booking-format';
 import type { ConflictCause, ConflictRowData } from '@/types/conflicts';
 
 /** Short, plain-language reason a booking cannot be fulfilled as scheduled. */
@@ -72,4 +73,24 @@ export function formatMinutes(minutes: number): string {
     const rest = minutes % 60;
 
     return rest === 0 ? `${hours} h` : `${hours} h ${rest} min`;
+}
+
+/**
+ * How soon the protected appointment is, derived from its start instant and the
+ * branch calendar day. Presentation only: it is never stored or sent, so the
+ * conflict's state stays independent of how close the appointment is.
+ */
+export function urgencyLabel(
+    startAt: string,
+    now: number,
+    timezone: string,
+): { label: string; tone: 'warning' | 'info' | 'neutral' } {
+    if (new Date(startAt).getTime() <= now) {
+        return { label: 'Start time passed', tone: 'warning' };
+    }
+
+    return localDateOf(startAt, timezone) ===
+        localDateOf(new Date(now).toISOString(), timezone)
+        ? { label: 'Today', tone: 'warning' }
+        : { label: 'Upcoming', tone: 'neutral' };
 }

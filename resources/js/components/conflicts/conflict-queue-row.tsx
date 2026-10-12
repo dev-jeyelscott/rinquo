@@ -1,7 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { StatusChip } from '@/components/owner/status-chip';
 import { formatDayAndTime } from '@/lib/booking-format';
-import { CAUSE_LABELS, statusLabel } from '@/lib/conflicts';
+import { CAUSE_LABELS, statusLabel, urgencyLabel } from '@/lib/conflicts';
 import { cn } from '@/lib/utils';
 import type { ConflictRowData } from '@/types/conflicts';
 
@@ -10,6 +10,8 @@ type Props = {
     href: string;
     selected: boolean;
     timezone: string;
+    /** Current time in ms; when given, unresolved rows show how soon the appointment is. */
+    now?: number;
 };
 
 /**
@@ -17,8 +19,18 @@ type Props = {
  * appointment), why, and the state in words as well as colour. The whole row is
  * a link that opens the conflict in the detail pane.
  */
-export function ConflictQueueRow({ row, href, selected, timezone }: Props) {
+export function ConflictQueueRow({
+    row,
+    href,
+    selected,
+    timezone,
+    now,
+}: Props) {
     const status = statusLabel(row);
+    const urgency =
+        now !== undefined && row.booking && row.status !== 'resolved'
+            ? urgencyLabel(row.booking.startAt, now, timezone)
+            : null;
 
     return (
         <li>
@@ -47,8 +59,13 @@ export function ConflictQueueRow({ row, href, selected, timezone }: Props) {
                 <span className="text-muted-foreground">
                     {row.booking?.serviceName} · {CAUSE_LABELS[row.cause]}
                 </span>
-                <span>
+                <span className="flex flex-wrap gap-2">
                     <StatusChip tone={status.tone}>{status.label}</StatusChip>
+                    {urgency ? (
+                        <StatusChip tone={urgency.tone}>
+                            {urgency.label}
+                        </StatusChip>
+                    ) : null}
                 </span>
             </Link>
         </li>

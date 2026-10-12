@@ -16,6 +16,8 @@ type Props = {
     tone?: Tone;
     /** One short supporting phrase, for example "3 not arrived". */
     hint?: string;
+    /** Smaller figure and padding, and no hint below the sm breakpoint, so a set of counters fits one row on a phone. */
+    compact?: boolean;
 };
 
 /**
@@ -28,23 +30,39 @@ export function OperationStatCard({
     value,
     tone = 'neutral',
     hint,
+    compact = false,
 }: Props) {
     return (
-        <Card className="rounded-2xl py-4 shadow-none">
-            <CardContent className="grid gap-1 px-5">
+        <Card
+            className={cn(
+                'rounded-2xl py-4 shadow-none',
+                compact && 'max-sm:py-3',
+            )}
+        >
+            <CardContent
+                className={cn('grid gap-1 px-5', compact && 'max-sm:px-3')}
+            >
                 <p className="text-sm font-semibold text-muted-foreground">
                     {label}
                 </p>
                 <p
                     className={cn(
                         'text-3xl font-bold tabular-nums',
+                        compact && 'max-sm:text-2xl',
                         VALUE_TONES[tone],
                     )}
                 >
                     {value}
                 </p>
                 {hint ? (
-                    <p className="text-xs text-muted-foreground">{hint}</p>
+                    <p
+                        className={cn(
+                            'text-xs text-muted-foreground',
+                            compact && 'max-sm:hidden',
+                        )}
+                    >
+                        {hint}
+                    </p>
                 ) : null}
             </CardContent>
         </Card>

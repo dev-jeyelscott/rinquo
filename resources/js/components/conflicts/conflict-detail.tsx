@@ -1,3 +1,4 @@
+import { Link } from '@inertiajs/react';
 import { CircleAlertIcon } from 'lucide-react';
 import { useState } from 'react';
 import { CandidateTimes } from '@/components/conflicts/candidate-times';
@@ -18,7 +19,25 @@ type Props = {
     candidates: ConflictsPageData['candidates'];
     timezone: string;
     conflictsUrl: string;
+    operationsUrl: string;
+    /**
+     * True while the screen cannot vouch for what it shows: offline, refreshing,
+     * a failed read, or a stale revision or time that has not been refreshed yet.
+     * Proposal actions stay disabled and any chosen time is dropped.
+     */
+    locked?: boolean;
 };
+
+const REFRESH_FIRST =
+    'The connection was interrupted, so it is not known whether this reached the server. Refresh the conflict before trying again; nothing is repeated automatically.';
+
+const PAUSED =
+    'Actions are paused until this conflict is refreshed. Nothing was sent or changed.';
+
+/** A stable place for focus once the control that opened a dialog is gone or disabled. */
+function resolutionHeading(): HTMLElement | null {
+    return document.getElementById('resolution-heading');
+}
 
 /**
  * The resolution pane. The protected original appointment sits beside the
@@ -31,10 +50,25 @@ export function ConflictDetail({
     candidates,
     timezone,
     conflictsUrl,
+    operationsUrl,
+    locked = false,
 }: Props) {
     const now = useNow(30000);
     const [chosen, setChosen] = useState('');
-    const key = useOperationKey(`${row.id}:${row.revision}:${chosen}`);
+    const [wasLocked, setWasLocked] = useState(locked);
+    const [epoch, setEpoch] = useState(0);
+
+    // A time picked before the screen lost its footing is a stale claim: drop it.
+    if (locked !== wasLocked) {
+        setWasLocked(locked);
+
+        if (locked) {
+            setChosen('');
+            setEpoch((current) => current + 1);
+        }
+    }
+
+    const key = useOperationKey(`${row.id}:${row.revision}:${chosen}:${epoch}`);
     const status = statusLabel(row);
     const booking = row.booking;
     const base = `${conflictsUrl}/${row.id}/proposal`;
@@ -46,6 +80,13 @@ export function ConflictDetail({
         return null;
     }
 
+    const original = formatDayAndTime(booking.startAt, timezone);
+    const accepted =
+        row.resolution === 'customer_accepted' &&
+        row.lastOutcome?.status === 'accepted'
+            ? formatDayAndTime(row.lastOutcome.startAt, timezone)
+            : null;
+
     return (
         <div className="grid gap-4">
             {row.status === 'resolved' ? (
@@ -55,9 +96,11 @@ export function ConflictDetail({
                     </AlertTitle>
                     <AlertDescription className="text-foreground">
                         {row.resolution === 'same_time_reassigned'
-                            ? `Moved from ${row.originalResource} to ${row.reassignedResource} at the same time. The customer was not contacted.`
+                            ? `Moved from ${row.originalResource} to ${row.reassignedResource}. The appointment time did not change: ${original}. The customer was not contacted.`
                             : row.resolution === 'customer_accepted'
-                              ? 'The customer accepted a new time and their booking was replaced.'
+                              ? accepted
+                                  ? `The customer accepted ${accepted}. That time is now confirmed and the original ${original} time is released.`
+                                  : 'The customer accepted a new time and their booking was replaced. The original time is released.'
                               : 'The booking ended, so there is nothing left to resolve.'}
                     </AlertDescription>
                 </Alert>
@@ -83,11 +126,20 @@ export function ConflictDetail({
                             <h2 className="text-xl font-semibold">
                                 Affected booking
                             </h2>
-                            <p className="text-sm text-muted-foreground">
-                                {booking.status === 'confirmed'
-                                    ? 'Confirmed'
-                                    : booking.status.replace('_', ' ')}{' '}
-                                · conflict is a separate operational state
+                            <p className="flex flex-wrap items-center gap-2">
+                                <StatusChip
+                                    tone={
+                                        booking.status === 'confirmed'
+                                            ? 'success'
+                                            : 'neutral'
+                                    }
+                                >
+                                    Booking{' '}
+                                    {booking.status.replaceAll('_', ' ')}
+                                </StatusChip>
+                                <StatusChip tone={status.tone}>
+                                    Conflict: {status.label}
+                                </StatusChip>
                             </p>
                             <p className="text-lg font-semibold">
                                 {booking.customerName}
@@ -107,7 +159,16 @@ export function ConflictDetail({
                                 <p className="font-semibold text-primary">
                                     Original slot remains reserved
                                 </p>
-                            ) : null}
+                            ) : (
+                                <p className="text-sm text-muted-foreground">
+                                    {row.resolution === 'customer_accepted'
+                                        ? 'This original time is released.'
+                                        : row.resolution ===
+                                            'same_time_reassigned'
+                                          ? 'Still booked at this time.'
+                                          : null}
+                                </p>
+                            )}
                             <p className="text-sm text-muted-foreground tabular-nums">
                                 Duration snapshot: {booking.durationMinutes} min
                                 + {booking.bufferMinutes} min buffer
@@ -126,8 +187,12 @@ export function ConflictDetail({
                                         label="Withdraw proposal"
                                         ariaLabel={`Withdraw the proposal to ${booking.customerName}`}
                                         title="Withdraw this proposal?"
-                                        description="The proposed time is released. Their original appointment stays reserved and the conflict returns to staff."
+                                        description={`Only the held proposed time${row.proposal ? ` (${formatDayAndTime(row.proposal.startAt, timezone)})` : ''} is released and ${booking.customerName} can no longer accept it. Their original ${original} appointment stays reserved, and the conflict returns to staff.`}
                                         confirmLabel="Withdraw proposal"
+                                        disabled={locked}
+                                        disabledMessage={PAUSED}
+                                        returnFocus={resolutionHeading}
+                                        networkErrorMessage={REFRESH_FIRST}
                                         dismissLabel="Keep proposal"
                                         url={`${base}/withdraw`}
                                         data={() => ({
@@ -167,14 +232,23 @@ export function ConflictDetail({
                                     2. Propose a new appointment time
                                 </h3>
                                 {!booking.hasAccount ? (
-                                    <p className="text-sm">
-                                        This customer has no account to answer a
-                                        proposal. Contact them directly
-                                        {booking.customerPhone
-                                            ? ` on ${booking.customerPhone}`
-                                            : ''}
-                                        , then cancel or rebook from Operations.
-                                    </p>
+                                    <div className="grid gap-2 text-sm">
+                                        <p>
+                                            This customer has no account to
+                                            answer a proposal. Contact them
+                                            directly
+                                            {booking.customerPhone
+                                                ? ` on ${booking.customerPhone}`
+                                                : ''}
+                                            , then cancel or rebook from
+                                            Operations.
+                                        </p>
+                                        <p className="text-muted-foreground">
+                                            The original {original} appointment
+                                            stays reserved until then.
+                                        </p>
+                                        <ManualNextStep href={operationsUrl} />
+                                    </div>
                                 ) : !row.actions.propose ? (
                                     <p className="text-sm">
                                         This booking can no longer be
@@ -185,11 +259,18 @@ export function ConflictDetail({
                                         {candidates.error}
                                     </p>
                                 ) : times.length === 0 ? (
-                                    <p className="text-sm">
-                                        No open times in the next 7 days for
-                                        this service. Free up capacity or
-                                        contact the customer directly.
-                                    </p>
+                                    <div className="grid gap-2 text-sm">
+                                        <p>
+                                            No open times in the next 7 days for
+                                            this service. Free up capacity or
+                                            contact the customer directly.
+                                        </p>
+                                        <p className="text-muted-foreground">
+                                            The original {original} appointment
+                                            stays reserved. Nothing was sent.
+                                        </p>
+                                        <ManualNextStep href={operationsUrl} />
+                                    </div>
                                 ) : (
                                     <>
                                         <CandidateTimes
@@ -203,6 +284,12 @@ export function ConflictDetail({
                                             Customer approval required before
                                             schedule changes.
                                         </p>
+                                        {locked ? (
+                                            <p className="text-sm text-muted-foreground">
+                                                Sending is paused until this
+                                                conflict is refreshed.
+                                            </p>
+                                        ) : null}
                                         <ConfirmAction
                                             label={
                                                 replacing
@@ -215,7 +302,11 @@ export function ConflictDetail({
                                                     : `Send a reschedule proposal to ${booking.customerName}`
                                             }
                                             title={`${replacing ? 'Replace' : 'Send'} the proposal to ${booking.customerName}?`}
-                                            description={`${booking.customerName} is emailed ${when}. Their current appointment stays reserved and nothing changes unless they accept before the deadline.`}
+                                            description={
+                                                replacing && row.proposal
+                                                    ? `The active proposal for ${formatDayAndTime(row.proposal.startAt, timezone)} is released and ${booking.customerName} is emailed ${when} instead; only one proposal can be active. ${when} is held temporarily. Their original ${original} appointment stays reserved and nothing changes unless they accept before the deadline.`
+                                                    : `${booking.customerName} is emailed ${when}. That time is held temporarily beside their original ${original} appointment, which stays reserved. Nothing changes unless they accept before the deadline.`
+                                            }
                                             confirmLabel={
                                                 replacing
                                                     ? 'Replace proposal'
@@ -223,7 +314,12 @@ export function ConflictDetail({
                                             }
                                             confirmVariant="default"
                                             triggerVariant="default"
-                                            disabled={chosen === ''}
+                                            disabled={chosen === '' || locked}
+                                            disabledMessage={
+                                                locked ? PAUSED : undefined
+                                            }
+                                            returnFocus={resolutionHeading}
+                                            networkErrorMessage={REFRESH_FIRST}
                                             url={base}
                                             data={() => ({
                                                 revision: row.revision,
@@ -239,5 +335,19 @@ export function ConflictDetail({
                 ) : null}
             </div>
         </div>
+    );
+}
+
+/** The safe manual path when no proposal can be sent: handle it in Operations, nothing is changed here. */
+function ManualNextStep({ href }: { href: string }) {
+    return (
+        <p>
+            <Link
+                href={href}
+                className="font-semibold text-primary underline-offset-4 hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none max-sm:inline-block max-sm:py-3"
+            >
+                Open Operations
+            </Link>
+        </p>
     );
 }

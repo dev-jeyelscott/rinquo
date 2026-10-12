@@ -1,5 +1,5 @@
 import { router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { TextareaField } from '@/components/owner/form-field';
 import { Button } from '@/components/ui/button';
 import {
@@ -37,10 +37,20 @@ type Props = {
     data?:
         | Record<string, string | number>
         | (() => Record<string, string | number>);
+    /**
+     * When set, a request that never reached a server answer (a network failure) keeps the dialog open with this
+     * message instead of closing as if it had settled, so the user can retry the same logical action or refresh.
+     */
+    networkErrorMessage?: string;
     /** Called when the request has settled, successfully or not (for example to close a surface the action was opened from). */
     onSettled?: () => void;
-    /** Where focus goes when the dialog closes, for a trigger that the action removes; the trigger keeps focus when absent or null. */
+    /**
+     * Where focus goes when the dialog closes after the request settled or while the trigger is disabled or gone;
+     * the trigger keeps focus on a plain dismissal, or when this is absent or returns null.
+     */
     returnFocus?: () => HTMLElement | null;
+    /** Explains inside the open dialog why confirming is unavailable while `disabled` is set. */
+    disabledMessage?: string;
 };
 
 /**
@@ -64,14 +74,40 @@ export function ConfirmAction({
     triggerVariant = 'outline',
     disabled = false,
     data = {},
+    networkErrorMessage,
     onSettled,
     returnFocus,
+    disabledMessage,
 }: Props) {
     const [open, setOpen] = useState(false);
     const [processing, setProcessing] = useState(false);
     const [reason, setReason] = useState('');
+    const [uncertain, setUncertain] = useState(false);
+    const inFlight = useRef(false);
+    const keepOpen = useRef(false);
+    const settled = useRef(false);
+    const trigger = useRef<HTMLButtonElement>(null);
+    const confirmButton = useRef<HTMLButtonElement>(null);
+    // The wording is frozen while the dialog is open so a chosen value that the screen later drops cannot blank it.
+    const [shown, setShown] = useState(description);
+
+    // Send is disabled while the request is pending, which drops focus to the page body. When an interrupted request
+    // leaves the dialog open, put focus back on the (re-enabled) confirm button so Tab continues inside the dialog.
+    useEffect(() => {
+        if (uncertain && !processing) {
+            confirmButton.current?.focus();
+        }
+    }, [uncertain, processing]);
 
     function confirm() {
+        if (inFlight.current) {
+            return;
+        }
+
+        inFlight.current = true;
+        keepOpen.current = false;
+        settled.current = false;
+        setUncertain(false);
         router[method](
             url,
             {
@@ -81,8 +117,21 @@ export function ConfirmAction({
             {
                 preserveScroll: true,
                 onStart: () => setProcessing(true),
+                onNetworkError: () => {
+                    if (networkErrorMessage) {
+                        keepOpen.current = true;
+                        setUncertain(true);
+                    }
+                },
                 onFinish: () => {
+                    inFlight.current = false;
                     setProcessing(false);
+
+                    if (keepOpen.current) {
+                        return;
+                    }
+
+                    settled.current = true;
                     setOpen(false);
                     onSettled?.();
                 },
@@ -91,9 +140,20 @@ export function ConfirmAction({
     }
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog
+            open={open}
+            onOpenChange={(next) => {
+                setOpen(next);
+                if (next) {
+                    setShown(description);
+                    settled.current = false;
+                    setUncertain(false);
+                }
+            }}
+        >
             <DialogTrigger asChild>
                 <Button
+                    ref={trigger}
                     variant={triggerVariant}
                     size="sm"
                     aria-label={ariaLabel}
@@ -105,7 +165,11 @@ export function ConfirmAction({
             </DialogTrigger>
             <DialogContent
                 onCloseAutoFocus={(event) => {
-                    const target = returnFocus?.();
+                    const lost =
+                        settled.current ||
+                        !trigger.current?.isConnected ||
+                        trigger.current.disabled;
+                    const target = lost ? returnFocus?.() : null;
 
                     if (target) {
                         event.preventDefault();
@@ -115,7 +179,9 @@ export function ConfirmAction({
             >
                 <DialogHeader>
                     <DialogTitle>{title}</DialogTitle>
-                    <DialogDescription>{description}</DialogDescription>
+                    <DialogDescription>
+                        {open ? shown : description}
+                    </DialogDescription>
                 </DialogHeader>
                 {reasonLabel ? (
                     <TextareaField
@@ -126,11 +192,22 @@ export function ConfirmAction({
                         onChange={(event) => setReason(event.target.value)}
                     />
                 ) : null}
+                {uncertain && networkErrorMessage ? (
+                    <p role="alert" className="text-sm font-semibold">
+                        {networkErrorMessage}
+                    </p>
+                ) : null}
+                {disabled && disabledMessage ? (
+                    <p role="alert" className="text-sm font-semibold">
+                        {disabledMessage}
+                    </p>
+                ) : null}
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setOpen(false)}>
                         {dismissLabel}
                     </Button>
                     <Button
+                        ref={confirmButton}
                         variant={confirmVariant}
                         onClick={confirm}
                         disabled={

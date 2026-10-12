@@ -120,6 +120,21 @@ describe('Schedule impact review', () => {
         });
     });
 
+    it('refuses to apply while offline and says nothing was applied', () => {
+        vi.spyOn(window.navigator, 'onLine', 'get').mockReturnValue(false);
+        show(impact());
+        render(<ScheduleImpactDialog />);
+        attempt();
+
+        expect(screen.getByRole('alert')).toHaveTextContent(
+            'You are offline. Nothing was applied',
+        );
+        expect(
+            screen.getByRole('button', { name: 'Apply changes' }),
+        ).toBeDisabled();
+        vi.restoreAllMocks();
+    });
+
     it('does not apply anything when the owner keeps current settings', () => {
         show(impact());
         render(<ScheduleImpactDialog />);
