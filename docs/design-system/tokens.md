@@ -20,7 +20,7 @@ All colors are defined as CSS custom properties in `resources/css/app.css` and e
 | `--muted-foreground` / `text-muted-foreground` | `#6b7280` | Secondary/disabled text |
 | `--border` / `border-border` | `#e5e7eb` | Borders, dividers |
 | `--input` / `bg-input` | `#f9fafb` | Form input backgrounds |
-| `--booking-control-border` / `border-booking-control` | `#7a808c` | Scoped: boundary of booking-journey controls only (fields, OTP cells, time and date chips, choice indicators). 3.97:1 vs `--background`/`--card`, 3.80:1 vs `--input`, 3.20:1 vs `--muted` |
+| `--booking-control-border` / `border-booking-control` | `#7a808c` | Scoped: boundary of booking-journey controls only (fields, OTP cells, time and date chips, choice indicators), plus the shared `otp-input` cells and the text fields and search box of the Spec 06 customer account, which reuse it for the same 3:1 boundary. 3.97:1 vs `--background`/`--card`, 3.80:1 vs `--input`, 3.20:1 vs `--muted` |
 
 #### Semantic Colors
 

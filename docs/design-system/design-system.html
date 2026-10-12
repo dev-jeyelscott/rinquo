@@ -1342,6 +1342,75 @@
                         </div>
                     </div>
                 </article>
+
+                <article id="account-page-header" data-registry-id="account-page-header" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">AccountPageHeader</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">account-page-header</div>
+                    <p class="registry-description">Customer account page heading: h1, a one-line purpose at a readable measure and an optional primary action (Find a shop, Add vehicle); the action may show only its icon on mobile while keeping its accessible name.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/customer/account-page-header.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-06/desktop/07-cross-shop-bookings.png, spec-06/mobile/09-saved-vehicles.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="account-state-card" data-registry-id="account-state-card" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">AccountStateCard</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">account-state-card</div>
+                    <p class="registry-description">Centered durable state for a whole account section: a valid empty result or a confirmed outcome, with icon tile, heading, explanation and one continuing action. Never used for a failed request.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/customer/account-state-card.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-06/desktop/05-directory-empty.png, spec-06/desktop/08-bookings-empty.png, spec-06/desktop/16-email-change-success.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="account-info-panel" data-registry-id="account-info-panel" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">AccountInfoPanel</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">account-info-panel</div>
+                    <p class="registry-description">Quiet primary-tinted note explaining an account boundary (cross-business privacy, profile changes do not touch shop records). A labelled complementary region; informational only.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/customer/account-info-panel.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-06/desktop/07-cross-shop-bookings.png, spec-06/desktop/09-saved-vehicles.png, spec-06/desktop/12-customer-profile.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
             </div>
         </section>
 
@@ -1586,7 +1655,7 @@
                         <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">otp-input</div>
-                    <p class="registry-description">One-time code as separate numeric cells. Typing advances, Backspace steps back, arrows move, a paste spreads across the cells and only digits are accepted; labelled group, one-time-code autofill and a linked error; focus starts on the first cell and returns to it after a rejected code. Cell boundaries use the scoped booking-control-border token (3:1).</p>
+                    <p class="registry-description">One-time code as separate numeric cells. Typing advances, Backspace steps back, arrows move, a paste spreads across the cells and only digits are accepted; labelled group, one-time-code autofill and a linked error; focus starts on the first cell and returns to it after a rejected code. Cell boundaries use the scoped booking-control-border token (3:1). Also used for the Spec 06 customer sign-in and email-change codes.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Path:</span>
@@ -1594,7 +1663,7 @@
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Reference:</span>
-                            <span class="registry-meta-value">spec-02/desktop/05-email-verification.png, spec-02/mobile/05-email-verification.png</span>
+                            <span class="registry-meta-value">spec-02/desktop/05-email-verification.png, spec-02/mobile/05-email-verification.png, spec-06/desktop/03-email-otp.png, spec-06/desktop/15-email-change-otp.png</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Category:</span>
@@ -2258,6 +2327,29 @@
                         </div>
                     </div>
                 </article>
+
+                <article id="shop-directory-card" data-registry-id="shop-directory-card" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">ShopDirectoryCard</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">shop-directory-card</div>
+                    <p class="registry-description">One listed shop in the neutral directory: optional cover and logo (initials when absent), name, city, bookable services, starting price from bookable variants, weekly hours, then View shop and Book into the shop’s own tenant routes. Images only via the gated shop media route.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/customer/shop-directory-card.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-06/desktop/04-shop-directory.png, spec-06/mobile/04-shop-directory.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Composition</span>
+                        </div>
+                    </div>
+                </article>
             </div>
         </section>
 
@@ -2650,6 +2742,29 @@
                                 <span class="tag">ToggleGroup</span>
                                 <span class="tag">Dialog</span>
                             </div>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Pattern</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="customer-account-navigation" data-registry-id="customer-account-navigation" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">Customer Account Navigation</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">customer-account-navigation</div>
+                    <p class="registry-description">Neutral Rinquo account shell. Desktop: wordmark, Home, Book, Bookings, Vehicles and Profile with one underlined current destination, Verified account chip and account menu. Mobile: five icon-only bottom destinations with accessible names, 44px targets and safe-area padding. Home and Book are URL-backed intents over the one directory route.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/layouts/customer-shell.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-06/desktop/01-account-home.png, spec-06/mobile/01-account-home.png</span>
                         </div>
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Category:</span>

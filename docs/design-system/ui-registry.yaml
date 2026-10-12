@@ -962,7 +962,7 @@ components:
           advances, Backspace steps back, arrows move, a pasted code is spread
           across the cells and only digits are accepted. The value is a plain
           digit string.
-      reference_design: "spec-02/desktop/05-email-verification.png, spec-02/mobile/05-email-verification.png"
+      reference_design: "spec-02/desktop/05-email-verification.png, spec-02/mobile/05-email-verification.png, spec-06/desktop/03-email-otp.png, spec-06/desktop/15-email-change-otp.png"
       props:
           - name: value
             type: string
@@ -977,6 +977,12 @@ components:
             type: string
             required: false
           - name: autoFocus
+            type: boolean
+            required: false
+          - name: label
+            type: string
+            required: false
+          - name: disabled
             type: boolean
             required: false
       tokens: [booking-control-border]
@@ -1147,6 +1153,90 @@ components:
 # ==============================================================================
 # COMPOSITIONS: Reusable multi-component patterns
 # ==============================================================================
+
+    - id: account-page-header
+      name: AccountPageHeader
+      category: component
+      path: resources/js/components/customer/account-page-header.tsx
+      description: >
+          Customer account page heading: the page h1, a one-line purpose bounded
+          to a readable measure, and an optional primary action on the right
+          (Find a shop, Add vehicle). On mobile the action may show its icon
+          only while keeping its accessible name.
+      reference_design: "spec-06/desktop/07-cross-shop-bookings.png, spec-06/mobile/09-saved-vehicles.png"
+      props:
+          - name: title
+            type: string
+            required: true
+          - name: description
+            type: string
+            required: true
+          - name: action
+            type: ReactNode
+            required: false
+      accessibility:
+          - One h1 per page; the action keeps a visible or accessible name
+      responsive: Title and action share a row at every width; the description wraps
+      status: stable
+
+    - id: account-state-card
+      name: AccountStateCard
+      category: component
+      path: resources/js/components/customer/account-state-card.tsx
+      description: >
+          Centered durable state for a whole customer account section: a valid
+          empty result (no matching businesses, no verified online bookings, no
+          saved vehicles) or a confirmed outcome (email verified). Icon tile,
+          heading, explanation and one continuing action.
+      reference_design: "spec-06/desktop/05-directory-empty.png, spec-06/desktop/08-bookings-empty.png, spec-06/desktop/16-email-change-success.png"
+      props:
+          - name: icon
+            type: LucideIcon
+            required: true
+          - name: title
+            type: string
+            required: true
+          - name: children
+            type: ReactNode
+            required: true
+          - name: action
+            type: ReactNode
+            required: false
+          - name: tone
+            type: "'info' | 'success'"
+            required: false
+          - name: headingLevel
+            type: "1 | 2"
+            required: false
+      accessibility:
+          - The heading and text carry the meaning; the icon is decorative
+          - Never used for a failed request; failures use an alert with a retry
+      responsive: Constrained width, centered, comfortable padding at 390px
+      status: stable
+
+    - id: account-info-panel
+      name: AccountInfoPanel
+      category: component
+      path: resources/js/components/customer/account-info-panel.tsx
+      description: >
+          Quiet primary-tinted note that explains a customer account boundary,
+          such as cross-business privacy or that profile changes do not touch a
+          shop's records. Informational only.
+      reference_design: "spec-06/desktop/07-cross-shop-bookings.png, spec-06/desktop/09-saved-vehicles.png, spec-06/desktop/12-customer-profile.png"
+      props:
+          - name: icon
+            type: LucideIcon
+            required: true
+          - name: title
+            type: string
+            required: true
+          - name: children
+            type: string
+            required: true
+      accessibility:
+          - Rendered as a labelled complementary region with a heading
+      responsive: Beside the main card from lg, below it on smaller screens
+      status: stable
 
 compositions:
     - id: exact-start-time-selector
@@ -1720,6 +1810,29 @@ compositions:
 # PATTERNS: Interaction and layout conventions
 # ==============================================================================
 
+    - id: shop-directory-card
+      name: ShopDirectoryCard
+      category: composition
+      path: resources/js/components/customer/shop-directory-card.tsx
+      description: >
+          One listed shop in the neutral customer directory: optional cover and
+          logo (initials when absent), name, city, up to three bookable service
+          names, starting price from bookable variants, weekly hours runs, and
+          View shop and Book actions into the shop's own tenant routes. Data
+          comes from the bounded ShopDirectory read model; images are served
+          only through the gated public shop media route.
+      reference_design: "spec-06/desktop/04-shop-directory.png, spec-06/mobile/04-shop-directory.png, spec-06/desktop/01-account-home.png"
+      authority:
+          decisions: [28, 74, 75, 76, 77, 78, 79, 203]
+      accessibility:
+          - Article named by the shop heading; facts carry visually hidden labels
+          - Actions name the shop ("Book at Shine") and are 44px tall on mobile
+          - Prices are tabular; long names wrap
+      responsive: One column on mobile, two from md, three from xl
+      status: stable
+      dependencies:
+          - Button
+
 patterns:
     - id: step-indicator
       name: Step Indicator
@@ -2291,6 +2404,37 @@ patterns:
 # ==============================================================================
 # STATUS & METADATA
 # ==============================================================================
+
+    - id: customer-account-navigation
+      name: Customer Account Navigation
+      category: pattern
+      path: resources/js/layouts/customer-shell.tsx
+      description: >
+          Neutral Rinquo customer account shell. Desktop: wordmark, five text
+          destinations (Home, Book, Bookings, Vehicles, Profile) with a primary
+          underline on the one current destination, the Verified account chip
+          and an account menu (profile, sign out). Mobile: wordmark and account
+          menu above, five icon-only bottom destinations with accessible names.
+          Home and Book are two URL-backed intents over the one directory route
+          (plain route is Home; `q` or `view=book` is Book).
+      authority:
+          decisions: [44, 45, 71, 72, 73, 203, 211, 212]
+          references:
+              - "docs/reference-ui/spec-06/desktop/01-account-home.png"
+              - "docs/reference-ui/spec-06/mobile/01-account-home.png"
+              - "docs/reference-ui/spec-06/mobile/04-shop-directory.png"
+      mobile:
+          presentation: icon-only bottom navigation
+          requirements:
+              - 44px or larger targets with a visible focus ring
+              - safe-area aware; page content is padded clear of the bar
+              - exactly one destination has aria-current="page"
+      accessibility:
+          - Named nav landmarks for desktop and mobile; each icon link has a text name
+          - Skip link to the main content
+          - Never shows a shop's brand; shop pages use the tenant shop shell
+      responsive: Desktop text navigation from md; bottom navigation below md
+      status: stable
 
 status_definitions:
     active: >
