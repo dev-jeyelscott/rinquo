@@ -52,8 +52,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // in AppServiceProvider, so they keep working with a cached config.
         $middleware->trustHosts();
 
-        $middleware->redirectGuestsTo(fn (Request $request) => route('owner.auth.login'));
-        $middleware->redirectUsersTo(fn (Request $request) => route('owner.home'));
+        // The neutral customer account keeps its own sign-in and landing page; everything else is the Owner surface.
+        $middleware->redirectGuestsTo(fn (Request $request) => route($request->routeIs('customer.*') ? 'customer.auth.login' : 'owner.auth.login'));
+        $middleware->redirectUsersTo(fn (Request $request) => route($request->routeIs('customer.*') ? 'customer.directory' : 'owner.home'));
 
         // The platform surface has its own cookie/session namespace, so it is not part of the "web" group.
         $middleware->group('platform', [

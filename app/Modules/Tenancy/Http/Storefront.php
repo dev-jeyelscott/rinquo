@@ -177,7 +177,8 @@ final class Storefront
             ])->values()->all();
     }
 
-    private static function clock(string $time): string
+    /** "09:00:00" -> "9:00 AM". */
+    public static function clock(string $time): string
     {
         return CarbonImmutable::createFromFormat('H:i:s', strlen($time) === 5 ? $time.':00' : $time)->format('g:i A');
     }

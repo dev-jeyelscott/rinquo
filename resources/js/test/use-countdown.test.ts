@@ -45,4 +45,17 @@ describe('useCountdown', () => {
         rerender({ s: 60 });
         expect(result.current).toBe(60);
     });
+
+    it('restarts on a new restartKey even when the seconds are unchanged', () => {
+        const { result, rerender } = renderHook(({ k }) => useCountdown(5, k), {
+            initialProps: { k: 0 },
+        });
+        act(() => {
+            vi.advanceTimersByTime(5000);
+        });
+        expect(result.current).toBe(0);
+
+        rerender({ k: 1 });
+        expect(result.current).toBe(5);
+    });
 });

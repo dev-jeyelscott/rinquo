@@ -6,11 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Modules\Booking\Models\Booking;
 use App\Modules\Customer\Actions\ChangeCustomerEmail;
 use App\Modules\Customer\Actions\SaveCustomerVehicle;
+use App\Modules\Customer\Directory\ShopDirectory;
 use App\Modules\Customer\Models\CustomerProfile;
 use App\Modules\Customer\Models\CustomerVehicle;
-use App\Modules\Scheduling\Readiness\ReadinessEvaluator;
-use App\Modules\Subscription\Access\AccessResolver;
-use App\Modules\Tenancy\Models\Organization;
+use App\Modules\Identity\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,33 +20,53 @@ class CustomerAccountController extends Controller
 {
     private const EMAIL_TOKEN = 'customer_email_change.token';
 
-    public function directory(Request $request, ReadinessEvaluator $readiness, AccessResolver $access): Response
-    {
-        $query = trim((string) $request->query('q', ''));
-        // Listed only while the shop can take new bookings: restriction and closure remove it without touching published_at.
-        $shops = $access->scopeAcceptingNewBookings(Organization::query()->where('directory_opted_in', true)->whereNotNull('published_at'))->with('branch')->orderBy('name')->get()
-            ->filter(fn (Organization $organization): bool => $readiness->evaluate($organization)->isReady())
-            ->filter(fn (Organization $organization): bool => $query === '' || str_contains(mb_strtolower($organization->name.' '.$organization->branch?->city), mb_strtolower($query)))
-            ->take(50)->map(fn (Organization $organization): array => ['name' => $organization->name, 'city' => $organization->branch?->city, 'url' => route('shops.show', $organization->slug, absolute: false)])->values();
+    private const EMAIL_PENDING = 'customer_email_change.email';
 
-        return Inertia::render('customer/directory', ['query' => $query, 'shops' => $shops]);
+    private const BOOKINGS_PER_PAGE = 20;
+
+    public function directory(Request $request, ShopDirectory $directory): Response
+    {
+        $query = mb_substr(trim((string) $request->query('q', '')), 0, 120);
+
+        return Inertia::render('customer/directory', ['query' => $query, ...$directory->search($query)]);
     }
 
+    /** Only this signed-in customer's verified online bookings; staff-entered contact emails never link activity. */
     public function bookings(Request $request): Response
     {
-        $rows = Booking::query()->where('customer_user_id', $request->user()->id)->where('source', Booking::SOURCE_ONLINE)
+        $page = Booking::query()->where('customer_user_id', $request->user()->id)->where('source', Booking::SOURCE_ONLINE)
             ->join('organizations', 'organizations.id', '=', 'bookings.organization_id')->join('branches', 'branches.organization_id', '=', 'organizations.id')
-            ->orderByDesc('bookings.scheduled_start_at')->get(['bookings.*', 'organizations.name as shop_name', 'organizations.slug as shop_slug', 'branches.city as shop_city'])
-            ->map(fn (Booking $booking): array => ['id' => $booking->public_id, 'shop' => $booking->shop_name, 'city' => $booking->shop_city, 'status' => $booking->status, 'scheduledAt' => $booking->scheduled_start_at->toIso8601String(), 'url' => route('bookings.show', [$booking->shop_slug, $booking->public_id], absolute: false)])->values();
+            ->orderByDesc('bookings.scheduled_start_at')->orderByDesc('bookings.id')
+            ->paginate(self::BOOKINGS_PER_PAGE, ['bookings.*', 'organizations.name as shop_name', 'organizations.slug as shop_slug', 'branches.city as shop_city']);
 
-        return Inertia::render('customer/bookings', ['bookings' => $rows]);
+        return Inertia::render('customer/bookings', [
+            'bookings' => array_map(fn (Booking $booking): array => [
+                'id' => $booking->public_id,
+                'shop' => $booking->getAttribute('shop_name'),
+                'city' => $booking->getAttribute('shop_city'),
+                // A confirmed booking's customer-facing progress (checked in, in service, completed, no-show) wins over "confirmed".
+                'status' => $booking->status === Booking::CONFIRMED && $booking->operational_state !== Booking::SCHEDULED ? $booking->operational_state : $booking->status,
+                'scheduledAt' => $booking->scheduled_start_at->toIso8601String(),
+                'timezone' => $booking->branch_timezone,
+                'url' => route('bookings.show', [$booking->getAttribute('shop_slug'), $booking->public_id], absolute: false),
+            ], $page->items()),
+            'pageInfo' => ['page' => $page->currentPage(), 'perPage' => $page->perPage(), 'total' => $page->total(), 'lastPage' => $page->lastPage(), 'from' => $page->firstItem() ?? 0, 'to' => $page->lastItem() ?? 0],
+        ]);
     }
 
     public function profile(Request $request): Response
     {
         $profile = CustomerProfile::query()->firstOrCreate(['user_id' => $request->user()->id]);
 
-        return Inertia::render('customer/profile', ['profile' => ['name' => $profile->name ?? '', 'phone' => $profile->phone ?? '', 'email' => $request->user()->email], 'emailChangePending' => $request->session()->has(self::EMAIL_TOKEN)]);
+        $pending = $request->session()->get(self::EMAIL_PENDING);
+
+        return Inertia::render('customer/profile', [
+            'profile' => ['name' => $profile->name ?? '', 'phone' => $profile->phone ?? '', 'email' => $request->user()->email, 'emailVerified' => $request->user()->email_verified_at !== null],
+            'emailChange' => [
+                'pendingEmail' => $request->session()->has(self::EMAIL_TOKEN) && is_string($pending) ? $pending : null,
+                'changedTo' => $request->session()->get('email_changed_to'),
+            ],
+        ]);
     }
 
     public function updateProfile(Request $request): RedirectResponse
@@ -85,8 +104,9 @@ class CustomerAccountController extends Controller
 
     public function requestEmailChange(Request $request, ChangeCustomerEmail $change): RedirectResponse
     {
-        $email = (string) $request->validate(['email' => ['required', 'email:rfc,dns', 'max:255']])['email'];
-        $request->session()->put(self::EMAIL_TOKEN, $change->request($request->user(), $email, (string) $request->ip()));
+        $email = (string) $request->validate(['email' => ['required', 'email:rfc', 'max:254']])['email'];
+        // The session moves to the new challenge only after its code was sent.
+        $request->session()->put([self::EMAIL_TOKEN => $change->request($request->user(), $email, (string) $request->ip()), self::EMAIL_PENDING => User::normalizeEmail($email)]);
 
         return to_route('customer.profile')->with('status', 'We sent a confirmation code to your new email address.');
     }
@@ -95,9 +115,9 @@ class CustomerAccountController extends Controller
     {
         $code = (string) $request->validate(['code' => ['required', 'digits:6']])['code'];
         $change->verify($request->user(), $request->session()->get(self::EMAIL_TOKEN), $code, (string) $request->ip());
-        $request->session()->forget(self::EMAIL_TOKEN);
+        $request->session()->forget([self::EMAIL_TOKEN, self::EMAIL_PENDING]);
 
-        return to_route('customer.profile')->with('status', 'Your Rinquo email address was changed and verified.');
+        return to_route('customer.profile')->with('email_changed_to', $request->user()->email);
     }
 
     public function logout(Request $request): RedirectResponse

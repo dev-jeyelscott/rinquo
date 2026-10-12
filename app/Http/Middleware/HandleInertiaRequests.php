@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Modules\Customer\Models\CustomerProfile;
 use App\Modules\Platform\Models\PlatformAdmin;
 use App\Modules\Platform\Support\SupportContext;
 use Illuminate\Http\Request;
@@ -50,6 +51,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user() === null ? null : ['email' => $request->user()->email],
             ],
             'platform' => fn () => $this->platform($request),
+            'customer' => fn () => $this->customer($request),
             'flash' => [
                 'status' => fn () => $request->session()->get('status'),
                 'schedulingImpact' => fn () => $request->session()->get('scheduling_impact'),
@@ -61,6 +63,25 @@ class HandleInertiaRequests extends Middleware
                 'scheme' => config('broadcasting.connections.reverb.browser.scheme') === 'http' ? 'http' : 'https',
             ],
         ];
+    }
+
+    /**
+     * Neutral customer-account shell props: the platform profile name for the
+     * account avatar and whether the signed-in email is verified. Null outside
+     * signed-in /account pages.
+     *
+     * @return array{name: ?string, emailVerified: bool}|null
+     */
+    private function customer(Request $request): ?array
+    {
+        $user = $request->user();
+        if ($user === null || ! $request->routeIs('customer.*')) {
+            return null;
+        }
+
+        $name = CustomerProfile::query()->where('user_id', $user->id)->value('name');
+
+        return ['name' => is_string($name) && trim($name) !== '' ? trim($name) : null, 'emailVerified' => $user->email_verified_at !== null];
     }
 
     /**
