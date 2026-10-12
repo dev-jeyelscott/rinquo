@@ -18,6 +18,8 @@ final class ChangeCustomerEmail
 {
     private const GENERIC = 'That code is invalid or has expired. Request a new code.';
 
+    private const IN_USE = 'That email address is already in use.';
+
     public function request(User $user, string $email, string $ip): string
     {
         $email = User::normalizeEmail($email);
@@ -59,26 +61,36 @@ final class ChangeCustomerEmail
             throw ValidationException::withMessages(['code' => self::GENERIC]);
         }
 
-        DB::transaction(function () use ($user, $token, $code): void {
+        // The transaction returns the rejection instead of throwing it, so a wrong guess's attempt count commits.
+        $error = DB::transaction(function () use ($user, $token, $code): ?string {
             /** @var CustomerEmailChangeChallenge|null $challenge */
             $challenge = CustomerEmailChangeChallenge::query()->where('user_id', $user->id)
                 ->where('token_hash', hash('sha256', $token))->lockForUpdate()->first();
-            if ($challenge === null || ! $challenge->isUsable() || $challenge->failed_attempts >= (int) config('rinquo.otp.max_failed_attempts')) {
-                throw ValidationException::withMessages(['code' => self::GENERIC]);
+            if ($challenge === null || ! $challenge->isUsable()) {
+                return self::GENERIC;
+            }
+            if ($challenge->failed_attempts >= (int) config('rinquo.otp.max_failed_attempts')) {
+                $challenge->forceFill(['consumed_at' => now()])->save();
+
+                return self::GENERIC;
             }
             if (! hash_equals($challenge->code_hash, $this->hash($challenge->new_email, $code))) {
                 $challenge->increment('failed_attempts');
-                throw ValidationException::withMessages(['code' => self::GENERIC]);
+
+                return self::GENERIC;
             }
             if (User::query()->where('email', $challenge->new_email)->whereKeyNot($user->id)->exists()) {
-                throw ValidationException::withMessages(['code' => 'That email address is already in use.']);
+                return self::IN_USE;
             }
 
             $oldEmail = $user->email;
             try {
-                $user->forceFill(['email' => $challenge->new_email, 'email_verified_at' => now()])->save();
+                // Savepoint, so a concurrent claim of the address does not abort the outer PostgreSQL transaction.
+                DB::transaction(fn () => $user->forceFill(['email' => $challenge->new_email, 'email_verified_at' => now()])->save());
             } catch (UniqueConstraintViolationException) {
-                throw ValidationException::withMessages(['code' => 'That email address is already in use.']);
+                $user->refresh();
+
+                return self::IN_USE;
             }
             $challenge->forceFill(['consumed_at' => now()])->save();
             DB::afterCommit(function () use ($oldEmail, $user): void {
@@ -88,7 +100,13 @@ final class ChangeCustomerEmail
                     report($exception);
                 }
             });
+
+            return null;
         });
+
+        if ($error !== null) {
+            throw ValidationException::withMessages(['code' => $error]);
+        }
     }
 
     private function hash(string $email, string $code): string
