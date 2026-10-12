@@ -45,7 +45,7 @@ Paths are relative to `docs/reference-ui/`.
 | `01-customer-shop-home.png`                         | Tenant-branded customer shop home                    | Mobile            | Approved                            | 2026-10-04 |
 | `02-booking-schedule.png`                           | Tenant booking schedule selection                    | Mobile            | Superseded (mobile Schedule visual) | 2026-10-04 |
 | `03-staff-operations-dashboard.png`                 | Staff operational workspace                          | Desktop           | Superseded by Spec 04               | 2026-10-04 |
-| `04-scheduling-conflict-resolution.png`             | Scheduling conflict resolution                       | Desktop           | Approved                            | 2026-10-04 |
+| `04-scheduling-conflict-resolution.png`             | Scheduling conflict resolution                       | Desktop           | Superseded by Spec 05               | 2026-10-04 |
 | `05-owner-scheduling-configuration.png`             | Owner scheduling configuration                       | Desktop           | Superseded for Owner Settings       | 2026-10-04 |
 | `spec-02/desktop/01-vehicle.png`                    | Vehicle selection                                    | Desktop 1600×1000 | Approved                            | 2026-10-08 |
 | `spec-02/desktop/02-service.png`                    | Service + add-ons                                    | Desktop 1600×1000 | Approved                            | 2026-10-08 |
@@ -141,6 +141,38 @@ Paths are relative to `docs/reference-ui/`.
 | `spec-04/mobile/16-realtime-offline-recovery.png`   | Reconnect, stale, offline and recovery               | Mobile 390×844    | Approved                            | 2026-10-11 |
 | `spec-04/desktop/17-owner-role-navigation.png`      | Role-aware shell and mobile navigation               | Desktop 1600×1000 | Approved                            | 2026-10-11 |
 | `spec-04/mobile/17-owner-role-navigation.png`       | Role-aware shell and mobile navigation               | Mobile 390×844    | Approved                            | 2026-10-11 |
+| `spec-05/desktop/01-overview.png` | Scheduling conflicts workspace | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-05/mobile/01-overview.png` | Scheduling conflicts workspace | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-05/desktop/02-queue.png` | Conflict queue | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-05/mobile/02-queue.png` | Conflict queue | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-05/desktop/03-booking-details.png` | Affected booking details | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-05/mobile/03-booking-details.png` | Affected booking details | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-05/desktop/04-same-time-reassigned.png` | Same-time reassignment | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-05/mobile/04-same-time-reassigned.png` | Same-time reassignment | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-05/desktop/05-replacement-selection.png` | Replacement-time selection | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-05/mobile/05-replacement-selection.png` | Replacement-time selection | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-05/desktop/06-proposal-confirmation.png` | Send proposal confirmation | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-05/mobile/06-proposal-confirmation.png` | Send proposal confirmation | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-05/desktop/07-awaiting-response.png` | Awaiting customer reply | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-05/mobile/07-awaiting-response.png` | Awaiting customer reply | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-05/desktop/08-replace-proposal.png` | Replace active proposal | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-05/mobile/08-replace-proposal.png` | Replace active proposal | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-05/desktop/09-withdraw-proposal.png` | Withdraw active proposal | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-05/mobile/09-withdraw-proposal.png` | Withdraw active proposal | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-05/desktop/10-customer-accepted.png` | Customer acceptance outcome | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-05/mobile/10-customer-accepted.png` | Customer acceptance outcome | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-05/desktop/11-customer-declined.png` | Customer decline recovery | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-05/mobile/11-customer-declined.png` | Customer decline recovery | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-05/desktop/12-proposal-expired.png` | Proposal expiry recovery | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-05/mobile/12-proposal-expired.png` | Proposal expiry recovery | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-05/desktop/13-resolution-history.png` | Recently resolved conflicts | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-05/mobile/13-resolution-history.png` | Recently resolved conflicts | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-05/desktop/14-impact-preview.png` | Resource/configuration impact preview | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-05/mobile/14-impact-preview.png` | Resource/configuration impact preview | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-05/desktop/15-stale-offline.png` | Stale and offline recovery | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-05/mobile/15-stale-offline.png` | Stale and offline recovery | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-05/desktop/16-no-replacement.png` | No eligible replacement | Desktop 1600×1000 | Approved | 2026-10-12 |
+| `spec-05/mobile/16-no-replacement.png` | No eligible replacement | Mobile 390×844 | Approved | 2026-10-12 |
 
 The sixteen Spec 02 booking references were reviewed and approved together on 2026-10-08 under Decision 212; they are canonical under `spec-02/`.
 
@@ -256,7 +288,9 @@ Mobile tenant navigation is governed by Decisions 46, 47, and 206.
 
 **Viewport:** Desktop
 
-**Status:** Approved
+**Status:** Superseded by Spec 05
+
+**Superseded by:** the approved Spec 05 desktop conflict workspace references (2026-10-12).
 
 **Locks:**
 
@@ -425,6 +459,24 @@ For the per-image route/state, locks, exclusions and implementation notes, see `
 
 For the per-image route/state, locks, exclusions and implementation notes, see `spec-04/manifest.md`.
 
+## Spec 05. Staff resolves scheduling conflicts (approved 2026-10-12)
+
+**Approval:** User approved all 32 core references (16 desktop 1600×1000 and 16 mobile 390×844) together on 2026-10-12 (Asia/Manila) under Decision 212.
+
+**Files:** `spec-05/desktop/01-overview.png` through `16-no-replacement.png`, and matching `spec-05/mobile/` PNGs. The precise inventory and visual contracts are recorded in `spec-05/manifest.md`.
+
+**Product surface:** Owner/Staff scheduling conflict queue and resolution workspace, same-time reassignment history, customer proposals, replacement, withdrawal, declined/expired recovery, customer-accepted resolution, resource/configuration impact preview, and stale/offline/no-candidate states. Customer responses remain in the Spec 03 customer-management journey.
+
+**Applicable Locked Decisions:** 137–151, 175–181, 184–185, 201, 206–212.
+
+**Status:** Approved (2026-10-12).
+
+**Supersession:** `04-scheduling-conflict-resolution.png` is superseded by the Spec 05 desktop conflicts family. All earlier approved Specs and Owner Settings retain their own status and scope.
+
+**Behavioral boundaries:** No new scheduling algorithm, state enum, endpoint, unbounded candidate search, independent mobile conflicts tab, or staff access to Owner-only settings. Booking snapshots, protected original reservation, customer approval, proposal hold, tenant isolation and atomic capacity are mandatory.
+
+**Rendering artifacts:** The “Draft reference” badge, specimen index labels, sample customer data and presentation footers inside screenshots are nonproduction metadata, not visual requirements.
+
 ## Responsive coverage
 
 Desktop and mobile references are separate visual contracts when their compositions materially differ.
@@ -438,10 +490,10 @@ Current approved coverage is incomplete:
 | Customer booking journey (Spec 02: vehicle, service, schedule, details, email verification, confirm, confirmed, request sent) | Approved (2026-10-08, 390×844) | Approved (2026-10-08, 1600×1000) |
 | Customer booking management (Spec 03: management, cancel, reschedule, proposal, progress, history) | Approved (2026-10-09, 390×844) | Approved (2026-10-09, 1600×1000) |
 | Staff operations (Spec 04: overview, queue, actions, walk-in, blocks, recovery, role-aware shell) | Approved (2026-10-11, 390×844) | Approved (2026-10-11, 1600×1000) |
-| Conflict resolution                                                                                                           | Not yet locked                 | Approved                         |
+| Conflict resolution (Spec 05)                                                                                                  | Approved (2026-10-12, 390×844) | Approved (2026-10-12, 1600×1000) |
 | Owner shell and Settings                                                                                                      | Approved (2026-10-08)          | Approved (2026-10-08)            |
 
-Owner Settings coverage is limited to the shell, the Settings index, and the seven pages at the viewports listed above. Owner Operations follows the shared Spec 04 references (including role-aware pair 17). Other Owner surfaces outside Settings (Booking Requests, Conflicts, Billing) have no approved Owner-specific reference.
+Owner Settings coverage is limited to the shell, the Settings index, and the seven pages at the viewports listed above. Owner Operations follows the shared Spec 04 references (including role-aware pair 17). Other Owner surfaces outside Settings (Booking Requests, Billing) have no approved Owner-specific reference. Conflicts follows the shared Owner/Staff Spec 05 references.
 
 An uncovered viewport must follow:
 
