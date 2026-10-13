@@ -1,4 +1,7 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
+import { PageHeader } from '@/components/platform/page-header';
+import { RecordTable } from '@/components/platform/record-table';
+import { StatusChip } from '@/components/owner/status-chip';
 import { SectionCard } from '@/components/owner/section-card';
 import { Button } from '@/components/ui/button';
 import { formatInstant } from '@/lib/datetime';
@@ -19,18 +22,20 @@ export default function SupportBookingRequests({
 
     return (
         <>
-            <Head title="Support: booking requests" />
+            <PageHeader
+                eyebrow="Support"
+                title="Pending booking requests"
+                documentTitle="Support: booking requests"
+                description="Read-only and redacted. Only allowlisted request fields are shown."
+            />
             <p>
                 <Link
                     href={overviewUrl}
-                    className="text-sm underline underline-offset-4"
+                    className="inline-flex min-h-11 items-center text-sm text-primary underline underline-offset-4 sm:min-h-0"
                 >
                     Back to overview
                 </Link>
             </p>
-            <h1 className="text-2xl font-semibold tracking-tight">
-                Pending booking requests
-            </h1>
             <SectionCard
                 title="Awaiting a decision"
                 description="Customer contact details and notes are not shown in support views. You cannot approve or decline from here."
@@ -40,21 +45,44 @@ export default function SupportBookingRequests({
                         No requests are waiting for a decision.
                     </p>
                 ) : (
-                    <ul className="divide-y text-sm">
-                        {requests.map((request) => (
-                            <li key={request.id} className="grid gap-0.5 py-3">
-                                <p className="font-medium">
-                                    {request.serviceName}, {request.vehicleName}
-                                </p>
-                                <p className="text-muted-foreground tabular-nums">
-                                    Starts {formatInstant(request.startAt, tz)}
-                                    {request.pendingExpiresAt
-                                        ? `, decide by ${formatInstant(request.pendingExpiresAt, tz)}`
-                                        : ''}
-                                </p>
-                            </li>
-                        ))}
-                    </ul>
+                    <RecordTable
+                        label="Pending booking requests"
+                        columns={[
+                            { key: 'request', label: 'Service and vehicle' },
+                            { key: 'start', label: 'Planned time' },
+                            { key: 'status', label: 'Status' },
+                        ]}
+                        rows={requests}
+                        rowKey={(request) => request.id}
+                        template="md:grid-cols-[minmax(0,2fr)_minmax(0,1.6fr)_minmax(0,0.8fr)]"
+                        cell={(request, key) => {
+                            switch (key) {
+                                case 'request':
+                                    return (
+                                        <span className="font-semibold">
+                                            {request.serviceName},{' '}
+                                            {request.vehicleName}
+                                        </span>
+                                    );
+                                case 'start':
+                                    return (
+                                        <span className="tabular-nums">
+                                            Starts{' '}
+                                            {formatInstant(request.startAt, tz)}
+                                            {request.pendingExpiresAt
+                                                ? `, decide by ${formatInstant(request.pendingExpiresAt, tz)}`
+                                                : ''}
+                                        </span>
+                                    );
+                                default:
+                                    return (
+                                        <StatusChip tone="warning">
+                                            Pending
+                                        </StatusChip>
+                                    );
+                            }
+                        }}
+                    />
                 )}
                 {pagination.previousUrl || pagination.nextUrl ? (
                     <div className="mt-4 flex gap-2">

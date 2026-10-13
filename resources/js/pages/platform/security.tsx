@@ -1,5 +1,5 @@
-import { Head } from '@inertiajs/react';
 import { SectionCard } from '@/components/owner/section-card';
+import { PageHeader } from '@/components/platform/page-header';
 import { StepUpDialog } from '@/components/platform/step-up-dialog';
 
 export default function Security({
@@ -9,8 +9,11 @@ export default function Security({
 }) {
     return (
         <>
-            <Head title="Security" />
-            <h1 className="text-2xl font-semibold tracking-tight">Security</h1>
+            <PageHeader
+                eyebrow="Security"
+                title="Security"
+                description="Manage the recovery codes for your own sign-in."
+            />
             <SectionCard
                 title="Recovery codes"
                 description="Single-use codes for signing in without your authenticator."
@@ -26,7 +29,7 @@ export default function Security({
                     <StepUpDialog
                         label="Generate new codes"
                         title="Generate new recovery codes"
-                        description="Replaces every existing code. The new codes are shown once."
+                        description="Replaces every existing code, which stops working immediately. The new codes are shown once and cannot be shown again."
                         confirmLabel="Generate codes"
                         pendingLabel="Generating..."
                         url="/platform/security/recovery-codes"

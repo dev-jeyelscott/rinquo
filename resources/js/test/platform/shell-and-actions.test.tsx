@@ -1,5 +1,12 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import {
+    fireEvent,
+    render,
+    screen,
+    waitFor,
+    within,
+} from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+import { RecordTable } from '@/components/platform/record-table';
 import { StepUpDialog } from '@/components/platform/step-up-dialog';
 import PlatformShell from '@/layouts/platform-shell';
 import FailedJobs from '@/pages/platform/failed-jobs';
@@ -162,6 +169,7 @@ describe('Step-up dialog', () => {
                 'Your password or authenticator code was not accepted.',
             ),
         ).toBeInTheDocument();
+        expect(screen.getByLabelText(/authenticator code/i)).toHaveFocus();
         expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
 
@@ -202,6 +210,62 @@ describe('Step-up dialog', () => {
         expect(
             screen.getByText(/offline\. Nothing was changed/i),
         ).toBeInTheDocument();
+    });
+});
+
+describe('Step-up focus after success', () => {
+    beforeEach(() => resetInertia({ appName: 'Rinquo' }));
+
+    it('moves focus to the main region when the action removes its own trigger', async () => {
+        const main = document.createElement('main');
+        main.id = 'platform-main';
+        main.tabIndex = -1;
+        document.body.appendChild(main);
+        const { unmount } = render(
+            <StepUpDialog
+                label="Disable"
+                title="Disable a@example.test"
+                description="Signs them out."
+                confirmLabel="Disable administrator"
+                pendingLabel="Disabling..."
+                url="/platform/admins/2/disable"
+            />,
+        );
+        fireEvent.click(screen.getByRole('button', { name: 'Disable' }));
+        fireEvent.change(screen.getByLabelText(/^password/i), {
+            target: { value: 'pw' },
+        });
+        fireEvent.change(screen.getByLabelText(/authenticator code/i), {
+            target: { value: '123456' },
+        });
+        fireEvent.click(
+            screen.getByRole('button', { name: 'Disable administrator' }),
+        );
+        // The server reply replaces the row, so the dialog and its trigger are gone.
+        unmount();
+        (document.activeElement as HTMLElement | null)?.blur();
+
+        await waitFor(() => expect(main).toHaveFocus());
+        main.remove();
+    });
+});
+
+describe('RecordTable semantics', () => {
+    it('keeps the column headers in the accessibility tree at every width', () => {
+        render(
+            <RecordTable
+                label="Jobs"
+                columns={[{ key: 'q', label: 'Queue' }]}
+                rows={[{ id: 1 }]}
+                rowKey={(row) => row.id}
+                cell={() => 'default'}
+                template="md:grid-cols-1"
+            />,
+        );
+        const header = screen.getByRole('columnheader', { name: 'Queue' });
+
+        expect(header.parentElement).toHaveClass('sr-only', 'md:not-sr-only');
+        expect(header.parentElement).not.toHaveClass('hidden');
     });
 });
 
@@ -271,12 +335,12 @@ describe('Failed jobs page', () => {
             />,
         );
 
-        expect(screen.getByText(jobClass).closest('li')).toHaveClass(
-            'break-words',
+        expect(screen.getByText(jobClass).closest('[role="cell"]')).toHaveClass(
+            'min-w-0',
         );
-        expect(screen.getByText(jobClass)).toHaveClass(
-            '[overflow-wrap:anywhere]',
-        );
+        expect(
+            screen.getByText(jobClass).closest('[role="cell"] > div'),
+        ).toHaveClass('[overflow-wrap:anywhere]');
     });
 
     it('explains an empty list', () => {

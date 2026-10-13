@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { TriangleAlertIcon } from 'lucide-react';
+import { TriangleAlertIcon, ClipboardCheckIcon } from 'lucide-react';
 import { AuthCard } from '@/components/platform/auth-card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { ALERT_TONES } from '@/lib/tones';
 export default function RecoveryCodes({ codes }: { codes: string[] }) {
     return (
         <AuthCard
+            icon={ClipboardCheckIcon}
             title="Save your recovery codes"
             description="Use one of these if you lose your authenticator. Each works once."
         >

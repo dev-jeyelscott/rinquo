@@ -1,6 +1,8 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { PageHeader } from '@/components/platform/page-header';
+import { RecordTable } from '@/components/platform/record-table';
 import { SectionCard } from '@/components/owner/section-card';
 import { StatusChip } from '@/components/owner/status-chip';
 import { TextField } from '@/components/owner/form-field';
@@ -37,16 +39,18 @@ export default function Organizations({
 
     return (
         <>
-            <Head title="Organizations" />
-            <h1 className="text-2xl font-semibold tracking-tight">
-                Organizations
-            </h1>
+            <PageHeader
+                eyebrow="Platform"
+                title="Organizations"
+                description="Find an organization by name or address. Customers are never listed here."
+            />
             <form
                 onSubmit={submit}
                 className="flex flex-wrap items-end gap-2"
                 role="search"
             >
                 <TextField
+                    controlClassName="max-sm:h-11"
                     label="Search by name or address"
                     name="search"
                     className="min-w-60 flex-1"
@@ -68,64 +72,91 @@ export default function Organizations({
                             : 'There are no organizations yet.'}
                     </p>
                 ) : (
-                    <ul className="divide-y">
-                        {organizations.map((organization) => (
-                            <li
-                                key={organization.id}
-                                className="flex flex-wrap items-center justify-between gap-3 py-3"
-                            >
-                                <div className="min-w-0">
-                                    <p className="font-medium">
-                                        {organization.name}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">
-                                        /{organization.slug}
-                                    </p>
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                    {organization.closed ? (
-                                        <StatusChip tone="warning">
-                                            Closed
-                                        </StatusChip>
-                                    ) : null}
-                                    <StatusChip
-                                        tone={
-                                            organization.entitlement ===
-                                            'restricted'
-                                                ? 'warning'
-                                                : 'neutral'
-                                        }
-                                    >
-                                        {STATE_LABEL[organization.entitlement]}
-                                    </StatusChip>
-                                    <StatusChip
-                                        tone={
-                                            organization.published
-                                                ? 'success'
-                                                : 'neutral'
-                                        }
-                                    >
-                                        {organization.published
-                                            ? 'Published'
-                                            : 'Not published'}
-                                    </StatusChip>
-                                    <Button
-                                        asChild
-                                        variant="outline"
-                                        size="sm"
-                                        className="max-sm:h-11"
-                                    >
-                                        <Link
-                                            href={organization.url}
-                                            aria-label={`Open ${organization.name}`}
+                    <RecordTable
+                        label="Organizations"
+                        columns={[
+                            { key: 'name', label: 'Organization' },
+                            { key: 'status', label: 'Status' },
+                            { key: 'published', label: 'Storefront' },
+                            {
+                                key: 'open',
+                                label: 'Action',
+                                className: 'md:text-right',
+                            },
+                        ]}
+                        rows={organizations}
+                        rowKey={(organization) => organization.id}
+                        template="md:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,0.8fr)]"
+                        cell={(organization, key) => {
+                            switch (key) {
+                                case 'name':
+                                    return (
+                                        <>
+                                            <p className="font-semibold">
+                                                {organization.name}
+                                            </p>
+                                            <p className="text-muted-foreground">
+                                                /{organization.slug}
+                                            </p>
+                                        </>
+                                    );
+                                case 'status':
+                                    return (
+                                        <span className="flex flex-wrap gap-2 md:justify-start">
+                                            {organization.closed ? (
+                                                <StatusChip tone="warning">
+                                                    Closed
+                                                </StatusChip>
+                                            ) : null}
+                                            <StatusChip
+                                                tone={
+                                                    organization.entitlement ===
+                                                    'restricted'
+                                                        ? 'warning'
+                                                        : 'neutral'
+                                                }
+                                            >
+                                                {
+                                                    STATE_LABEL[
+                                                        organization.entitlement
+                                                    ]
+                                                }
+                                            </StatusChip>
+                                        </span>
+                                    );
+                                case 'published':
+                                    return (
+                                        <StatusChip
+                                            tone={
+                                                organization.published
+                                                    ? 'success'
+                                                    : 'neutral'
+                                            }
                                         >
-                                            Open
-                                        </Link>
-                                    </Button>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
+                                            {organization.published
+                                                ? 'Published'
+                                                : 'Not published'}
+                                        </StatusChip>
+                                    );
+                                default:
+                                    return (
+                                        <Button
+                                            asChild
+                                            variant="outline"
+                                            size="sm"
+                                            className="max-sm:h-11"
+                                        >
+                                            <Link
+                                                href={organization.url}
+                                                aria-label={`Open ${organization.name}`}
+                                            >
+                                                Open
+                                            </Link>
+                                        </Button>
+                                    );
+                            }
+                        }}
+                    />
                 )}
                 {pagination.previousUrl || pagination.nextUrl ? (
                     <div className="mt-4 flex gap-2">

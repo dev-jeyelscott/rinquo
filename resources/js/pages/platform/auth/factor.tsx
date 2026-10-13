@@ -1,14 +1,17 @@
 import { useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { SmartphoneIcon } from 'lucide-react';
 import { TextField } from '@/components/owner/form-field';
 import { AuthCard } from '@/components/platform/auth-card';
 import { SubmitButton } from '@/components/platform/submit-button';
+import { useFocusFirstInvalid } from '@/components/platform/use-focus-first-invalid';
 import { Button } from '@/components/ui/button';
 
 export default function Factor({ email }: { email: string }) {
     const [useRecovery, setUseRecovery] = useState(false);
     const form = useForm({ code: '', recovery_code: '' });
+    const { ref, focusFirstInvalid } = useFocusFirstInvalid();
 
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -18,12 +21,16 @@ export default function Factor({ email }: { email: string }) {
                 : { code: data.code },
         );
         form.post('/platform/mfa', {
-            onError: () => form.reset('code', 'recovery_code'),
+            onError: () => {
+                form.reset('code', 'recovery_code');
+                focusFirstInvalid();
+            },
         });
     }
 
     return (
         <AuthCard
+            icon={SmartphoneIcon}
             title="Second factor"
             description={`Signing in as ${email}. ${
                 useRecovery
@@ -31,9 +38,10 @@ export default function Factor({ email }: { email: string }) {
                     : 'Enter the 6-digit code from your authenticator app.'
             }`}
         >
-            <form onSubmit={submit} className="grid gap-4" noValidate>
+            <form ref={ref} onSubmit={submit} className="grid gap-4" noValidate>
                 {useRecovery ? (
                     <TextField
+                        controlClassName="max-sm:h-11"
                         label="Recovery code"
                         name="recovery_code"
                         autoComplete="off"
@@ -46,6 +54,7 @@ export default function Factor({ email }: { email: string }) {
                     />
                 ) : (
                     <TextField
+                        controlClassName="max-sm:h-11"
                         label="Authenticator code"
                         name="code"
                         inputMode="numeric"
@@ -76,7 +85,7 @@ export default function Factor({ email }: { email: string }) {
                     type="button"
                     variant="link"
                     size="sm"
-                    className="w-fit px-0"
+                    className="w-fit px-0 max-sm:h-11"
                     onClick={() => {
                         form.reset();
                         form.clearErrors();

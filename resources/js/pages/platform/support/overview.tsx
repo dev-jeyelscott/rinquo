@@ -1,5 +1,6 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { CheckCircle2Icon, CircleXIcon } from 'lucide-react';
+import { PageHeader } from '@/components/platform/page-header';
 import { SectionCard } from '@/components/owner/section-card';
 import { StatusChip } from '@/components/owner/status-chip';
 import { Button } from '@/components/ui/button';
@@ -35,10 +36,12 @@ export default function SupportOverview({
 
     return (
         <>
-            <Head title={`Support: ${organization.name}`} />
-            <h1 className="text-2xl font-semibold tracking-tight">
-                {organization.name}
-            </h1>
+            <PageHeader
+                eyebrow="Support"
+                title={organization.name}
+                documentTitle={`Support: ${organization.name}`}
+                description="Viewing tenant data with the selected member's permissions. Nothing can be changed."
+            />
             <div className="flex flex-wrap items-center gap-2">
                 <StatusChip
                     tone={organization.published ? 'success' : 'neutral'}

@@ -1,7 +1,8 @@
-import { Head, Link } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 import { SectionCard } from '@/components/owner/section-card';
 import { StatusChip } from '@/components/owner/status-chip';
 import { TextField, TextareaField } from '@/components/owner/form-field';
+import { PageHeader } from '@/components/platform/page-header';
 import { StepUpDialog } from '@/components/platform/step-up-dialog';
 import type { MemberRow } from '@/types/platform';
 
@@ -25,19 +26,23 @@ export default function OrganizationShow({
 }: Props) {
     return (
         <>
-            <Head title={organization.name} />
+            <PageHeader
+                eyebrow="Platform"
+                title={organization.name}
+                description="Confirm who you will view as and why access is needed."
+            />
             <p>
                 <Link
                     href="/platform/organizations"
-                    className="text-sm underline underline-offset-4"
+                    className="inline-flex items-center text-sm text-primary underline underline-offset-4 max-sm:min-h-11"
                 >
                     All organizations
                 </Link>
             </p>
-            <h1 className="text-2xl font-semibold tracking-tight">
-                {organization.name}
-            </h1>
-            <SectionCard title="Status">
+            <SectionCard
+                title="Status"
+                description="Allowed organization status only. Nothing here can be changed from Platform."
+            >
                 <div className="flex flex-wrap gap-2">
                     <StatusChip>Billing: {entitlement.state}</StatusChip>
                     {entitlement.closed ? (
@@ -51,7 +56,7 @@ export default function OrganizationShow({
                 </div>
             </SectionCard>
             <SectionCard
-                title="Support access"
+                title="Eligible support members"
                 description="Read-only and limited to this organization for 30 minutes. Every view and every blocked attempt is recorded against your name, with the reason and reference you give."
             >
                 {members.length === 0 ? (
@@ -66,17 +71,19 @@ export default function OrganizationShow({
                                 key={member.userId}
                                 className="flex flex-wrap items-center justify-between gap-3 py-3"
                             >
-                                <div>
-                                    <p className="font-medium">
+                                <div className="grid min-w-0 gap-1">
+                                    <p className="font-medium [overflow-wrap:anywhere]">
                                         {member.email}
                                     </p>
-                                    <StatusChip caps>{member.role}</StatusChip>
+                                    <StatusChip caps className="w-fit">
+                                        {member.role}
+                                    </StatusChip>
                                 </div>
                                 <StepUpDialog
                                     label="View as this member"
                                     ariaLabel={`Start a support session as ${member.email}`}
                                     title="Start a read-only support session"
-                                    description={`You will see ${organization.name} with the permissions of ${member.email} (${member.role}). You cannot change anything, and the session ends after 30 minutes.`}
+                                    description={`View ${organization.name} as ${member.email} (${member.role}). Limited to 30 minutes and cannot be extended. Every view and blocked attempt is audited.`}
                                     confirmLabel="Start support session"
                                     pendingLabel="Starting..."
                                     url={startUrl}
@@ -104,6 +111,7 @@ export default function OrganizationShow({
                                                 error={form.errors.reason}
                                             />
                                             <TextField
+                                                controlClassName="max-sm:h-11"
                                                 label="Support or ticket reference"
                                                 required
                                                 maxLength={120}

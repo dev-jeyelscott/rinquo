@@ -53,6 +53,7 @@ describe('Platform sign in', () => {
             'These credentials were not accepted.',
         );
         expect(screen.getByLabelText(/^password/i)).toHaveValue('');
+        expect(email).toHaveFocus();
     });
 
     it('disables the control and names the pending action while signing in', () => {
@@ -129,6 +130,7 @@ describe('Second factor', () => {
             screen.getByText('That code was not accepted.'),
         ).toBeInTheDocument();
         expect(screen.getByLabelText(/authenticator code/i)).toHaveValue('');
+        expect(screen.getByLabelText(/authenticator code/i)).toHaveFocus();
     });
 });
 

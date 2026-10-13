@@ -13,6 +13,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import { useFocusFirstInvalid } from '@/components/platform/use-focus-first-invalid';
 import { Spinner } from '@/components/ui/spinner';
 
 type Data = Record<string, string | number>;
@@ -42,6 +43,23 @@ export type StepUpForm = {
     setData: (key: string, value: string | number) => void;
     errors: Record<string, string>;
 };
+
+/**
+ * A successful action can unmount its own trigger (the row's button is replaced or the row
+ * disappears), which would drop focus to the document body. When that happens, move focus
+ * to the main region so keyboard users resume near the status message, not at the page top.
+ */
+function restoreFocusIfLost() {
+    window.setTimeout(() => {
+        if (typeof document === 'undefined') {
+            return;
+        }
+        const active = document.activeElement;
+        if (!active || active === document.body) {
+            document.getElementById('platform-main')?.focus();
+        }
+    }, 50);
+}
 
 /**
  * Sensitive platform actions re-authenticate at the moment of action: the admin re-enters
@@ -130,6 +148,7 @@ function StepUpBody({
         },
     );
     const [networkError, setNetworkError] = useState(false);
+    const { ref, focusFirstInvalid } = useFocusFirstInvalid();
 
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -139,7 +158,11 @@ function StepUpBody({
         setNetworkError(false);
         form.post(url, {
             preserveScroll: true,
-            onSuccess: onDone,
+            onSuccess: () => {
+                onDone();
+                restoreFocusIfLost();
+            },
+            onError: focusFirstInvalid,
             onNetworkError: () => setNetworkError(true),
             // The one-time code and password are never kept after an attempt.
             onFinish: () => form.reset('current_password', 'otp_code'),
@@ -150,10 +173,12 @@ function StepUpBody({
     const general = errors.job ?? errors.admin ?? errors.token;
 
     return (
-        <form onSubmit={submit} className="grid gap-4" noValidate>
+        <form ref={ref} onSubmit={submit} className="grid gap-4" noValidate>
             <DialogHeader>
-                <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                    Confirm action
+                <p className="flex flex-wrap gap-x-1.5 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    <span>Confirm action</span>
+                    <span aria-hidden="true">·</span>
+                    <span>Step-up required</span>
                 </p>
                 <DialogTitle>{title}</DialogTitle>
                 <DialogDescription>{description}</DialogDescription>
@@ -164,10 +189,11 @@ function StepUpBody({
                 errors,
             })}
             <fieldset className="grid gap-3">
-                <legend className="text-sm font-medium">
+                <legend className="mb-1 border-t pt-4 text-sm font-medium">
                     Confirm it is you
                 </legend>
                 <TextField
+                    controlClassName="max-sm:h-11"
                     label="Password"
                     type="password"
                     name="current_password"
@@ -180,6 +206,7 @@ function StepUpBody({
                     error={errors.current_password}
                 />
                 <TextField
+                    controlClassName="max-sm:h-11"
                     label="Authenticator code"
                     name="otp_code"
                     inputMode="numeric"

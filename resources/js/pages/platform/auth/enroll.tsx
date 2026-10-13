@@ -1,25 +1,34 @@
 import { useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
+import { QrCodeIcon } from 'lucide-react';
 import { TextField } from '@/components/owner/form-field';
 import { AuthCard } from '@/components/platform/auth-card';
 import { SubmitButton } from '@/components/platform/submit-button';
+import { useFocusFirstInvalid } from '@/components/platform/use-focus-first-invalid';
 
 type Props = { secret: string; otpauthUri: string; email: string };
 
 export default function Enroll({ secret, otpauthUri, email }: Props) {
     const form = useForm({ code: '' });
+    const { ref, focusFirstInvalid } = useFocusFirstInvalid();
 
     function submit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        form.post('/platform/enroll', { onError: () => form.reset('code') });
+        form.post('/platform/enroll', {
+            onError: () => {
+                form.reset('code');
+                focusFirstInvalid();
+            },
+        });
     }
 
     return (
         <AuthCard
+            icon={QrCodeIcon}
             title="Set up your authenticator"
             description={`Every administrator signs in with a second factor. Add ${email} to an authenticator app, then confirm with a code.`}
         >
-            <form onSubmit={submit} className="grid gap-4" noValidate>
+            <form ref={ref} onSubmit={submit} className="grid gap-4" noValidate>
                 <div className="grid gap-1.5 rounded-lg border p-3 text-sm">
                     <p className="font-medium">Setup key</p>
                     <p
@@ -33,7 +42,7 @@ export default function Enroll({ secret, otpauthUri, email }: Props) {
                         digits). Or open{' '}
                         <a
                             href={otpauthUri}
-                            className="underline underline-offset-4"
+                            className="underline underline-offset-4 max-sm:py-3"
                         >
                             this link
                         </a>{' '}
@@ -41,6 +50,7 @@ export default function Enroll({ secret, otpauthUri, email }: Props) {
                     </p>
                 </div>
                 <TextField
+                    controlClassName="max-sm:h-11"
                     label="Authenticator code"
                     name="code"
                     inputMode="numeric"

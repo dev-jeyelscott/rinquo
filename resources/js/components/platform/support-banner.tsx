@@ -24,28 +24,43 @@ export function SupportBanner({ support }: { support: SupportBannerData }) {
         <section
             aria-label="Support session"
             className={cn(
-                'sticky top-0 z-40 flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 text-sm sm:px-6',
+                'sticky top-0 z-40 border-b text-sm',
                 ALERT_TONES.warning,
             )}
         >
-            <p className="flex min-w-0 flex-wrap items-center gap-x-2">
-                <EyeIcon className="size-4" aria-hidden="true" />
-                <strong>Read-only support view</strong>
-                <span>
-                    {support.organizationName} as {support.targetRole}{' '}
-                    {support.targetEmail}. Reference {support.reference}.
-                </span>
-                <span className="tabular-nums" role="timer">
+            <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+                <p className="flex min-w-0 flex-wrap items-center gap-x-2">
+                    <EyeIcon className="size-4" aria-hidden="true" />
+                    <strong>Read-only support view</strong>
+                    <span>
+                        {support.organizationName} as {support.targetRole}{' '}
+                        {support.targetEmail}. Reference {support.reference}.
+                    </span>
+                    <span
+                        className="rounded-full bg-warning/20 px-3 py-1 text-xs font-semibold tabular-nums"
+                        role="timer"
+                    >
+                        {secondsLeft === 0
+                            ? 'Session ended'
+                            : `${minutes}:${seconds} left`}
+                    </span>
+                </p>
+                <span role="status" className="sr-only">
                     {secondsLeft === 0
-                        ? 'Session ended'
-                        : `${minutes}:${seconds} left`}
+                        ? 'The support session has ended. Exit to return to the organization.'
+                        : ''}
                 </span>
-            </p>
-            <Button asChild variant="outline" size="sm" className="max-sm:h-11">
-                <Link href={support.exitUrl} method="post" as="button">
-                    Exit support session
-                </Link>
-            </Button>
+                <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="max-sm:h-11"
+                >
+                    <Link href={support.exitUrl} method="post" as="button">
+                        Exit support session
+                    </Link>
+                </Button>
+            </div>
         </section>
     );
 }
