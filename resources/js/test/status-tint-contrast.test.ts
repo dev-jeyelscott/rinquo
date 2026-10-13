@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vite-plus/test';
+import { ALERT_TONES } from '@/lib/tones';
 
 const css = readFileSync('resources/css/app.css', 'utf8');
 
@@ -41,7 +42,7 @@ describe('tinted status text tokens (SC 1.4.3)', () => {
     const white = [255, 255, 255];
     const page = mix(rgb(token('secondary', 'root')), white, 0.6);
 
-    it.each(['success', 'warning'])(
+    it.each(['success', 'warning', 'destructive', 'info'])(
         '%s-text reaches 4.5:1 on its 10%% tint over white and over the page background',
         (tone) => {
             const text = rgb(token(`${tone}-text`, 'root'));
@@ -53,14 +54,44 @@ describe('tinted status text tokens (SC 1.4.3)', () => {
         },
     );
 
-    it.each(['success', 'warning'])(
-        'dark theme %s-text reaches 4.5:1 on its tint over the dark background',
+    it.each(['success', 'warning', 'destructive', 'info'])(
+        'dark theme %s-text reaches 4.5:1 on its tint over the dark background, the card and the page background (secondary/60)',
         (tone) => {
-            const dark = rgb(token('background', 'dark'));
-            const tint = mix(rgb(token(tone, 'dark')), dark, 0.1);
-            expect(
-                ratio(rgb(token(`${tone}-text`, 'dark')), tint),
-            ).toBeGreaterThanOrEqual(4.5);
+            const background = rgb(token('background', 'dark'));
+            const darkPage = mix(
+                rgb(token('secondary', 'dark')),
+                background,
+                0.6,
+            );
+
+            for (const base of [
+                background,
+                rgb(token('card', 'dark')),
+                darkPage,
+            ]) {
+                const tint = mix(rgb(token(tone, 'dark')), base, 0.1);
+                expect(
+                    ratio(rgb(token(`${tone}-text`, 'dark')), tint),
+                ).toBeGreaterThanOrEqual(4.5);
+            }
+        },
+    );
+
+    it.each([
+        ['error', 'destructive'],
+        ['warning', 'warning'],
+        ['success', 'success'],
+        ['info', 'info'],
+    ] as const)(
+        'the %s alert tone colours title and body with %s-text, never neutral foreground (Decision 221)',
+        (alertTone, token) => {
+            const classes = ALERT_TONES[alertTone].split(' ');
+
+            expect(classes).toContain(`text-${token}-text`);
+            expect(classes).toContain(
+                `*:data-[slot=alert-description]:text-${token}-text`,
+            );
+            expect(classes.join(' ')).not.toMatch(/foreground/);
         },
     );
 

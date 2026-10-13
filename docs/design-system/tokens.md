@@ -43,10 +43,14 @@ All colors are defined as CSS custom properties in `resources/css/app.css` and e
 | `--success-foreground` / `text-success-foreground` | `#ffffff` | Text on success | 5.48:1 on success |
 | `--warning` / `bg-warning` | `#b45309` | Waiting, pending, attention needed | 5.02:1 vs white |
 | `--warning-foreground` / `text-warning-foreground` | `#ffffff` | Text on warning | 5.02:1 on warning |
-| `--success-text` / `text-success-text` | `#065f46` | Text on 10% success tints (StatusChip, status panels) | 6.67:1 on a success tint over white, 6.32:1 over the page tint |
-| `--warning-text` / `text-warning-text` | `#92400e` | Text on 10% warning tints | 6.19:1 on a warning tint over white, 5.86:1 over the page tint |
+| `--success-text` / `text-success-text` | `#065f46` | Alert titles and bodies, StatusChip and status panels on 10% success tints | 6.67:1 on a success tint over white, 6.32:1 over the page tint |
+| `--warning-text` / `text-warning-text` | `#92400e` | Alert titles and bodies and other text on 10% warning tints | 6.19:1 on a warning tint over white, 5.86:1 over the page tint |
+| `--destructive-text` / `text-destructive-text` | `#b91c1c` (dark `#fca5a5`) | Alert titles and bodies and other text on 10% destructive tints; never use raw `--destructive` for text on a tint (4.14:1 over white, 3.92:1 over the page tint) | 5.54:1 on a destructive tint over white, 5.25:1 over the page tint; dark 6.05:1 over the page tint (secondary/60), 4.82:1 over full secondary |
+| `--info-text` / `text-info-text` | `#1d4ed8` (dark `#93c5fd`) | Alert titles and bodies and other text on 10% info tints | 5.83:1 on an info tint over white, 5.53:1 over the page tint; dark 6.16:1 over the page tint (secondary/60), 4.92:1 over full secondary |
 | `--info` / `bg-info` | `#2563eb` | Informational alerts, status updates | 5.17:1 vs white |
 | `--info-foreground` / `text-info-foreground` | `#ffffff` | Text on info | 5.17:1 on info |
+
+Alert tones (`ALERT_TONES`) colour title and body with the matching `<tone>-text` token (Decision 221); the icon keeps the solid tone colour. Dark-theme tone text values are set against the dark surfaces (4.62:1 or better on the card tint) and are tested with the light values in `resources/js/test/status-tint-contrast.test.ts`.
 
 #### Component-Specific
 

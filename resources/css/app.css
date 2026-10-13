@@ -51,6 +51,8 @@
     --color-warning-foreground: var(--warning-foreground);
     --color-success-text: var(--success-text);
     --color-warning-text: var(--warning-text);
+    --color-destructive-text: var(--destructive-text);
+    --color-info-text: var(--info-text);
     --color-info: var(--info);
     --color-info-foreground: var(--info-foreground);
 
@@ -114,6 +116,8 @@
     /* Text on 10% status tints (chips, status panels): 4.5:1 or better on white and on secondary/60 */
     --success-text: #065f46;
     --warning-text: #92400e;
+    --destructive-text: #b91c1c;
+    --info-text: #1d4ed8;
     --info: #2563eb;
     --info-foreground: #ffffff;
 
@@ -180,6 +184,8 @@
     --warning-foreground: #001f3f;
     --success-text: #34d399;
     --warning-text: #fbbf24;
+    --destructive-text: #fca5a5;
+    --info-text: #93c5fd;
     --info: #60a5fa;
     --info-foreground: #001f3f;
 

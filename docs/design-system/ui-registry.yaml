@@ -473,6 +473,7 @@ components:
       accessibility:
           - role=alert for real-time alerts
           - Semantic color + text (not color alone)
+          - Tone alerts (ALERT_TONES) set title and body in the success-text, warning-text, destructive-text or info-text token at 4.5:1 or better on the tint in light and dark; never neutral foreground
           - Clear call-to-action when needed
       responsive: Full width, constrained by parent
       status: stable
@@ -484,8 +485,8 @@ components:
           - "Info messages: status updates and confirmations"
       notes: >
           Only default and destructive variants exist in implementation.
-          For success, warning, or info colors, use inline styling or
-          create variants as needed. Reference designs show destructive
+          For success, warning, or info colors, apply ALERT_TONES
+          (resources/js/lib/tones.ts), which uses the tone text tokens. Reference designs show destructive
           (red) alerts for conflicts and informational (blue) alerts.
 
     - id: badge
@@ -728,7 +729,7 @@ components:
             required: false
       accessibility:
           - Meaning is always in the text; tone only reinforces it
-          - Success and warning tones use the success-text and warning-text tokens so text reaches 4.5:1 on the tint
+          - Success and warning tones use the success-text and warning-text tokens (destructive and info use destructive-text and info-text) so text reaches 4.5:1 on the tint
       responsive: Inline, never wraps
       status: stable
       dependencies:

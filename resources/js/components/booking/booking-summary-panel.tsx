@@ -12,7 +12,7 @@ const BADGE: Record<Tone, string> = {
     success: 'bg-success/15 text-success-text',
     warning: 'bg-warning/15 text-warning-text',
     primary: 'bg-primary/10 text-primary',
-    error: 'bg-destructive/10 text-destructive',
+    error: 'bg-destructive/10 text-destructive-text',
     neutral: 'bg-muted text-muted-foreground',
 };
 
