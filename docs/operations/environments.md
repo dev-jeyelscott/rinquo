@@ -166,7 +166,10 @@ Owner sees the new paid-through date exactly once.
 The Rinquo renewal request lives 24 hours but one provider QR lives at most
 `RINQUO_QR_LIFETIME_SECONDS`, so the app refreshes the QR against the same
 request. `subscriptions:send-reminders` and `organizations:mark-deletion-eligible`
-run hourly from the scheduler; both are idempotent. Deletion eligibility only
+run hourly from the scheduler; both are idempotent. `subscriptions:regenerate-requests`
+runs every ten minutes and opens a fresh 24-hour request (and its Payment Intent,
+not a QR) for organizations in their renewal window whose previous request
+expired; it makes bounded, backed-off provider calls and never changes access. Deletion eligibility only
 marks an Owner-closed organization after its 90-day recovery window; no
 automatic deletion exists.
 

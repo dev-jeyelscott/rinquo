@@ -26,6 +26,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property ?CarbonImmutable $qr_expires_at
  * @property ?string $last_provider_error
  * @property ?CarbonImmutable $paid_at
+ * @property int $provider_attempts
+ * @property ?CarbonImmutable $next_provider_attempt_at
  * @property CarbonImmutable $created_at
  */
 class PaymentRequest extends Model
@@ -46,6 +48,7 @@ class PaymentRequest extends Model
             'expires_at' => 'immutable_datetime',
             'qr_expires_at' => 'immutable_datetime',
             'paid_at' => 'immutable_datetime',
+            'next_provider_attempt_at' => 'immutable_datetime',
             'created_at' => 'immutable_datetime',
             'updated_at' => 'immutable_datetime',
         ];

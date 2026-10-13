@@ -53,6 +53,12 @@ final class PlanTerms
         }
     }
 
+    /** How many days before access ends the renewal window opens: the largest reminder offset. */
+    public function renewalWindowDays(): int
+    {
+        return max([1, ...$this->reminderOffsetsDays]);
+    }
+
     public static function current(): self
     {
         return self::at(CarbonImmutable::now());

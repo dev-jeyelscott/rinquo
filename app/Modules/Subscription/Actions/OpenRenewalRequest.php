@@ -39,11 +39,7 @@ final class OpenRenewalRequest
         $request = $this->ensureRequest($organization, $actor);
 
         try {
-            if ($request->provider_payment_intent_id === null) {
-                $intentId = $this->gateway->createPaymentIntent($request, "rinquo-{$request->public_id}-intent");
-                PaymentRequest::query()->whereKey($request->id)->whereNull('provider_payment_intent_id')->update(['provider_payment_intent_id' => $intentId]);
-                $request->refresh();
-            }
+            $this->ensureIntent($request);
 
             $generation = $this->claimQrGeneration($request, $refresh);
             if ($generation !== null) {
@@ -59,7 +55,23 @@ final class OpenRenewalRequest
         return $request->refresh();
     }
 
-    private function ensureRequest(Organization $organization, ?User $actor): PaymentRequest
+    /**
+     * Gives the request its Payment Intent when it has none. The idempotency key is derived from the
+     * request, so a retry after an uncertain response resumes instead of duplicating. Throws PayMongoException.
+     */
+    public function ensureIntent(PaymentRequest $request): void
+    {
+        if ($request->provider_payment_intent_id !== null) {
+            return;
+        }
+
+        $intentId = $this->gateway->createPaymentIntent($request, "rinquo-{$request->public_id}-intent");
+        PaymentRequest::query()->whereKey($request->id)->whereNull('provider_payment_intent_id')->update(['provider_payment_intent_id' => $intentId]);
+        $request->refresh();
+    }
+
+    /** The organization's one open request, created under the organization lock when none is live. */
+    public function ensureRequest(Organization $organization, ?User $actor): PaymentRequest
     {
         return DB::transaction(function () use ($organization, $actor): PaymentRequest {
             Organization::query()->whereKey($organization->id)->lockForUpdate()->firstOrFail();

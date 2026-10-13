@@ -69,6 +69,11 @@ final class ApplyPaidPayment
                 $subscription->forceFill(['paid_until' => $paidUntil, 'grace_ends_at' => $graceEnds])->save();
                 $request->forceFill(['status' => PaymentRequest::PAID, 'paid_at' => $paidAt, 'qr_image' => null, 'last_provider_error' => null])->save();
 
+                // A confirmed month supersedes any other open request: it must not stay payable-looking.
+                // Its own late payment, if any, is still judged by the payable-window rule above.
+                PaymentRequest::query()->where('organization_id', $organization->id)->where('status', PaymentRequest::OPEN)
+                    ->whereKeyNot($request->id)->update(['status' => PaymentRequest::EXPIRED, 'updated_at' => CarbonImmutable::now()]);
+
                 $payment = new Payment;
                 $payment->forceFill([
                     'organization_id' => $organization->id,
