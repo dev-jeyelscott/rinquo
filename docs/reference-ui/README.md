@@ -207,6 +207,48 @@ Paths are relative to `docs/reference-ui/`.
 | `spec-06/mobile/16-email-change-success.png` | Email change completed | Mobile 390×844 | Approved | 2026-10-12 |
 | `spec-06/desktop/17-email-change-recovery.png` | Email verification failure recovery | Desktop 1600×1000 | Approved | 2026-10-12 |
 | `spec-06/mobile/17-email-change-recovery.png` | Email verification failure recovery | Mobile 390×844 | Approved | 2026-10-12 |
+| `spec-07/desktop/01-trial-overview.png` | Trial overview | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-07/mobile/01-trial-overview.png` | Trial overview | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-07/desktop/02-paid-subscription.png` | Paid subscription | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-07/mobile/02-paid-subscription.png` | Paid subscription | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-07/desktop/03-renewal-reminder.png` | Upcoming renewal | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-07/mobile/03-renewal-reminder.png` | Upcoming renewal | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-07/desktop/04-prepare-renewal.png` | Generate renewal request | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-07/mobile/04-prepare-renewal.png` | Generate renewal request | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-07/desktop/05-qr-active.png` | QR ready | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-07/mobile/05-qr-active.png` | QR ready | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-07/desktop/06-qr-expired.png` | QR expired, request open | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-07/mobile/06-qr-expired.png` | QR expired, request open | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-07/desktop/07-request-expired.png` | Renewal request expired | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-07/mobile/07-request-expired.png` | Renewal request expired | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-07/desktop/08-payment-pending.png` | Waiting for confirmation | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-07/mobile/08-payment-pending.png` | Waiting for confirmation | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-07/desktop/09-payment-confirmed.png` | Payment confirmed | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-07/mobile/09-payment-confirmed.png` | Payment confirmed | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-07/desktop/10-provider-offline.png` | Provider / offline recovery | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-07/mobile/10-provider-offline.png` | Provider / offline recovery | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-07/desktop/11-paid-grace.png` | Grace warning after paid expiry | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-07/mobile/11-paid-grace.png` | Grace warning after paid expiry | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-07/desktop/12-restricted-billing.png` | Restricted Billing | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-07/mobile/12-restricted-billing.png` | Restricted Billing | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-07/desktop/13-restricted-operations.png` | Restricted Operations | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-07/mobile/13-restricted-operations.png` | Restricted Operations | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-07/desktop/14-restricted-storefront.png` | Restricted storefront notice | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-07/mobile/14-restricted-storefront.png` | Restricted storefront notice | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-07/desktop/15-closure-separation.png` | Organization closure area | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-07/mobile/15-closure-separation.png` | Organization closure area | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-07/desktop/16-closure-confirm.png` | Typed closure confirmation | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-07/mobile/16-closure-confirm.png` | Typed closure confirmation | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-07/desktop/17-closed-recoverable.png` | Closed, within recovery | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-07/mobile/17-closed-recoverable.png` | Closed, within recovery | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-07/desktop/18-closure-recovered.png` | Organization recovered | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-07/mobile/18-closure-recovered.png` | Organization recovered | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-07/desktop/19-recovery-ended.png` | Recovery window ended | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-07/mobile/19-recovery-ended.png` | Recovery window ended | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-07/desktop/20-platform-terms.png` | Platform plan terms | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-07/mobile/20-platform-terms.png` | Platform plan terms | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-07/desktop/21-platform-publish.png` | Publish plan terms confirmation | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-07/mobile/21-platform-publish.png` | Publish plan terms confirmation | Mobile 390×844 | Approved | 2026-10-13 |
 
 The sixteen Spec 02 booking references were reviewed and approved together on 2026-10-08 under Decision 212; they are canonical under `spec-02/`.
 
@@ -533,6 +575,28 @@ For the per-image route/state, locks, exclusions and implementation notes, see `
 
 **Does not lock (rendering artifacts and sample data):** the `SPEC 06 · DRAFT REFERENCE · Illustrative data` footer, specimen data (shop, customer, vehicle and booking names, prices, hours, dates), the illustrated car photographs and booking thumbnails, the `Recovery gap to resolve` note in reference 17, raster fonts and exact pixel sizes, and any interaction, loading, offline or retry mechanism the images do not show. Supporting material under `spec-06/review-support/` (boards, comparisons, contact sheet, supplementary states and the repository audit) is review-only and not canonical.
 
+## Spec 07. Subscription lifecycle restricts safely (approved 2026-10-13)
+
+**Approval:** User approved all 42 references (21 desktop 1600×1000 and 21 mobile 390×844 pairs) together on 2026-10-13 (Asia/Manila) under Decision 212; they are canonical under `spec-07/`.
+
+**Files:** `spec-07/desktop/01-trial-overview.png` through `21-platform-publish.png`, and the matching twenty-one `spec-07/mobile/` PNGs. The per-image route/state, applicable decisions and implementation boundary are recorded in `spec-07/manifest.md`.
+
+**Product surface:** Owner Billing (trial, paid, upcoming renewal, renewal request and QR states, paid grace, restricted), additive restriction notices over Owner Operations and the tenant storefront, organization closure and recovery, and the Platform Admin plan terms and publish confirmation.
+
+**Applicable Locked Decisions:** 39–42, 99–109, 199–201, 204, 205, 210–212, and ADR 0005.
+
+**Status:** Approved (2026-10-13).
+
+**Locks:** Owner Billing as a primary destination; paid-through and trial status hierarchy; clear renewal and payment-verification states; a short-lived QR that is distinct from the 24-hour request; grace and restricted warnings; preserved existing bookings and customer cancellation; explicit typed organization closure and recoverability; and a separate Platform Admin plan terms and publishing flow. The previously approved Owner shell, tenant operation patterns and existing design-system tokens apply.
+
+**Additive notices:** References 13 (restricted Operations) and 14 (restricted storefront) define only additive restriction notices and preserved-booking states. They do not replace the approved Spec 04 Operations references, the approved tenant storefront or Spec 03 booking management.
+
+**Supersession:** none. Owner Settings and Specs 02–06 keep their status and scope.
+
+**Behavioral boundaries:** Payment confirmation is exclusively verified provider and server data. Grace applies after paid expiry only; an unpaid trial restricts immediately at expiry (Decision 100). No renewal failure starts closure or data deletion. Explicit Owner closure starts a 90-day recovery window, and deletion eligibility never means automatic deletion. Staff never sees Owner Billing. Platform Admin is a separate identity and shell, not a tenant role. Immediate unpaid-trial restriction (Decision 100) and automatic replacement of an expired 24-hour request (Decision 108) are implementation gaps against Locked Decisions, not alternative product decisions.
+
+**Does not lock (rendering artifacts and sample data):** the `DRAFT` / `ILLUSTRATIVE DATA` text and footers embedded in images, fictional shop and person names, demo price and amounts, the dummy non-payable QR, sample dates and times, static component rendering artifacts, notes that describe implementation gaps, exact fonts and pixels, and interaction mechanics the images do not show. The comparisons, boards and contact sheet under `spec-07/review-support/` are review aids only, not canonical UI.
+
 ## Responsive coverage
 
 Desktop and mobile references are separate visual contracts when their compositions materially differ.
@@ -548,9 +612,10 @@ Current approved coverage is incomplete:
 | Staff operations (Spec 04: overview, queue, actions, walk-in, blocks, recovery, role-aware shell) | Approved (2026-10-11, 390×844) | Approved (2026-10-11, 1600×1000) |
 | Conflict resolution (Spec 05)                                                                                                  | Approved (2026-10-12, 390×844) | Approved (2026-10-12, 1600×1000) |
 | Customer account across shops (Spec 06: sign-in, Home/Book directory, bookings, vehicles, profile, email change) | Approved (2026-10-12, 390×844) | Approved (2026-10-12, 1600×1000) |
+| Owner Billing, restriction notices (Operations, storefront), closure and recovery, Platform plan terms (Spec 07) | Approved (2026-10-13, 390×844) | Approved (2026-10-13, 1600×1000) |
 | Owner shell and Settings                                                                                                      | Approved (2026-10-08)          | Approved (2026-10-08)            |
 
-Owner Settings coverage is limited to the shell, the Settings index, and the seven pages at the viewports listed above. Owner Operations follows the shared Spec 04 references (including role-aware pair 17). Other Owner surfaces outside Settings (Booking Requests, Billing) have no approved Owner-specific reference. Conflicts follows the shared Owner/Staff Spec 05 references.
+Owner Settings coverage is limited to the shell, the Settings index, and the seven pages at the viewports listed above. Owner Operations follows the shared Spec 04 references (including role-aware pair 17). Owner Billing is covered by Spec 07; Booking Requests has no approved Owner-specific reference. Spec 07 restriction notices on Operations and the storefront are additive and do not replace those references. Conflicts follows the shared Owner/Staff Spec 05 references.
 
 An uncovered viewport must follow:
 
