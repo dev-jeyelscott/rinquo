@@ -123,6 +123,17 @@ class Booking extends Model
         return 'public_id';
     }
 
+    /**
+     * The instant the customer should expect service to begin (Decisions 56, 213).
+     * The appointment time is immutable and a delayed predecessor produces a
+     * scheduling conflict or reschedule proposal rather than a shifted start, so
+     * this equals the booked start. A derived ETA shift would change only here.
+     */
+    public function expectedStartAt(): CarbonImmutable
+    {
+        return $this->scheduled_start_at;
+    }
+
     public function isPending(): bool
     {
         return $this->status === self::PENDING_APPROVAL;

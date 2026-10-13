@@ -6,6 +6,7 @@ use App\Modules\Booking\Mail\BookingReminderMail;
 use App\Modules\Booking\Mail\BookingRequestExpiredMail;
 use App\Modules\Booking\Models\Booking;
 use App\Modules\Booking\Models\Hold;
+use Carbon\CarbonImmutable;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Mail;
 use Tests\Support\Shop;
@@ -46,10 +47,10 @@ test('the sweeper only touches its own stale rows and frees capacity for new boo
     expect(Booking::query()->sole()->status)->toBe(Booking::EXPIRED);
 });
 
-test('a reminder is sent exactly once across repeated runs', function () {
+test('a reminder is sent exactly once, 30 minutes before the start, across repeated runs', function () {
     $shop = Shop::make();
-    // Confirmed two days ago for tomorrow 07:00 (23 hours away); now is Monday 08:00.
-    $booking = $shop->booking('2026-10-06 07:00', attributes: ['confirmed_at' => now()->subDays(2)]);
+    // Confirmed two days ago for 08:25 today; now is Monday 08:00.
+    $booking = $shop->booking('2026-10-05 08:25', attributes: ['confirmed_at' => now()->subDays(2)]);
 
     expect(app(SendBookingReminders::class)->handle())->toBe(1);
     expect(app(SendBookingReminders::class)->handle())->toBe(0);
@@ -59,16 +60,67 @@ test('a reminder is sent exactly once across repeated runs', function () {
     expect($booking->fresh()->reminder_sent_at)->not->toBeNull();
 });
 
-test('reminders skip bookings outside the window, confirmed inside it, unconfirmed or already started', function () {
+test('the reminder states the start time in the branch timezone', function () {
+    $shop = Shop::make();
+    $shop->booking('2026-10-05 08:25', attributes: ['confirmed_at' => now()->subDays(2)]);
+
+    app(SendBookingReminders::class)->handle();
+
+    Mail::assertQueued(BookingReminderMail::class, function (BookingReminderMail $mail) {
+        $html = $mail->render();
+
+        return str_contains($html, 'starts at 8:25 AM (Philippine time)');
+    });
+});
+
+test('there is no 24 hour reminder, only one inside 30 minutes of the start', function () {
     $shop = Shop::make(capacity: 9);
-    $shop->booking('2026-10-08 10:00', attributes: ['confirmed_at' => now()->subDays(2)]);            // starts in > 24 h
-    $shop->booking('2026-10-06 07:30', attributes: ['confirmed_at' => now()->subMinutes(10)]);        // confirmed inside the window
-    $shop->booking('2026-10-06 11:00', Booking::PENDING_APPROVAL);                                    // not confirmed
-    $shop->booking('2026-10-06 12:00', Booking::DECLINED);                                            // declined
-    $shop->booking('2026-10-05 07:00', attributes: ['confirmed_at' => now()->subDays(2)]);            // already started
+    $shop->booking('2026-10-06 07:00', attributes: ['confirmed_at' => now()->subDays(2)]);            // 23 hours away
+    $shop->booking('2026-10-05 08:45', attributes: ['confirmed_at' => now()->subDays(2)]);            // 45 minutes away
 
     expect(app(SendBookingReminders::class)->handle())->toBe(0);
     Mail::assertNotQueued(BookingReminderMail::class);
+
+    $this->travel(15)->minutes();     // the 08:45 booking is now exactly 30 minutes away
+    expect(app(SendBookingReminders::class)->handle())->toBe(1);
+    expect(config('rinquo.booking.reminder_minutes_before'))->toBe(30)
+        ->and(config('rinquo.booking.reminder_hours_before'))->toBeNull();
+});
+
+test('reminders skip bookings confirmed inside the window, unconfirmed, no longer scheduled or already started', function () {
+    $shop = Shop::make(capacity: 9);
+    $shop->booking('2026-10-05 08:20', attributes: ['confirmed_at' => now()->subMinutes(10)]);        // confirmed inside the window
+    $shop->booking('2026-10-05 08:15', Booking::PENDING_APPROVAL);                                    // not confirmed
+    $shop->booking('2026-10-05 08:10', Booking::DECLINED);                                            // declined
+    $shop->booking('2026-10-05 08:05', attributes: ['confirmed_at' => now()->subDays(2), 'operational_state' => Booking::CHECKED_IN, 'checked_in_at' => now()]); // arrived
+    $shop->booking('2026-10-04 07:00', attributes: ['confirmed_at' => now()->subDays(2)]);            // already started
+
+    expect(app(SendBookingReminders::class)->handle())->toBe(0);
+    Mail::assertNotQueued(BookingReminderMail::class);
+});
+
+test('expected start equals the booked start', function () {
+    $booking = Shop::make()->booking('2026-10-05 09:00');
+
+    expect($booking->expectedStartAt()->equalTo($booking->scheduled_start_at))->toBeTrue();
+});
+
+test('the reset migration clears only upcoming scheduled confirmed reminders beyond 30 minutes and is idempotent', function () {
+    $shop = Shop::make(capacity: 9);
+    $sent = ['confirmed_at' => now()->subDays(2), 'reminder_sent_at' => now()->subHours(1)];
+    // The migration compares against the database clock, which test time travel does not move.
+    $real = fn (string $modify) => CarbonImmutable::createFromTimestamp(time(), 'Asia/Manila')->modify($modify)->format('Y-m-d H:i');
+    $future = $shop->booking($real('+1 day'), attributes: $sent);
+    $soon = $shop->booking($real('+20 minutes'), attributes: $sent);
+    $started = $shop->booking($real('-1 hour'), attributes: $sent);
+
+    $migration = require base_path('database/migrations/2026_10_16_000001_reset_reminders_sent_under_24h_rule.php');
+    $migration->up();
+    $migration->up();
+
+    expect($future->fresh()->reminder_sent_at)->toBeNull()
+        ->and($soon->fresh()->reminder_sent_at)->not->toBeNull()
+        ->and($started->fresh()->reminder_sent_at)->not->toBeNull();
 });
 
 test('both sweepers are scheduled every minute without overlapping', function () {

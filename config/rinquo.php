@@ -37,8 +37,8 @@ return [
         'hold_decay_minutes' => 10,
         'confirm_per_ip' => (int) env('RINQUO_BOOKING_CONFIRM_PER_IP', 30),
         'confirm_decay_minutes' => 10,
-        // The reminder email goes out this many hours before the start.
-        'reminder_hours_before' => 24,
+        // The single customer reminder goes out this many minutes before the expected start (Decision 213).
+        'reminder_minutes_before' => 30,
     ],
 
     /*
