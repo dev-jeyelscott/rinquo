@@ -30,7 +30,7 @@ function graceOp(Shop $shop, Booking $booking, string $operation, array $data = 
 
 function graceBooking(Shop $shop, string $local, ?int $grace, array $attributes = []): Booking
 {
-    $snapshot = ['slot_interval_minutes' => 15, 'min_notice_minutes' => 60, 'horizon_days' => 30, 'approval_window_minutes' => 120] + ($grace === null ? [] : ['late_arrival_grace_minutes' => $grace]);
+    $snapshot = ['slot_interval_minutes' => 15, 'min_notice_minutes' => 60, 'horizon_days' => 30, 'approval_window_minutes' => 15] + ($grace === null ? [] : ['late_arrival_grace_minutes' => $grace]);
 
     return $shop->booking($local, attributes: $attributes + ['policy_snapshot' => $snapshot]);
 }

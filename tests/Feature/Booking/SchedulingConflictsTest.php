@@ -358,7 +358,7 @@ test('a proposal holds its slot beside the original booking and only notifies th
     $proposal = ConflictProposal::query()->sole();
     expect($proposal->status)->toBe(ConflictProposal::ACTIVE)
         ->and($proposal->proposed_start_at->equalTo(Shop::at('2026-10-05 14:00')))->toBeTrue()
-        ->and($proposal->expires_at->equalTo(Shop::at('2026-10-05 10:00')))->toBeTrue()
+        ->and($proposal->expires_at->equalTo(Shop::at('2026-10-05 08:15')))->toBeTrue()
         ->and($conflict->fresh()->status)->toBe(SchedulingConflict::AWAITING_CUSTOMER)
         // The proposed time is never a confirmed booking.
         ->and(Booking::query()->count())->toBe(1)

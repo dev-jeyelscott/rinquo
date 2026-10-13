@@ -38,7 +38,7 @@ const policy = {
     slotIntervalMinutes: 15,
     minNoticeMinutes: 90,
     horizonDays: 30,
-    approvalWindowMinutes: 120,
+    approvalWindowMinutes: 15,
     lateArrivalGraceMinutes: 15,
 };
 
@@ -71,7 +71,7 @@ describe('Booking policy settings', () => {
         );
 
         expect(screen.getByLabelText(/Approval response window/)).toHaveValue(
-            120,
+            15,
         );
     });
 
@@ -137,7 +137,7 @@ describe('Booking policy settings', () => {
                 slot_interval_minutes: 30,
                 min_notice_minutes: 135,
                 horizon_days: 30,
-                approval_window_minutes: 120,
+                approval_window_minutes: 15,
                 late_arrival_grace_minutes: 15,
             },
         });
@@ -152,7 +152,7 @@ describe('Booking policy settings', () => {
 
         expect(inertia.calls[0].data).toMatchObject({
             approval_mode: 'auto_confirm',
-            approval_window_minutes: 120,
+            approval_window_minutes: 15,
         });
     });
 

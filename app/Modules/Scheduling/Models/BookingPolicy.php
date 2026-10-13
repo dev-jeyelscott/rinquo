@@ -28,6 +28,9 @@ class BookingPolicy extends Model
     /** Locked default grace (Decisions 8, 20): also what a historical snapshot without the key means. */
     public const DEFAULT_LATE_ARRIVAL_GRACE_MINUTES = 15;
 
+    /** Locked default staff-approval response window (Decision 214); mirrors the table default. */
+    public const DEFAULT_APPROVAL_WINDOW_MINUTES = 15;
+
     public const SLOT_INTERVALS = [5, 10, 15, 20, 30, 60];
 
     /** The allowlisted editable values (also the audit and snapshot keys). */

@@ -156,7 +156,7 @@ final class Shop
             'occupied_end_at' => $start->addMinutes($minutes),
             'branch_timezone' => 'Asia/Manila',
             'approval_mode' => 'auto_confirm',
-            'policy_snapshot' => ['slot_interval_minutes' => 15, 'min_notice_minutes' => 60, 'horizon_days' => 30, 'approval_window_minutes' => 120],
+            'policy_snapshot' => ['slot_interval_minutes' => 15, 'min_notice_minutes' => 60, 'horizon_days' => 30, 'approval_window_minutes' => 15],
             'contact_name' => 'Ana Cruz',
             'contact_email' => $customer->email,
             'physical_resource_id' => $resource->id,

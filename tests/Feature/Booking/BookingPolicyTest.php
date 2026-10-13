@@ -34,7 +34,7 @@ test('the owner reads the policy with defaults', function () {
             ->where('policy.slotIntervalMinutes', 15)
             ->where('policy.minNoticeMinutes', 60)
             ->where('policy.horizonDays', 30)
-            ->where('policy.approvalWindowMinutes', 120)
+            ->where('policy.approvalWindowMinutes', 15)
             ->where('policy.lateArrivalGraceMinutes', 15));
 });
 
@@ -50,7 +50,7 @@ test('the owner updates the policy, the change is audited in the same transactio
 
     $event = AuditEvent::query()->where('action', 'booking_policy.updated')->sole();
     expect($event->actor_user_id)->toBe($shop->owner->id)
-        ->and($event->before)->toEqual(['approval_mode' => 'auto_confirm', 'slot_interval_minutes' => 15, 'min_notice_minutes' => 60, 'horizon_days' => 30, 'approval_window_minutes' => 120, 'late_arrival_grace_minutes' => 15])
+        ->and($event->before)->toEqual(['approval_mode' => 'auto_confirm', 'slot_interval_minutes' => 15, 'min_notice_minutes' => 60, 'horizon_days' => 30, 'approval_window_minutes' => 15, 'late_arrival_grace_minutes' => 15])
         ->and($event->after)->toEqual(policyPayload());
 
     // New availability follows the new policy: 30 minute grid.
@@ -61,7 +61,7 @@ test('the owner updates the policy, the change is audited in the same transactio
 
 test('saving an unchanged policy writes no audit event', function () {
     $shop = Shop::make();
-    $current = ['approval_mode' => 'auto_confirm', 'slot_interval_minutes' => 15, 'min_notice_minutes' => 60, 'horizon_days' => 30, 'approval_window_minutes' => 120, 'late_arrival_grace_minutes' => 15];
+    $current = ['approval_mode' => 'auto_confirm', 'slot_interval_minutes' => 15, 'min_notice_minutes' => 60, 'horizon_days' => 30, 'approval_window_minutes' => 15, 'late_arrival_grace_minutes' => 15];
 
     $this->actingAs($shop->owner)->put(route('owner.settings.booking-policy.update', $shop->organization), $current)->assertSessionHasNoErrors();
 
@@ -149,4 +149,26 @@ test('changing the policy never changes existing booking snapshots', function ()
 
     expect(Booking::query()->sole()->getAttributes())->toEqual($before)
         ->and(Booking::query()->sole()->approval_mode)->toBe('auto_confirm');
+});
+
+test('the approval window migration moves only untouched 120 policies to 15 and defaults new rows to 15', function () {
+    $untouched = Shop::make('untouched');
+    $edited = Shop::make('edited');
+    $custom = Shop::make('custom');
+    foreach ([$untouched, $edited, $custom] as $shop) {
+        DB::table('booking_policies')->where('organization_id', $shop->organization->id)->update(['approval_window_minutes' => 120]);
+    }
+    DB::table('booking_policies')->where('organization_id', $custom->organization->id)->update(['approval_window_minutes' => 45]);
+    DB::table('organization_audit_events')->insert([
+        'organization_id' => $edited->organization->id, 'action' => 'booking_policy.updated',
+        'subject_type' => 'booking_policy', 'created_at' => now(),
+    ]);
+
+    $migration = require base_path('database/migrations/2026_10_16_000002_default_approval_window_to_15_minutes.php');
+    $migration->up();
+    $migration->up();
+
+    $window = fn (Shop $shop) => DB::table('booking_policies')->where('organization_id', $shop->organization->id)->value('approval_window_minutes');
+    expect($window($untouched))->toBe(15)->and($window($edited))->toBe(120)->and($window($custom))->toBe(45);
+    expect(DB::selectOne("select column_default from information_schema.columns where table_name = 'booking_policies' and column_name = 'approval_window_minutes'")->column_default)->toBe('15');
 });

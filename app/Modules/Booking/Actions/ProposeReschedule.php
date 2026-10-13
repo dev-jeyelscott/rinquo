@@ -12,6 +12,7 @@ use App\Modules\Booking\Models\SchedulingConflict;
 use App\Modules\Booking\Support\BookingIntake;
 use App\Modules\Booking\Support\BookingNotifier;
 use App\Modules\Identity\Models\User;
+use App\Modules\Scheduling\Models\BookingPolicy;
 use App\Modules\Tenancy\Actions\AuditTrail;
 use App\Modules\Tenancy\Models\Organization;
 use Carbon\CarbonImmutable;
@@ -70,7 +71,7 @@ final class ProposeReschedule
             if ($assignment === null) {
                 throw ValidationException::withMessages(['start_at' => 'That time is no longer available.']);
             }
-            $deadline = $now->addMinutes((int) ($booking->policy_snapshot['approval_window_minutes'] ?? 120))->min($booking->scheduled_start_at);
+            $deadline = $now->addMinutes((int) ($booking->policy_snapshot['approval_window_minutes'] ?? BookingPolicy::DEFAULT_APPROVAL_WINDOW_MINUTES))->min($booking->scheduled_start_at);
             if ($deadline <= $now->addMinutes(5)) {
                 throw ValidationException::withMessages(['start_at' => 'The appointment is too close to give the customer time to respond. Contact them directly.']);
             }

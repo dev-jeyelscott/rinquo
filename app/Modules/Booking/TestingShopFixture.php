@@ -174,7 +174,7 @@ final class TestingShopFixture
             'variant_price_centavos' => 35000, 'variant_duration_minutes' => 60, 'buffer_minutes' => 10, 'add_ons_price_centavos' => 0, 'add_ons_duration_minutes' => 0, 'total_price_centavos' => 35000,
             'resource_type_id' => $type->getKey(), 'resource_type_name' => 'Wash bay', 'consumption_units' => 1,
             'scheduled_start_at' => $start, 'service_end_at' => $start->addMinutes(60), 'occupied_end_at' => $start->addMinutes(70), 'branch_timezone' => 'Asia/Manila',
-            'approval_mode' => 'auto_confirm', 'policy_snapshot' => ['slot_interval_minutes' => 15, 'min_notice_minutes' => 60, 'horizon_days' => 30, 'approval_window_minutes' => 120, 'late_arrival_grace_minutes' => 15],
+            'approval_mode' => 'auto_confirm', 'policy_snapshot' => ['slot_interval_minutes' => 15, 'min_notice_minutes' => 60, 'horizon_days' => 30, 'approval_window_minutes' => 15, 'late_arrival_grace_minutes' => 15],
             'contact_name' => $name, 'contact_email' => $customer->email, 'physical_resource_id' => $resource->id, 'confirmed_at' => now(),
         ])->save();
 
