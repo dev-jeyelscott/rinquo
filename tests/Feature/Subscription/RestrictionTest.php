@@ -62,6 +62,26 @@ test('an organization in trial, paid and grace takes bookings; restriction begin
     Journey::placeHold($shop, '2026-10-06 14:00')->assertNotFound();
 });
 
+test('an unpaid trial restricts every new-work gate at its exact end while cancellation and existing work continue (Decision 100)', function () {
+    $shop = Shop::make();
+    $booking = $shop->booking('2026-10-06 10:00');
+    $trialEnds = now()->addMinutes(30);
+    Billing::set($shop->organization, $trialEnds, null, $trialEnds->addDays(3));
+
+    Journey::placeHold($shop, '2026-10-06 12:00')->assertSessionHasNoErrors();
+    staffWalkIn($shop)->assertSessionHasNoErrors();
+
+    $this->travelTo($trialEnds);
+
+    Journey::placeHold($shop, '2026-10-06 14:00')->assertNotFound();
+    $this->get(route('bookings.wizard', 'shine'))->assertNotFound();
+    staffWalkIn($shop)->assertSessionHasErrors('access');
+    $this->actingAs($shop->owner)->get(route('owner.settings.billing', $shop->organization))->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('entitlement.state', 'restricted')->where('entitlement.graceEndsAt', null));
+    customerCancel($booking)->assertSessionHasNoErrors();
+    expect($booking->fresh()->status)->toBe(Booking::CANCELLED);
+});
+
 test('a restricted shop keeps its public page but reports unavailable and takes no holds or wizard visits', function () {
     $shop = Shop::make();
     Billing::restrict($shop->organization);
@@ -110,7 +130,7 @@ test('the shared intake gate rejects a restricted shop with a specific error und
     Billing::restrict($shop->organization);
 
     expect(fn () => app(PlaceHold::class)->handle(
-        $shop->organization, (string) Str::uuid(), $shop->records->vehicle->id, $shop->records->service->id, [], Shop::at('2026-10-06 10:00'), Str::random(40),
+        $shop->organization, (string) Str::uuid(), $shop->records->vehicle->id, $shop->records->service->id, [], Shop::at('2026-10-06 10:00'), Str::random(40), 'Toyota Vios',
     ))->toThrow(ValidationException::class, 'not taking new bookings');
 });
 

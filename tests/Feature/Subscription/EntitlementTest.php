@@ -5,6 +5,7 @@ use App\Modules\Subscription\Access\OrganizationAccess;
 use App\Modules\Subscription\Models\Subscription;
 use App\Modules\Subscription\Support\PaidThrough;
 use App\Modules\Subscription\Support\PlanTerms;
+use App\Modules\Tenancy\Models\Organization;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Tests\Support\Billing;
@@ -15,7 +16,7 @@ function manila(string $local): CarbonImmutable
     return CarbonImmutable::parse($local, 'Asia/Manila')->utc();
 }
 
-test('a new organization starts a trial snapshot with its first grace end', function () {
+test('a new organization starts a trial snapshot with an inert grace instant', function () {
     // The locked defaults (Decision 105): a 14-day trial and a 3-day grace, whatever a developer's .env sets.
     config(['rinquo.subscription.trial_days' => 14, 'rinquo.subscription.grace_days' => 3]);
     $this->travelTo(manila('2026-10-05 08:00'));
@@ -48,6 +49,60 @@ test('state is derived from instants and changes exactly at each boundary', func
         ->and($at($paidUntil))->toBe(OrganizationAccess::GRACE)
         ->and($at($graceEnds->subSecond()))->toBe(OrganizationAccess::GRACE)
         ->and($at($graceEnds))->toBe(OrganizationAccess::RESTRICTED);
+});
+
+test('an unpaid trial is restricted at its exact end and never enters grace (Decision 100)', function () {
+    [, $organization] = Tenant::organization();
+    $trialEnds = manila('2026-10-10 12:00');
+    // A persisted row whose stored grace instant is still in the future must not grant grace.
+    $subscription = Billing::set($organization, $trialEnds, null, $trialEnds->addDays(3));
+    $at = fn (CarbonImmutable $instant): string => AccessResolver::entitlementAt($subscription, $instant);
+    $resolver = app(AccessResolver::class);
+
+    expect($at($trialEnds->subSecond()))->toBe(OrganizationAccess::TRIAL)
+        ->and($at($trialEnds))->toBe(OrganizationAccess::RESTRICTED)
+        ->and($at($trialEnds->addDay()))->toBe(OrganizationAccess::RESTRICTED)
+        ->and($resolver->for($organization, $trialEnds->subSecond())->acceptsNewBookings())->toBeTrue()
+        ->and($resolver->for($organization, $trialEnds)->acceptsNewBookings())->toBeFalse()
+        ->and($resolver->for($organization, $trialEnds)->allowsExistingOperations())->toBeTrue()
+        ->and($resolver->for($organization, $trialEnds)->allowsCustomerCancellation())->toBeTrue()
+        ->and($resolver->for($organization, $trialEnds->subSecond())->graceEndsAt)->toBeNull()
+        ->and($resolver->for($organization, $trialEnds)->graceEndsAt)->toBeNull();
+});
+
+test('a paid period still gets grace and exposes its grace end', function () {
+    [, $organization] = Tenant::organization();
+    $paidUntil = manila('2026-11-10 12:00');
+    $graceEnds = manila('2026-11-13 12:00');
+    Billing::set($organization, manila('2026-10-10 12:00'), $paidUntil, $graceEnds);
+
+    $access = app(AccessResolver::class)->for($organization, $paidUntil);
+
+    expect($access->entitlement)->toBe(OrganizationAccess::GRACE)
+        ->and($access->graceEndsAt?->equalTo($graceEnds))->toBeTrue();
+});
+
+test('the directory scope agrees with entitlementAt across the instant matrix', function () {
+    [, $organization] = Tenant::organization();
+    $resolver = app(AccessResolver::class);
+    $trialEnds = manila('2026-10-10 12:00');
+    $paidUntil = manila('2026-11-10 12:00');
+    $graceEnds = manila('2026-11-13 12:00');
+
+    $cases = [
+        'unpaid' => [null, $trialEnds->addDays(3), [$trialEnds->subSecond(), $trialEnds, $trialEnds->addDay(), $trialEnds->addDays(3)]],
+        'paid' => [$paidUntil, $graceEnds, [$trialEnds, $paidUntil->subSecond(), $paidUntil, $graceEnds->subSecond(), $graceEnds]],
+    ];
+
+    foreach ($cases as [$paid, $grace, $instants]) {
+        $subscription = Billing::set($organization, $trialEnds, $paid, $grace);
+        foreach ($instants as $instant) {
+            $expected = AccessResolver::entitlementAt($subscription, $instant) !== OrganizationAccess::RESTRICTED;
+            $listed = $resolver->scopeAcceptingNewBookings(Organization::query()->whereKey($organization->id), $instant)->exists();
+
+            expect($listed)->toBe($expected, "{$instant->toIso8601String()} paid=".($paid === null ? 'no' : 'yes'));
+        }
+    }
 });
 
 test('grace stays bookable until its exact end and restriction keeps existing operations', function () {

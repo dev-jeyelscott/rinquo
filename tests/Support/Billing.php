@@ -33,12 +33,15 @@ final class Billing
         return $subscription->fresh();
     }
 
-    /** The trial and grace both ended: restricted from the given instant on. */
-    public static function restrict(Organization $organization, ?CarbonImmutable $graceEnds = null): Subscription
+    /**
+     * An unpaid trial that ended at the given instant: restricted from then on (Decision 100). The stored
+     * grace instant must still satisfy the table constraint, but it is inert without a paid period.
+     */
+    public static function restrict(Organization $organization, ?CarbonImmutable $endedAt = null): Subscription
     {
-        $graceEnds ??= CarbonImmutable::now()->subMinute();
+        $endedAt ??= CarbonImmutable::now()->subMinute();
 
-        return self::set($organization, $graceEnds->subDays(7), null, $graceEnds);
+        return self::set($organization, $endedAt, null, $endedAt->addDays(3));
     }
 
     /** @return array<string, mixed> */

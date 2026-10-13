@@ -28,18 +28,22 @@ final class AccessResolver
             $at,
             $subscription?->trial_ends_at,
             $subscription?->paid_until,
-            $subscription?->grace_ends_at,
+            // Grace exists only after a paid period (Decision 105); an unpaid trial has none to advertise.
+            $subscription?->paid_until === null ? null : $subscription->grace_ends_at,
             $closure,
         );
     }
 
-    /** Grace is writable up to its exact end instant; restriction begins at that boundary. */
+    /**
+     * An unpaid trial restricts at its exact end (Decision 100). Grace follows a
+     * paid period only (Decision 105) and is writable up to its exact end instant.
+     */
     public static function entitlementAt(Subscription $subscription, CarbonImmutable $at): string
     {
         return match (true) {
             $at < $subscription->trial_ends_at => OrganizationAccess::TRIAL,
             $subscription->paid_until !== null && $at < $subscription->paid_until => OrganizationAccess::PAID,
-            $at < $subscription->grace_ends_at => OrganizationAccess::GRACE,
+            $subscription->paid_until !== null && $at < $subscription->grace_ends_at => OrganizationAccess::GRACE,
             default => OrganizationAccess::RESTRICTED,
         };
     }
@@ -57,7 +61,10 @@ final class AccessResolver
 
         return $query
             ->whereExists(fn ($sub) => $sub->selectRaw('1')->from('subscriptions')
-                ->whereColumn('subscriptions.organization_id', 'organizations.id')->where('subscriptions.grace_ends_at', '>', $at))
+                ->whereColumn('subscriptions.organization_id', 'organizations.id')
+                // Mirrors entitlementAt(): trial, or a paid period still inside paid access or grace.
+                ->where(fn ($open) => $open->where('subscriptions.trial_ends_at', '>', $at)
+                    ->orWhere(fn ($paid) => $paid->whereNotNull('subscriptions.paid_until')->where('subscriptions.grace_ends_at', '>', $at))))
             ->whereNotExists(fn ($closure) => $closure->selectRaw('1')->from('organization_closures')
                 ->whereColumn('organization_closures.organization_id', 'organizations.id')->whereNull('organization_closures.recovered_at'));
     }

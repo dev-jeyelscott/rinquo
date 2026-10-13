@@ -140,7 +140,7 @@ final class TestingShopFixture
     private static function applyEntitlement(Organization $organization, User $owner, ?string $entitlement): void
     {
         if ($entitlement === 'restricted') {
-            Subscription::query()->where('organization_id', $organization->id)->update(['trial_ends_at' => now()->subDays(10), 'grace_ends_at' => now()->subDay()]);
+            Subscription::query()->where('organization_id', $organization->id)->update(['trial_ends_at' => now()->subDays(10), 'paid_until' => null, 'grace_ends_at' => now()->subDay()]);
         }
 
         if ($entitlement === 'closed') {

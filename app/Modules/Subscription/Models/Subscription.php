@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $organization_id
  * @property CarbonImmutable $trial_ends_at
  * @property ?CarbonImmutable $paid_until
- * @property CarbonImmutable $grace_ends_at
+ * @property CarbonImmutable $grace_ends_at Meaningful only once paid_until is set; never read as a gate for an unpaid trial.
  */
 class Subscription extends Model
 {
