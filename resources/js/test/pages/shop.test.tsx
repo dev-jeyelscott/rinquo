@@ -120,6 +120,9 @@ describe('Public shop page', () => {
         );
 
         expect(screen.getByRole('status')).toHaveTextContent(
+            'New bookings temporarily unavailable',
+        );
+        expect(screen.getByRole('status')).toHaveTextContent(
             'not taking new bookings right now',
         );
         expect(screen.getByRole('status')).toHaveTextContent(
@@ -128,6 +131,18 @@ describe('Public shop page', () => {
         expect(
             screen.queryByRole('link', { name: /book now|select/i }),
         ).not.toBeInTheDocument();
+    });
+
+    it('replaces the open-now chip with a paused chip while a restriction pauses bookings', () => {
+        inertia.props = {
+            ...props,
+            bookingAvailable: false,
+            bookingUnavailableReason: 'Paused.',
+        };
+        render(<TenantShopShell>content</TenantShopShell>);
+
+        expect(screen.getByText('Bookings paused')).toBeInTheDocument();
+        expect(screen.queryByText('Open now')).not.toBeInTheDocument();
     });
 
     it('falls back gracefully without a hero photo or a phone number', () => {

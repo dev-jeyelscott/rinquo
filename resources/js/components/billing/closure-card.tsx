@@ -1,5 +1,5 @@
 import { useForm } from '@inertiajs/react';
-import { LockIcon } from 'lucide-react';
+import { CircleAlertIcon, LockIcon } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { TextField } from '@/components/owner/form-field';
@@ -55,6 +55,21 @@ export function ClosureCard({
                 className="border-destructive/40"
             >
                 <div className="grid gap-4">
+                    <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                        Danger zone
+                    </p>
+                    <Alert className={ALERT_TONES.warning} role="note">
+                        <CircleAlertIcon aria-hidden="true" />
+                        <AlertTitle>
+                            Closure is separate from renewal
+                        </AlertTitle>
+                        <AlertDescription>
+                            <p className="max-w-[65ch]">
+                                Stopping payments does not close the shop.
+                                Closure requires your explicit request.
+                            </p>
+                        </AlertDescription>
+                    </Alert>
                     <p className="max-w-[65ch] text-sm text-muted-foreground">
                         If you simply stop paying, your shop is restricted but
                         nothing is ever closed or deleted. Closing stops new
@@ -107,8 +122,9 @@ export function ClosureCard({
                             <p className="max-w-[65ch]">
                                 It ended on{' '}
                                 {formatDate(closure.recoverableUntil, timezone)}
-                                . Rinquo Platform Operations now handles
-                                retention. Nothing has been deleted
+                                . Self-service recovery is no longer available;
+                                contact Rinquo Platform Operations. They now
+                                handle retention. Nothing has been deleted
                                 automatically, and existing bookings stay open.
                             </p>
                         </AlertDescription>
@@ -160,6 +176,9 @@ function CloseDialog({
             <DialogContent>
                 <form onSubmit={submit} className="grid gap-4" noValidate>
                     <DialogHeader>
+                        <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                            Confirm action
+                        </p>
                         <DialogTitle>Close {organizationName}?</DialogTitle>
                         <DialogDescription>
                             New bookings and configuration changes stop
@@ -190,6 +209,7 @@ function CloseDialog({
                         <Button
                             type="button"
                             variant="outline"
+                            className="max-sm:h-11"
                             onClick={() => setOpen(false)}
                         >
                             Keep organization open
@@ -197,6 +217,7 @@ function CloseDialog({
                         <Button
                             type="submit"
                             variant="destructive"
+                            className="max-sm:h-11"
                             disabled={!matches || form.processing}
                             aria-busy={form.processing}
                         >

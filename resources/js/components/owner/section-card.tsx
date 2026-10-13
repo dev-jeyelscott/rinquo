@@ -15,6 +15,8 @@ type Props = Omit<ComponentProps<typeof Card>, 'title'> & {
     badge?: ReactNode;
     /** Heading level of the title; use h3 when the card sits under an h2 section. */
     headingLevel?: 'h2' | 'h3';
+    /** Id for the title heading, so the card can be named through aria-labelledby. */
+    titleId?: string;
     /** Omit the body wrapper when the card only has a header. */
     children?: ReactNode;
     contentClassName?: string;
@@ -30,6 +32,7 @@ export function SectionCard({
     description,
     badge,
     headingLevel = 'h2',
+    titleId,
     children,
     className,
     contentClassName,
@@ -44,7 +47,10 @@ export function SectionCard({
         >
             <CardHeader>
                 <CardTitle className="flex flex-wrap items-center gap-2 leading-snug">
-                    <Heading className="text-xl font-semibold tracking-tight">
+                    <Heading
+                        id={titleId}
+                        className="text-xl font-semibold tracking-tight"
+                    >
                         {title}
                     </Heading>
                     {badge}

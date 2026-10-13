@@ -65,7 +65,7 @@ describe('Entitlement banner in the Owner shell', () => {
         shell({ state: 'grace', graceEndsAt: '2026-11-26T00:00:00Z' });
 
         expect(
-            screen.getByText('Your paid period has ended'),
+            screen.getByText('Paid period ended: grace active'),
         ).toBeInTheDocument();
         expect(screen.getByText(/November 26, 2026/)).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Renew now' })).toHaveAttribute(
@@ -81,12 +81,10 @@ describe('Entitlement banner in the Owner shell', () => {
             allowsConfigurationWrites: false,
         });
 
-        expect(
-            screen.getByText('Your subscription has ended'),
-        ).toBeInTheDocument();
+        expect(screen.getByText('New bookings paused')).toBeInTheDocument();
         expect(
             screen.getByText(
-                /Existing bookings, check-in, completion and customer cancellations still work/,
+                /Continue checking in, servicing and completing existing bookings/,
             ),
         ).toBeInTheDocument();
         expect(
@@ -94,12 +92,27 @@ describe('Entitlement banner in the Owner shell', () => {
         ).toBeInTheDocument();
     });
 
-    it('does not repeat the renewal link on the billing page itself', () => {
+    it('says an unpaid trial ended and shows no grace date', () => {
+        shell({
+            state: 'restricted',
+            paidUntil: null,
+            graceEndsAt: null,
+            trialEndsAt: '2026-10-19T00:00:00Z',
+            acceptsNewBookings: false,
+        });
+
+        expect(
+            screen.getByText(/Your free trial ended on October 19, 2026/),
+        ).toBeInTheDocument();
+        expect(screen.queryByText(/grace/i)).not.toBeInTheDocument();
+    });
+
+    it('leaves the banner to the billing page itself, which owns its state banner', () => {
         shell({ state: 'restricted' }, BILLING_URL);
 
         expect(
-            screen.getByText('Your subscription has ended'),
-        ).toBeInTheDocument();
+            screen.queryByText('New bookings paused'),
+        ).not.toBeInTheDocument();
         expect(
             screen.queryByRole('link', { name: 'Renew now' }),
         ).not.toBeInTheDocument();

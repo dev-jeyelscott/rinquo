@@ -38,7 +38,12 @@ const urls: BillingUrls = {
     recover: '/owner/organizations/1/settings/closure/recover',
 };
 const billing: BillingPageData = {
-    plan: { amountCentavos: 99900, currency: 'PHP', requestLifetimeHours: 24 },
+    plan: {
+        amountCentavos: 99900,
+        currency: 'PHP',
+        requestLifetimeHours: 24,
+        graceDays: 3,
+    },
     billingAvailable: true,
     request: null,
     lastRequestExpiredAt: null,
@@ -116,28 +121,77 @@ describe('Billing page', () => {
         renderBilling({ entitlement: { state: 'trial', paidUntil: null } });
 
         expect(screen.getByText('Free trial')).toBeInTheDocument();
-        expect(screen.getByText(/₱999 per month/)).toBeInTheDocument();
-        expect(screen.getByText('Trial ends')).toBeInTheDocument();
-        expect(screen.getByText('Paid through').nextSibling).toHaveTextContent(
-            'Not set',
-        );
+        expect(screen.getByText('₱999')).toBeInTheDocument();
+        expect(screen.getByText('Trial')).toBeInTheDocument();
+        expect(
+            screen.getByText('Next important date').nextSibling,
+        ).toHaveTextContent('Trial ends Oct 19, 2026');
         expect(
             screen.getByText(/starts when the trial ends/),
         ).toBeInTheDocument();
+        expect(
+            screen.getByRole('link', { name: 'Start payment' }),
+        ).toHaveAttribute('href', '#renewal');
+        expect(screen.getByText('3 days (paid only)')).toBeInTheDocument();
     });
 
     it.each([
         ['paid', /paid through/i],
-        ['grace', /grace period/i],
-        ['restricted', /new bookings and configuration changes are paused/i],
+        ['grace', /grace active/i],
+        ['restricted', /new bookings and configuration writes are paused/i],
     ] as const)('explains the %s state truthfully', (state, text) => {
         renderBilling({ entitlement: { state } });
 
         expect(screen.getAllByText(text).length).toBeGreaterThan(0);
     });
 
-    it('offers one primary action to generate a QR, labelled while the provider works', () => {
+    it('shows only the plan-card action until a renewal is started, then reveals the named renewal region', () => {
         renderBilling();
+
+        expect(
+            screen.queryByRole('button', { name: 'Generate renewal QR' }),
+        ).not.toBeInTheDocument();
+        expect(
+            screen.queryByRole('region', { name: 'Renewal payment' }),
+        ).not.toBeInTheDocument();
+
+        fireEvent.click(
+            screen.getByRole('link', { name: 'View renewal options' }),
+        );
+
+        expect(
+            screen.getByRole('region', { name: 'Renewal payment' }),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole('button', { name: 'Generate renewal QR' }),
+        ).toBeInTheDocument();
+    });
+
+    it('does not announce a provider error twice', () => {
+        renderBilling({
+            billing: {
+                request: openRequest({
+                    qrImage: null,
+                    qrExpiresAt: null,
+                    providerError: true,
+                }),
+            },
+        });
+
+        expect(
+            screen.queryByText('The QR code could not be prepared'),
+        ).not.toBeInTheDocument();
+        expect(
+            screen.getByText('We could not prepare a QR code'),
+        ).toBeInTheDocument();
+    });
+
+    it('offers one primary action to generate a QR, labelled while the provider works', () => {
+        renderBilling({
+            billing: {
+                request: openRequest({ qrImage: null, qrExpiresAt: null }),
+            },
+        });
         fireEvent.click(
             screen.getByRole('button', { name: 'Generate renewal QR' }),
         );
@@ -156,10 +210,17 @@ describe('Billing page', () => {
         ).toBeInTheDocument();
         expect(screen.getByRole('timer')).toHaveTextContent('30:00');
         expect(
-            screen.queryByRole('button', { name: /refresh|generate/i }),
+            screen.queryByRole('button', { name: /refresh QR|generate/i }),
         ).not.toBeInTheDocument();
-        expect(screen.getByText(/Waiting for payment/)).toBeInTheDocument();
-        expect(screen.getByText(/Do not pay twice/)).toBeInTheDocument();
+        expect(screen.getByText('QR Ph payment is ready')).toBeInTheDocument();
+        expect(
+            screen.getAllByText(/Waiting for verified payment/).length,
+        ).toBeGreaterThan(0);
+        expect(screen.getAllByText(/Do not pay twice/).length).toBeGreaterThan(
+            0,
+        );
+        // Never a success claim from a QR alone.
+        expect(screen.queryByText(/payment received/i)).not.toBeInTheDocument();
     });
 
     it('polls the server for the confirmed outcome while a request is open', () => {
@@ -221,7 +282,12 @@ describe('Billing page', () => {
         });
 
         expect(screen.getByText(/without a payment/)).toBeInTheDocument();
-        expect(screen.getByText(/Nothing was charged/)).toBeInTheDocument();
+        expect(
+            screen.getAllByText(/Nothing was charged/).length,
+        ).toBeGreaterThan(0);
+        expect(
+            screen.getByRole('button', { name: 'Generate new request' }),
+        ).toBeEnabled();
     });
 
     it('fails closed with an honest message when the provider is not configured', () => {
@@ -233,7 +299,7 @@ describe('Billing page', () => {
         expect(
             screen.getByRole('button', { name: 'Generate renewal QR' }),
         ).toBeDisabled();
-        expect(screen.getByText('Plan and access')).toBeInTheDocument();
+        expect(screen.getByText('Current plan & access')).toBeInTheDocument();
     });
 
     it('keeps the confirmed payment as a durable result with a continuation', () => {
@@ -266,7 +332,7 @@ describe('Billing page', () => {
         expect(
             screen.getByText('The payment provider is not responding.'),
         ).toBeInTheDocument();
-        expect(screen.getByText('Plan and access')).toBeInTheDocument();
+        expect(screen.getByText('Current plan & access')).toBeInTheDocument();
     });
 
     it('explains the renewal request lifetime on screen', () => {
@@ -370,10 +436,227 @@ describe('Closure section', () => {
             screen.queryByRole('button', { name: 'Recover organization' }),
         ).not.toBeInTheDocument();
         expect(
-            screen.getByText(/Platform Operations now handles retention/),
+            screen.getByText(/contact Rinquo Platform Operations/),
         ).toBeInTheDocument();
         expect(
             screen.getByText(/Nothing has been deleted automatically/),
+        ).toBeInTheDocument();
+    });
+});
+
+describe('Billing states from the approved Spec 07 references', () => {
+    beforeEach(() => {
+        vi.useFakeTimers({
+            toFake: [
+                'Date',
+                'setInterval',
+                'clearInterval',
+                'setTimeout',
+                'clearTimeout',
+            ],
+        });
+        vi.setSystemTime(NOW);
+    });
+    afterEach(() => {
+        vi.useRealTimers();
+        Object.defineProperty(document, 'hidden', {
+            value: false,
+            configurable: true,
+        });
+    });
+
+    it('treats an unpaid trial that ended as restricted, never as grace', () => {
+        renderBilling({
+            entitlement: {
+                state: 'restricted',
+                acceptsNewBookings: false,
+                allowsConfigurationWrites: false,
+                trialEndsAt: '2026-10-04T00:00:00Z',
+                paidUntil: null,
+                graceEndsAt: null,
+            },
+        });
+
+        expect(screen.getByText('Subscription restricted')).toBeInTheDocument();
+        expect(
+            screen.getByText(/Your free trial ended on October 4, 2026/),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText('Next important date').nextSibling,
+        ).toHaveTextContent('Trial ended Oct 4, 2026');
+        expect(
+            screen.getByRole('link', { name: 'Renew using QR Ph' }),
+        ).toHaveAttribute('href', '#renewal');
+        expect(
+            screen.queryByText(/grace/i, { selector: 'dd, h2, h3' }),
+        ).not.toBeInTheDocument();
+        expect(screen.getAllByText('Restricted').length).toBeGreaterThan(0);
+    });
+
+    it('shows grace for a paid period only, with its exact deadline and the guarantees', () => {
+        renderBilling({
+            entitlement: {
+                state: 'grace',
+                paidUntil: '2026-10-04T00:00:00Z',
+                graceEndsAt: '2026-10-07T00:00:00Z',
+            },
+        });
+
+        expect(
+            screen.getByText('Paid period ended: grace active'),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText('Grace ends Oct 7, 2026, 8:00 AM'),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole('link', { name: 'Renew now' }),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText('Early renewal extends the paid-through date'),
+        ).toBeInTheDocument();
+    });
+
+    it('warns about an upcoming renewal inside seven days', () => {
+        renderBilling({
+            entitlement: {
+                state: 'paid',
+                trialEndsAt: '2026-09-20T00:00:00Z',
+                paidUntil: '2026-10-08T00:00:00Z',
+            },
+        });
+
+        expect(screen.getByText('Renewal coming up')).toBeInTheDocument();
+        expect(screen.getByText('Renewal due in 3 days')).toBeInTheDocument();
+        expect(
+            screen.getByRole('link', { name: 'Renew with QR Ph' }),
+        ).toBeInTheDocument();
+    });
+
+    it('offers to generate a QR for an open request that has none yet, without calling it expired', () => {
+        renderBilling({
+            billing: {
+                request: openRequest({ qrImage: null, qrExpiresAt: null }),
+            },
+        });
+
+        expect(
+            screen.getByText(/Your renewal request is ready/),
+        ).toBeInTheDocument();
+        expect(screen.queryByText(/has expired/)).not.toBeInTheDocument();
+        expect(
+            screen.getByRole('button', { name: 'Generate renewal QR' }),
+        ).toBeEnabled();
+    });
+
+    it('lists what is and is not established while a request is open, and never claims payment', () => {
+        renderBilling({ billing: { request: openRequest() } });
+        const steps = screen.getByRole('list', { name: 'Payment progress' });
+
+        expect(within(steps).getByText('Request created')).toBeInTheDocument();
+        expect(
+            within(steps).getByText('Provider confirmation pending'),
+        ).toBeInTheDocument();
+        expect(
+            within(steps).getByText('Entitlement updated'),
+        ).toBeInTheDocument();
+        expect(screen.queryByText(/payment received/i)).not.toBeInTheDocument();
+    });
+
+    it('shows the verified result with one continuation once the server records the payment', () => {
+        renderBilling({
+            billing: {
+                lastPayment: {
+                    amountCentavos: 99900,
+                    paidAt: '2026-10-04T23:00:00Z',
+                    paidUntil: '2026-11-19T00:00:00Z',
+                },
+            },
+        });
+
+        expect(
+            screen.getByText('Payment received and verified'),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole('link', { name: 'Return to operations' }),
+        ).toHaveAttribute('href', '/owner/organizations/1/operations');
+    });
+
+    it('does not poll while the tab is hidden and never overlaps visits', () => {
+        renderBilling({ billing: { request: openRequest() } });
+        Object.defineProperty(document, 'hidden', {
+            value: true,
+            configurable: true,
+        });
+        act(() => {
+            vi.advanceTimersByTime(5000);
+        });
+        expect(
+            inertia.calls.filter((call) => call.method === 'get'),
+        ).toHaveLength(0);
+
+        Object.defineProperty(document, 'hidden', {
+            value: false,
+            configurable: true,
+        });
+        inertia.nextGet = 'pending';
+        act(() => {
+            vi.advanceTimersByTime(5000);
+        });
+        act(() => {
+            vi.advanceTimersByTime(5000);
+        });
+        expect(
+            inertia.calls.filter((call) => call.method === 'get'),
+        ).toHaveLength(1);
+        expect(
+            screen.getByRole('button', { name: 'Refresh status' }),
+        ).toBeDisabled();
+    });
+
+    it('stops polling and says payment status is unknown while offline', () => {
+        const online = vi
+            .spyOn(navigator, 'onLine', 'get')
+            .mockReturnValue(false);
+        renderBilling({ billing: { request: openRequest() } });
+        act(() => {
+            vi.advanceTimersByTime(10000);
+        });
+
+        expect(
+            inertia.calls.filter((call) => call.method === 'get'),
+        ).toHaveLength(0);
+        expect(screen.getByText(/You are offline/)).toBeInTheDocument();
+        expect(
+            screen.getByText('Payment status unavailable'),
+        ).toBeInTheDocument();
+        online.mockRestore();
+    });
+
+    it('hides renewal controls when the organization is closed and keeps recovery as the one action', () => {
+        renderBilling({
+            entitlement: {
+                closed: true,
+                acceptsNewBookings: false,
+                closure: {
+                    state: 'recoverable',
+                    requestedAt: '2026-10-01T00:00:00Z',
+                    recoverableUntil: '2026-12-30T00:00:00Z',
+                    deletionEligibleAt: null,
+                },
+            },
+        });
+
+        expect(
+            screen.queryByRole('button', { name: 'Generate renewal QR' }),
+        ).not.toBeInTheDocument();
+        expect(
+            screen.getByRole('button', { name: 'Recover organization' }),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText(
+                'Recovery restores only the subscription access currently valid.',
+                { selector: 'p' },
+            ),
         ).toBeInTheDocument();
     });
 });

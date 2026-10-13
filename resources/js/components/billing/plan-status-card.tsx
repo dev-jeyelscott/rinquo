@@ -1,75 +1,117 @@
-import { StatusChip } from '@/components/owner/status-chip';
+import type { MouseEvent } from 'react';
 import { SectionCard } from '@/components/owner/section-card';
-import {
-    accessEndsAt,
-    formatDateTime,
-    STATE_LABEL,
-    STATE_TONE,
-} from '@/lib/billing';
-import { formatCentavos } from '@/lib/money';
-import type { BillingPageData } from '@/types/billing';
-import type { Entitlement } from '@/types/owner';
+import { StatusChip } from '@/components/owner/status-chip';
+import { buttonVariants } from '@/components/ui/button';
+import { formatDateTime } from '@/lib/billing';
+import type { BillingView } from '@/lib/billing-view';
+import { cn } from '@/lib/utils';
 
 type Props = {
-    entitlement: Entitlement;
-    plan: BillingPageData['plan'];
+    view: BillingView;
+    organizationName: string;
+    operationsUrl: string;
     timezone: string;
+    /** Mounts the renewal section when the scene does not show it until asked. */
+    onRenewal?: () => void;
 };
 
-function explanation(entitlement: Entitlement, timezone: string): string {
-    const at = (iso: string | null) =>
-        iso ? formatDateTime(iso, timezone) : '';
+const ACTION_CLASS = cn(buttonVariants(), 'w-full max-sm:h-11');
 
-    switch (entitlement.state) {
-        case 'trial':
-            return `Your free trial runs until ${at(entitlement.trialEndsAt)}. A payment made now buys one month that starts when the trial ends, so nothing is lost by paying early.`;
-        case 'paid':
-            return `Access is paid through ${at(entitlement.paidUntil)}. Paying again before then adds a month to that date.`;
-        case 'grace':
-            return `Your paid period ended. The shop keeps working during the grace period, which ends ${at(entitlement.graceEndsAt)}.`;
-        default:
-            return `Restriction began ${at(entitlement.graceEndsAt)}. New bookings and configuration changes are paused; existing bookings are unaffected. A month paid now starts when the payment is confirmed.`;
-    }
+/** Moves keyboard focus and the viewport to the renewal section instead of adding a second set of request controls. */
+function goToRenewal(event: MouseEvent<HTMLAnchorElement>, reveal: () => void) {
+    event.preventDefault();
+    reveal();
+    // The section may mount on this click; wait for it before moving focus.
+    window.requestAnimationFrame(() => {
+        const target = document.getElementById('renewal');
+        target?.scrollIntoView({ block: 'start' });
+        target?.focus({ preventScroll: true });
+    });
 }
 
-/** The current entitlement: state, plan price and the exact instants it is derived from. */
-export function PlanStatusCard({ entitlement, plan, timezone }: Props) {
-    const accessEnds = accessEndsAt(
-        entitlement.trialEndsAt,
-        entitlement.paidUntil,
-    );
-    const rows: { label: string; value: string | null }[] = [
-        { label: 'Trial ends', value: entitlement.trialEndsAt },
-        { label: 'Paid through', value: entitlement.paidUntil },
-        { label: 'Access ends', value: accessEnds },
-        { label: 'New bookings pause', value: entitlement.graceEndsAt },
-    ];
-
+/**
+ * Current plan and access (Spec 07 references 01-03, 10-12): the state word or
+ * price as the hero, the one date that matters next, and at most one primary
+ * action. Status is always text (the pill), never colour alone. Amounts and
+ * dates use tabular figures.
+ */
+export function PlanStatusCard({
+    view,
+    organizationName,
+    operationsUrl,
+    timezone,
+    onRenewal,
+}: Props) {
     return (
         <SectionCard
-            title="Plan and access"
-            description={`${formatCentavos(plan.amountCentavos)} per month, paid by QR Ph. Each payment buys one calendar month.`}
-            badge={
-                <StatusChip tone={STATE_TONE[entitlement.state]}>
-                    {STATE_LABEL[entitlement.state]}
-                </StatusChip>
-            }
+            title="Current plan & access"
+            contentClassName="grid gap-5"
         >
-            <p className="max-w-[65ch] text-sm text-muted-foreground">
-                {explanation(entitlement, timezone)}
-            </p>
-            <dl className="mt-4 grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
-                {rows.map((row) => (
-                    <div key={row.label} className="grid gap-0.5">
-                        <dt className="text-muted-foreground">{row.label}</dt>
-                        <dd className="font-semibold tabular-nums">
-                            {row.value
-                                ? formatDateTime(row.value, timezone)
-                                : 'Not set'}
-                        </dd>
-                    </div>
-                ))}
+            <div className="flex items-start justify-between gap-3 border-b pb-5">
+                <div className="grid gap-1">
+                    <p className="text-sm text-muted-foreground">
+                        {view.eyebrow}
+                    </p>
+                    <p className="flex items-baseline gap-2 text-3xl font-semibold tracking-tight tabular-nums">
+                        {view.hero.text}
+                        {view.hero.suffix ? (
+                            <span className="text-sm font-normal tracking-normal text-muted-foreground">
+                                {view.hero.suffix}
+                            </span>
+                        ) : null}
+                    </p>
+                </div>
+                <StatusChip tone={view.pill.tone}>{view.pill.label}</StatusChip>
+            </div>
+            <dl className="grid gap-x-8 gap-y-4 text-sm sm:grid-cols-2">
+                <Fact label="Organization" value={organizationName} />
+                <Fact label="Plan" value="Monthly" />
+                <Fact
+                    label="Next important date"
+                    value={
+                        view.nextDate.value
+                            ? `${view.nextDate.label} ${formatDateTime(view.nextDate.value, timezone)}`
+                            : 'Not set'
+                    }
+                    wide
+                />
             </dl>
+            {view.action ? (
+                <div className="border-t pt-5">
+                    {view.action.kind === 'operations' ? (
+                        <a href={operationsUrl} className={ACTION_CLASS}>
+                            {view.action.label}
+                        </a>
+                    ) : (
+                        <a
+                            href="#renewal"
+                            onClick={(event) =>
+                                goToRenewal(event, () => onRenewal?.())
+                            }
+                            className={ACTION_CLASS}
+                        >
+                            {view.action.label}
+                        </a>
+                    )}
+                </div>
+            ) : null}
         </SectionCard>
+    );
+}
+
+function Fact({
+    label,
+    value,
+    wide,
+}: {
+    label: string;
+    value: string;
+    wide?: boolean;
+}) {
+    return (
+        <div className={cn('grid gap-0.5', wide && 'sm:col-span-2')}>
+            <dt className="text-muted-foreground">{label}</dt>
+            <dd className="font-semibold tabular-nums">{value}</dd>
+        </div>
     );
 }

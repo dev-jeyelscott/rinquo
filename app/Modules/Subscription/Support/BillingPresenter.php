@@ -52,7 +52,7 @@ final class BillingPresenter
         $payment = Payment::query()->where('organization_id', $organization->id)->orderByDesc('id')->first();
 
         return [
-            'plan' => ['amountCentavos' => $terms->amountCentavos, 'currency' => $terms->currency, 'requestLifetimeHours' => $terms->requestLifetimeHours],
+            'plan' => ['amountCentavos' => $terms->amountCentavos, 'currency' => $terms->currency, 'requestLifetimeHours' => $terms->requestLifetimeHours, 'graceDays' => $terms->graceDays],
             'billingAvailable' => $this->gateway->isConfigured(),
             'request' => $open === null ? null : [
                 'id' => $open->public_id,

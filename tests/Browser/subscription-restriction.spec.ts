@@ -48,7 +48,7 @@ test('a restricted shop shows no booking, blocks the wizard and keeps existing b
 
     await page.goto(`/shops/${seed.slug}`);
     await expect(
-        page.getByText('Online booking unavailable').first(),
+        page.getByText('New bookings temporarily unavailable').first(),
     ).toBeVisible();
     await expect(page.getByRole('link', { name: 'Book now' })).toHaveCount(0);
 
@@ -57,9 +57,7 @@ test('a restricted shop shows no booking, blocks the wizard and keeps existing b
 
     await signIn(page, seed.staffEmail);
     await page.goto(`/owner/organizations/${seed.organizationId}/operations`);
-    await expect(
-        page.getByText('Your subscription has ended').first(),
-    ).toBeVisible();
+    await expect(page.getByText('New bookings paused').first()).toBeVisible();
     await expect(
         page.getByRole('button', { name: 'Add walk-in' }),
     ).toBeDisabled();

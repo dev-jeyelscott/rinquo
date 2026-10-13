@@ -15,6 +15,8 @@ export type BillingPageData = {
         amountCentavos: number;
         currency: string;
         requestLifetimeHours: number;
+        /** Paid-only grace, in days (Decision 105); server-owned. */
+        graceDays: number;
     };
     billingAvailable: boolean;
     request: RenewalRequest | null;

@@ -1,6 +1,12 @@
 import { router } from '@inertiajs/react';
-import { CheckCircle2Icon, CircleAlertIcon, WifiOffIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import {
+    CheckCircle2Icon,
+    CircleAlertIcon,
+    CircleDotIcon,
+    CircleIcon,
+    WifiOffIcon,
+} from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { SectionCard } from '@/components/owner/section-card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -19,6 +25,8 @@ type Props = {
     organizationName: string;
     operationsUrl: string;
     errorMessage?: string;
+    /** False when a visible banner already announces the request state. */
+    announceStatus?: boolean;
 };
 
 const POLL_MS = 5000;
@@ -36,10 +44,12 @@ export function RenewalCard({
     organizationName,
     operationsUrl,
     errorMessage,
+    announceStatus = true,
 }: Props) {
     const online = useOnline();
     const now = useNow(1000);
     const [pending, setPending] = useState(false);
+    const [checking, setChecking] = useState(false);
     const request = billing.request;
     const qrExpiresAt = request?.qrExpiresAt
         ? Date.parse(request.qrExpiresAt)
@@ -48,25 +58,46 @@ export function RenewalCard({
         request?.qrImage != null && qrExpiresAt !== null && qrExpiresAt > now;
     const requestOpen = request !== null && Date.parse(request.expiresAt) > now;
 
+    const inFlight = useRef(false);
+
+    // Status polling is a partial reload of server truth. It pauses while offline or
+    // while the tab is hidden and never starts a visit while the previous one is running.
+    const refreshStatus = useCallback(() => {
+        if (inFlight.current) {
+            return;
+        }
+        router.get(
+            urls.billing,
+            {},
+            {
+                only: ['billing', 'entitlement'],
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+                onStart: () => {
+                    inFlight.current = true;
+                    setChecking(true);
+                },
+                onFinish: () => {
+                    inFlight.current = false;
+                    setChecking(false);
+                },
+            },
+        );
+    }, [urls.billing]);
+
     useEffect(() => {
         if (!requestOpen || !online) {
             return;
         }
         const timer = window.setInterval(() => {
-            router.get(
-                urls.billing,
-                {},
-                {
-                    only: ['billing', 'entitlement'],
-                    preserveState: true,
-                    preserveScroll: true,
-                    replace: true,
-                },
-            );
+            if (!document.hidden) {
+                refreshStatus();
+            }
         }, POLL_MS);
 
         return () => window.clearInterval(timer);
-    }, [requestOpen, online, urls.billing]);
+    }, [requestOpen, online, refreshStatus]);
 
     function ask(refresh: boolean) {
         router.post(urls.renewal, refresh ? { refresh: 1 } : {}, {
@@ -76,20 +107,48 @@ export function RenewalCard({
         });
     }
 
+    const prepared =
+        requestOpen &&
+        !qrLive &&
+        !request?.providerError &&
+        request?.qrExpiresAt === null;
     const label = request?.providerError
         ? 'Try again'
         : request
-          ? 'Refresh QR'
-          : 'Generate renewal QR';
+          ? prepared
+              ? 'Generate renewal QR'
+              : 'Refresh QR'
+          : billing.lastRequestExpiredAt
+            ? 'Generate new request'
+            : 'Generate renewal QR';
+    // One short, stable phrase per payment state: announced only when it changes.
+    // A visible alert or banner already announces the provider error and the scene states.
+    const announcement =
+        !announceStatus || !requestOpen || request?.providerError
+            ? ''
+            : qrLive
+              ? 'Waiting for verified payment'
+              : prepared
+                ? 'Renewal request ready'
+                : 'The QR code expired';
 
     return (
         <SectionCard
-            title="Renew"
+            id="renewal"
+            tabIndex={-1}
+            role="region"
+            aria-labelledby="renewal-heading"
+            titleId="renewal-heading"
+            title="Renewal payment"
             description={`Pay ${formatCentavos(billing.plan.amountCentavos)} with any QR Ph banking or e-wallet app. Access changes only after PayMongo confirms the payment.`}
+            className="scroll-mt-4 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
         >
+            <p role="status" className="sr-only">
+                {announcement}
+            </p>
             <div className="grid gap-4">
                 {billing.lastPayment ? (
-                    <Alert className={ALERT_TONES.success} role="status">
+                    <Alert className={ALERT_TONES.success}>
                         <CheckCircle2Icon aria-hidden="true" />
                         <AlertTitle>Payment received</AlertTitle>
                         <AlertDescription>
@@ -134,7 +193,7 @@ export function RenewalCard({
                 ) : null}
 
                 {!billing.billingAvailable ? (
-                    <Alert className={ALERT_TONES.warning} role="status">
+                    <Alert className={ALERT_TONES.warning}>
                         <CircleAlertIcon aria-hidden="true" />
                         <AlertTitle>Online renewal is unavailable</AlertTitle>
                         <AlertDescription>
@@ -147,38 +206,56 @@ export function RenewalCard({
                 ) : null}
 
                 {!online ? (
-                    <Alert className={ALERT_TONES.warning} role="status">
+                    <Alert className={ALERT_TONES.warning}>
                         <WifiOffIcon aria-hidden="true" />
                         <AlertDescription>
                             <p>
                                 You are offline. Payment status updates when you
-                                reconnect.
+                                reconnect. Do not pay again while the status is
+                                unknown.
                             </p>
                         </AlertDescription>
                     </Alert>
                 ) : null}
 
                 {requestOpen && request ? (
-                    <div className="grid gap-3">
+                    <div className="grid gap-4">
                         {qrLive && request.qrImage ? (
-                            <div className="grid justify-items-start gap-2">
+                            <div className="flex flex-wrap items-start gap-5">
                                 <img
                                     src={request.qrImage}
                                     alt={`QR Ph code to pay ${formatCentavos(request.amountCentavos)}`}
-                                    className="size-56 rounded-lg border bg-white p-2"
+                                    className="size-52 shrink-0 rounded-lg border bg-white p-2"
                                 />
-                                <p
-                                    role="timer"
-                                    className="text-sm text-muted-foreground"
-                                >
-                                    This QR code works for another{' '}
-                                    <span className="font-semibold text-foreground tabular-nums">
-                                        {formatRemaining(
-                                            (qrExpiresAt ?? now) - now,
+                                <div className="grid min-w-0 gap-1.5 text-sm">
+                                    <p className="font-semibold">
+                                        Payment request
+                                    </p>
+                                    <p className="tabular-nums">
+                                        One month &middot;{' '}
+                                        {formatCentavos(request.amountCentavos)}
+                                    </p>
+                                    <p
+                                        role="timer"
+                                        aria-live="off"
+                                        className="text-muted-foreground"
+                                    >
+                                        QR active. This code works for another{' '}
+                                        <span className="font-semibold text-foreground tabular-nums">
+                                            {formatRemaining(
+                                                (qrExpiresAt ?? now) - now,
+                                            )}
+                                        </span>
+                                        .
+                                    </p>
+                                    <p className="text-muted-foreground tabular-nums">
+                                        Request expires:{' '}
+                                        {formatDateTime(
+                                            request.expiresAt,
+                                            timezone,
                                         )}
-                                    </span>
-                                    .
-                                </p>
+                                    </p>
+                                </div>
                             </div>
                         ) : request.providerError ? (
                             <Alert className={ALERT_TONES.error} role="alert">
@@ -193,8 +270,13 @@ export function RenewalCard({
                                     </p>
                                 </AlertDescription>
                             </Alert>
+                        ) : prepared ? (
+                            <p className="max-w-[65ch] text-sm text-muted-foreground">
+                                Your renewal request is ready. Generate a QR
+                                code to pay.
+                            </p>
                         ) : (
-                            <p className="text-sm text-muted-foreground">
+                            <p className="max-w-[65ch] text-sm text-muted-foreground">
                                 The QR code on screen has expired. Refresh it to
                                 pay; your renewal request is still open.
                             </p>
@@ -207,6 +289,7 @@ export function RenewalCard({
                             . Each QR code lasts only a short time, so refresh
                             it if it expires. Do not pay twice.
                         </p>
+                        <ConfirmationSteps />
                     </div>
                 ) : billing.lastRequestExpiredAt ? (
                     <p className="max-w-[65ch] text-sm text-muted-foreground">
@@ -218,15 +301,22 @@ export function RenewalCard({
                             )}
                         </span>{' '}
                         without a payment. Nothing was charged. Generate a new
-                        QR to renew.
+                        request to renew.
                     </p>
-                ) : null}
+                ) : (
+                    <p className="max-w-[65ch] text-sm text-muted-foreground">
+                        Generating a request creates a{' '}
+                        {billing.plan.requestLifetimeHours}
+                        -hour payment request for one month at the plan price.
+                        Nothing is charged until you pay.
+                    </p>
+                )}
 
                 <div className="flex flex-wrap items-center gap-3">
                     {requestOpen && qrLive ? null : (
                         <Button
-                            className="max-sm:h-11"
-                            onClick={() => ask(Boolean(request))}
+                            className="min-w-52 justify-center max-sm:h-11"
+                            onClick={() => ask(Boolean(request) && !prepared)}
                             disabled={
                                 pending || !online || !billing.billingAvailable
                             }
@@ -242,17 +332,73 @@ export function RenewalCard({
                             )}
                         </Button>
                     )}
-                    {requestOpen && qrLive ? (
-                        <p
-                            className="text-sm text-muted-foreground"
-                            role="status"
+                    {requestOpen ? (
+                        <Button
+                            variant="outline"
+                            className="max-sm:h-11"
+                            onClick={refreshStatus}
+                            disabled={checking || !online}
+                            aria-busy={checking}
                         >
-                            Waiting for payment. This page updates by itself
-                            once PayMongo confirms it.
-                        </p>
+                            Refresh status
+                        </Button>
                     ) : null}
                 </div>
             </div>
         </SectionCard>
+    );
+}
+
+/**
+ * The three honest facts about an open request, derived only from what the
+ * server already exposes: a request exists, no payment is established, and
+ * access changes only after a signed webhook. It never reports a payment.
+ */
+function ConfirmationSteps() {
+    const steps = [
+        {
+            icon: CheckCircle2Icon,
+            title: 'Request created',
+            detail: 'Rinquo requested a PayMongo QR',
+            done: true,
+        },
+        {
+            icon: CircleDotIcon,
+            title: 'Provider confirmation pending',
+            detail: 'No payment has been established',
+            done: false,
+        },
+        {
+            icon: CircleIcon,
+            title: 'Entitlement updated',
+            detail: 'Only after signed webhook processing',
+            done: false,
+        },
+    ];
+
+    return (
+        <ol className="grid gap-3 text-sm" aria-label="Payment progress">
+            {steps.map(({ icon: Icon, title, detail, done }) => (
+                <li key={title} className="flex items-start gap-3">
+                    <Icon
+                        aria-hidden="true"
+                        className={
+                            done
+                                ? 'mt-0.5 size-4 shrink-0 text-success'
+                                : 'mt-0.5 size-4 shrink-0 text-muted-foreground'
+                        }
+                    />
+                    <span className="grid">
+                        <span className="font-semibold">
+                            {title}
+                            <span className="sr-only">
+                                {done ? ' (done)' : ' (not yet)'}
+                            </span>
+                        </span>
+                        <span className="text-muted-foreground">{detail}</span>
+                    </span>
+                </li>
+            ))}
+        </ol>
     );
 }

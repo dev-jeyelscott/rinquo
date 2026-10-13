@@ -1,6 +1,9 @@
 import { Head, Link } from '@inertiajs/react';
+import { CircleAlertIcon } from 'lucide-react';
 import { ShopServiceCard } from '@/components/shop/shop-service-card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
+import { ALERT_TONES } from '@/lib/tones';
 import type { ShopPageProps } from '@/types/shop';
 
 /**
@@ -51,17 +54,14 @@ export default function Show({
                                     Book now
                                 </Link>
                             </div>
-                        ) : (
+                        ) : bookingUnavailableReason ? null : (
                             <div role="status" className="grid gap-0.5">
                                 <p className="text-lg font-semibold">
                                     Online booking unavailable
                                 </p>
                                 <p className="max-w-[60ch] text-sm opacity-90">
-                                    {bookingUnavailableReason ??
-                                        'You can browse services and prices. Online booking is not open yet.'}
-                                    {bookingUnavailableReason
-                                        ? ' You can still browse services and prices.'
-                                        : ''}
+                                    You can browse services and prices. Online
+                                    booking is not open yet.
                                 </p>
                             </div>
                         )}
@@ -81,6 +81,21 @@ export default function Show({
                         </div>
                     )}
                 </section>
+
+                {bookingUnavailableReason ? (
+                    <Alert role="status" className={ALERT_TONES.warning}>
+                        <CircleAlertIcon aria-hidden="true" />
+                        <AlertTitle className="text-base font-semibold">
+                            New bookings temporarily unavailable
+                        </AlertTitle>
+                        <AlertDescription>
+                            <p className="max-w-[65ch]">
+                                {bookingUnavailableReason} You can still browse
+                                services and prices.
+                            </p>
+                        </AlertDescription>
+                    </Alert>
+                ) : null}
 
                 <div className="grid gap-4 min-[30rem]:grid-cols-2">
                     <Card className="rounded-2xl py-4 shadow-none">

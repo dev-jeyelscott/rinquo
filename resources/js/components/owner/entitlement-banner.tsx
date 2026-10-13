@@ -10,7 +10,10 @@ import type { Entitlement } from '@/types/owner';
 type Props = {
     entitlement: Entitlement;
     billingUrl: string;
-    /** True on the billing page itself, where the recovery action is already in view. */
+    /**
+     * True on the billing page itself: the page renders its own banner there (the shell does not),
+     * so the recovery action is already in view and the copy names the Billing context.
+     */
     onBilling: boolean;
     timezone: string;
 };
@@ -48,18 +51,36 @@ export function EntitlementBanner({
     }
 
     if (entitlement.state === 'restricted') {
-        return (
+        const trialEnded =
+            entitlement.paidUntil === null
+                ? `Your free trial ended on ${formatDate(entitlement.trialEndsAt ?? '', timezone)}. `
+                : '';
+
+        return onBilling ? (
             <Banner
-                tone="warning"
-                title="Your subscription has ended"
+                tone="error"
+                title="Subscription restricted"
                 billingUrl={billingUrl}
                 onBilling={onBilling}
                 action="Renew now"
             >
-                New bookings and configuration changes are paused. Existing
-                bookings, check-in, completion and customer cancellations still
-                work, and nothing is deleted. Renewing restores everything as
-                soon as the payment is confirmed.
+                {trialEnded}New bookings and configuration writes are paused.
+                Billing remains available. Existing bookings can still be
+                operated and completed, and nothing is deleted.
+            </Banner>
+        ) : (
+            <Banner
+                tone="warning"
+                title="New bookings paused"
+                billingUrl={billingUrl}
+                onBilling={onBilling}
+                action="Renew now"
+            >
+                {trialEnded}Continue checking in, servicing and completing
+                existing bookings. New bookings and configuration changes are
+                paused, customer cancellations still work, and nothing is
+                deleted. Renewing restores everything as soon as the payment is
+                confirmed.
             </Banner>
         );
     }
@@ -68,13 +89,13 @@ export function EntitlementBanner({
         return (
             <Banner
                 tone="warning"
-                title="Your paid period has ended"
+                title="Paid period ended: grace active"
                 billingUrl={billingUrl}
                 onBilling={onBilling}
                 action="Renew now"
             >
-                Everything still works during the grace period. New bookings and
-                configuration changes stop on{' '}
+                Your existing operations and new bookings work until the grace
+                deadline. New bookings and configuration changes stop on{' '}
                 <span className="tabular-nums">
                     {formatDate(entitlement.graceEndsAt, timezone)}
                 </span>

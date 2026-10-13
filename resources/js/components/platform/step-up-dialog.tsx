@@ -152,6 +152,9 @@ function StepUpBody({
     return (
         <form onSubmit={submit} className="grid gap-4" noValidate>
             <DialogHeader>
+                <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    Confirm action
+                </p>
                 <DialogTitle>{title}</DialogTitle>
                 <DialogDescription>{description}</DialogDescription>
             </DialogHeader>
@@ -207,12 +210,18 @@ function StepUpBody({
                 </Alert>
             ) : null}
             <DialogFooter>
-                <Button type="button" variant="outline" onClick={onCancel}>
+                <Button
+                    type="button"
+                    variant="outline"
+                    className="max-sm:h-11"
+                    onClick={onCancel}
+                >
                     Cancel
                 </Button>
                 <Button
                     type="submit"
                     variant={confirmVariant}
+                    className="max-sm:h-11"
                     disabled={
                         form.processing ||
                         form.data.current_password === '' ||

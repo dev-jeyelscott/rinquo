@@ -190,12 +190,14 @@ export default function OwnerShell({ children }: { children: ReactNode }) {
                     tabIndex={-1}
                     className="flex-1 px-4 pt-6 pb-28 outline-none sm:px-8 lg:pt-8 lg:pb-8"
                 >
-                    <EntitlementBanner
-                        entitlement={entitlement}
-                        billingUrl={organization.billingUrl}
-                        onBilling={onBilling}
-                        timezone={timezone}
-                    />
+                    {onBilling ? null : (
+                        <EntitlementBanner
+                            entitlement={entitlement}
+                            billingUrl={organization.billingUrl}
+                            onBilling={false}
+                            timezone={timezone}
+                        />
+                    )}
                     <div aria-live="polite" className="mb-4 empty:hidden">
                         {accessError ? (
                             <Alert

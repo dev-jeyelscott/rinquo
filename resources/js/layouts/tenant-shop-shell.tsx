@@ -56,7 +56,11 @@ export default function TenantShopShell({ children }: { children: ReactNode }) {
                                 {props.branch.city}
                             </p>
                         ) : null}
-                        {props.hours ? (
+                        {props.bookingUnavailableReason ? (
+                            <StatusChip caps tone="warning">
+                                Bookings paused
+                            </StatusChip>
+                        ) : props.hours ? (
                             <StatusChip
                                 caps
                                 tone={
