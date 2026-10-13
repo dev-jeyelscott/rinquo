@@ -249,6 +249,54 @@ Paths are relative to `docs/reference-ui/`.
 | `spec-07/mobile/20-platform-terms.png` | Platform plan terms | Mobile 390×844 | Approved | 2026-10-13 |
 | `spec-07/desktop/21-platform-publish.png` | Publish plan terms confirmation | Desktop 1600×1000 | Approved | 2026-10-13 |
 | `spec-07/mobile/21-platform-publish.png` | Publish plan terms confirmation | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-08/desktop/01-platform-sign-in.png` | Platform sign-in | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-08/mobile/01-platform-sign-in.png` | Platform sign-in | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-08/desktop/02-authenticator-verification.png` | Authenticator verification | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-08/mobile/02-authenticator-verification.png` | Authenticator verification | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-08/desktop/03-recovery-code-alternative.png` | Recovery code alternative | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-08/mobile/03-recovery-code-alternative.png` | Recovery code alternative | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-08/desktop/04-authenticator-enrollment.png` | Authenticator enrollment | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-08/mobile/04-authenticator-enrollment.png` | Authenticator enrollment | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-08/desktop/05-one-time-recovery-codes.png` | One-time recovery codes | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-08/mobile/05-one-time-recovery-codes.png` | One-time recovery codes | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-08/desktop/06-session-ended.png` | Session ended | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-08/mobile/06-session-ended.png` | Session ended | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-08/desktop/07-forgot-password.png` | Forgot password | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-08/mobile/07-forgot-password.png` | Forgot password | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-08/desktop/08-password-reset.png` | Password reset | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-08/mobile/08-password-reset.png` | Password reset | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-08/desktop/09-invitation-acceptance.png` | Invitation acceptance | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-08/mobile/09-invitation-acceptance.png` | Invitation acceptance | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-08/desktop/10-invitation-unavailable.png` | Invitation unavailable | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-08/mobile/10-invitation-unavailable.png` | Invitation unavailable | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-08/desktop/11-platform-overview.png` | Platform overview | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-08/mobile/11-platform-overview.png` | Platform overview | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-08/desktop/12-organization-directory.png` | Organization directory | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-08/mobile/12-organization-directory.png` | Organization directory | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-08/desktop/13-organization-details.png` | Organization details | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-08/mobile/13-organization-details.png` | Organization details | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-08/desktop/14-start-support-session.png` | Start support session | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-08/mobile/14-start-support-session.png` | Start support session | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-08/desktop/15-support-overview.png` | Support overview | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-08/mobile/15-support-overview.png` | Support overview | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-08/desktop/16-support-booking-requests.png` | Support booking requests | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-08/mobile/16-support-booking-requests.png` | Support booking requests | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-08/desktop/17-support-expired.png` | Support expired | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-08/mobile/17-support-expired.png` | Support expired | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-08/desktop/18-administrator-directory.png` | Administrator directory | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-08/mobile/18-administrator-directory.png` | Administrator directory | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-08/desktop/19-administrator-access-change.png` | Administrator access change | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-08/mobile/19-administrator-access-change.png` | Administrator access change | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-08/desktop/20-regenerate-recovery-codes.png` | Regenerate recovery codes | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-08/mobile/20-regenerate-recovery-codes.png` | Regenerate recovery codes | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-08/desktop/21-failed-job-monitoring.png` | Failed-job monitoring | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-08/mobile/21-failed-job-monitoring.png` | Failed-job monitoring | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-08/desktop/22-safe-job-retry.png` | Safe job retry | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-08/mobile/22-safe-job-retry.png` | Safe job retry | Mobile 390×844 | Approved | 2026-10-13 |
+| `spec-08/desktop/23-retry-result-and-history.png` | Retry result and history | Desktop 1600×1000 | Approved | 2026-10-13 |
+| `spec-08/mobile/23-retry-result-and-history.png` | Retry result and history | Mobile 390×844 | Approved | 2026-10-13 |
+
+The forty-six Spec 08 Platform Admin references were reviewed and approved together on 2026-10-13 under Decision 212; they are canonical under `spec-08/`.
 
 The sixteen Spec 02 booking references were reviewed and approved together on 2026-10-08 under Decision 212; they are canonical under `spec-02/`.
 
@@ -597,6 +645,26 @@ For the per-image route/state, locks, exclusions and implementation notes, see `
 
 **Does not lock (rendering artifacts and sample data):** the `DRAFT` / `ILLUSTRATIVE DATA` text and footers embedded in images, fictional shop and person names, demo price and amounts, the dummy non-payable QR, sample dates and times, static component rendering artifacts, notes that describe implementation gaps, exact fonts and pixels, and interaction mechanics the images do not show. The comparisons, boards and contact sheet under `spec-07/review-support/` are review aids only, not canonical UI.
 
+## Spec 08. Platform administration and operational recovery (approved 2026-10-13)
+
+**Approval:** User approved all 46 references (23 desktop 1600×1000 and 23 mobile 390×844 pairs) together on 2026-10-13 (Asia/Manila) under Decision 212; they are canonical under `spec-08/`.
+
+**Files:** `spec-08/desktop/01-platform-sign-in.png` through `23-retry-result-and-history.png`, and the matching twenty-three `spec-08/mobile/` PNGs. The per-image route/state, applicable decisions and implementation boundary are recorded in `spec-08/manifest.md`; `spec-08/approved-screen-inventory.json` is its machine-readable inventory.
+
+**Product surface:** Platform Admin password and authenticator sign-in, recovery-code alternative, enrollment, one-time recovery codes, session-ended notice, password reset and invitation acceptance; overview, organization directory and detail; support-session start step-up; read-only role-scoped support overview and redacted booking requests; support expiry; administrator directory and access changes; recovery-code rotation; and failed-job monitoring, single-job retry and retry result history.
+
+**Applicable Locked Decisions:** 62–66, 68, 83, 211 and 212.
+
+**Status:** Approved (2026-10-13).
+
+**Locks:** The neutral Platform Admin shell and signed-out card hierarchy; password then authenticator or recovery-code sign-in; one-time recovery-code presentation; non-enumerating reset; single-use 72-hour invitations; the six-destination Platform navigation; safe organization and eligible Owner/Staff member selection; the password plus authenticator step-up dialog; a persistent read-only support banner with role-scoped data and redacted booking requests; administrator lifecycle and recovery-rotation consequences; and failed-job metadata that is redacted, with server-derived retry eligibility and distinct claimed, queued and dispatch-failed outcomes.
+
+**Supersession:** none. Spec 07 Platform plan terms and publish (`/platform/plan-terms`) are outside this inventory and keep their status. Owner Settings and Specs 02–07 keep their status and scope.
+
+**Behavioral boundaries:** Each represented modal, error or confirmation is a state of an existing route and implies no new URL or server feature. Password and reset never bypass the authenticator challenge. Support is one administrator, one organization and one active Owner or Staff target for 30 non-extendable minutes, with Owner-only detail omitted for Staff and customer contacts, notes and tenant mutations absent. Returned to queue means dispatched, not completed. No audit explorer, deployment or monitoring console, backup restoration wizard, bulk retry or arbitrary tenant impersonation is approved.
+
+**Does not lock (rendering artifacts and sample data):** the rasterized `DRAFT DESIGN` / `ILLUSTRATIVE DATA` footers, fictional organization, person, email and job data, masked codes and secrets, sample dates and times, exact line wrapping, raster fonts and pixel sizes, and any interaction the images do not show. Material under `spec-08/review-support/` (comparisons, contact sheet, critical-state boards, findings and audit) is review-only and not canonical.
+
 ## Responsive coverage
 
 Desktop and mobile references are separate visual contracts when their compositions materially differ.
@@ -613,6 +681,7 @@ Current approved coverage is incomplete:
 | Conflict resolution (Spec 05)                                                                                                  | Approved (2026-10-12, 390×844) | Approved (2026-10-12, 1600×1000) |
 | Customer account across shops (Spec 06: sign-in, Home/Book directory, bookings, vehicles, profile, email change) | Approved (2026-10-12, 390×844) | Approved (2026-10-12, 1600×1000) |
 | Owner Billing, restriction notices (Operations, storefront), closure and recovery, Platform plan terms (Spec 07) | Approved (2026-10-13, 390×844) | Approved (2026-10-13, 1600×1000) |
+| Platform Admin identity, organizations, read-only support, administrators, security and failed-job recovery (Spec 08) | Approved (2026-10-13, 390×844) | Approved (2026-10-13, 1600×1000) |
 | Owner shell and Settings                                                                                                      | Approved (2026-10-08)          | Approved (2026-10-08)            |
 
 Owner Settings coverage is limited to the shell, the Settings index, and the seven pages at the viewports listed above. Owner Operations follows the shared Spec 04 references (including role-aware pair 17). Owner Billing is covered by Spec 07; Booking Requests has no approved Owner-specific reference. Spec 07 restriction notices on Operations and the storefront are additive and do not replace those references. Conflicts follows the shared Owner/Staff Spec 05 references.
