@@ -2004,7 +2004,7 @@ They must go through the same review and manifest approval process as manually c
 
 ## Implementation-Era Clarifications
 
-Decisions 213–222 were locked on 2026-10-13. They settle defaults and presentation questions left open in the slice 00–08 workflow artifacts. Where one of them differs from current code, the code is an implementation gap.
+Decisions 213–226 were locked on 2026-10-13. They settle defaults and presentation questions left open in the slice 00–08 workflow artifacts. Where one of them differs from current code, the code is an implementation gap.
 
 ### Decision 213 — Pre-arrival reminder timing
 
@@ -2077,6 +2077,38 @@ Fix the contrast by darkening the tone text tokens in the design system. Do not 
 **Decision:** Form-control boundaries must reach at least **3:1** contrast against adjacent colors (WCAG 1.4.11). This overrides the lighter control border shown in approved references, including the Spec 02 set.
 
 The references are not re-rendered for this change alone, and their other visual contract stays authoritative. Non-interactive outlines, such as choice-card frames, are not covered by this rule.
+
+### Decision 223 — Light theme only in MVP
+
+**Decision:** MVP ships a light theme only. Every Approved reference is light, and no surface offers a way to turn on dark mode.
+
+- The dark token variants in the design system stay, but dark mode is not a supported, user-facing surface in MVP.
+- Do not add a theme toggle or follow `prefers-color-scheme` without a later decision.
+- A finding that occurs only in the dark theme is not an implementation gap while this decision stands. Decision 221 still applies to the alert tone tokens in both themes.
+
+### Decision 224 — Pre-arrival reminder configuration
+
+**Decision:** This refines Decisions 56 and 213. The pre-arrival reminder is configurable per organization as **on or off** only.
+
+- It is on by default for every organization.
+- The lead time is fixed at 30 minutes before the expected start (Decision 213) and is not an Owner setting.
+- Turning it off stops future reminders for that organization. Reminders already sent are unaffected.
+
+### Decision 225 — Accessibility conformance target
+
+**Decision:** Every MVP surface targets **WCAG 2.2 Level AA**: tenant storefront and booking, customer account, Owner and Staff operations, and Platform admin.
+
+The design system may set stricter rules, such as its 44px mobile touch target. A stricter rule still applies; it is not relaxed to the WCAG minimum.
+
+### Decision 226 — Anonymous hold exhaustion is an accepted MVP risk
+
+**Decision:** MVP adds no further protection against anonymous checkout holds tying up a shop's capacity. The current controls are sufficient:
+
+- one active hold per browser session per shop, where a new selection releases the previous hold
+- a per-IP rate limit on placing holds
+- the 15-minute hold expiry (Decision 215)
+
+Revisit this decision if abuse is observed in production. Options at that point include a per-shop cap on concurrent anonymous holds, or verifying the customer before a hold is placed.
 
 # Current Core Architecture Summary
 

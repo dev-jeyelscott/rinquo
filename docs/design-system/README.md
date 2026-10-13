@@ -155,7 +155,7 @@ All design-system components include:
 - **Labels and ARIA**: Associated labels for inputs, ARIA descriptions for alerts
 - **Disabled states**: Visual and semantic indication
 - **Color not alone**: Never rely on color alone to communicate status
-- **Contrast**: Minimum WCAG AA contrast (4.5:1 for text)
+- **Contrast**: Minimum WCAG 2.2 AA contrast (4.5:1 for text), the conformance target set by Decision 225
 - **Reduced motion**: Respects `prefers-reduced-motion` for animations
 - **Touch targets**: Minimum 44px x 44px interactive elements on mobile
 
@@ -333,7 +333,7 @@ These are implemented via `<Badge>` with variant props and `<Alert>` with semant
 
 ## Dark Theme
 
-The project supports dark mode. CSS custom properties have dark variants (see `:root` and `.dark` in `resources/css/app.css`). Components automatically adapt when `.dark` class is present on the document root.
+MVP ships a light theme only (Decision 223). Dark mode is not a supported, user-facing surface yet. CSS custom properties keep dark variants (see `:root` and `.dark` in `resources/css/app.css`). Components automatically adapt when `.dark` class is present on the document root.
 
 No dark-specific components are needed; use Tailwind's `dark:` prefix to override styles.
 

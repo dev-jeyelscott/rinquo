@@ -8,7 +8,7 @@ It contains the approved product, architecture, navigation, UX, lifecycle, and g
 
 The current approved decision range is:
 
-`Decision 1 → Decision 222`
+`Decision 1 → Decision 226`
 
 This file is not a second decision register and must not duplicate or redefine locked decisions.
 
@@ -50,7 +50,7 @@ Architecture changes that materially alter an approved boundary require either:
 
 ## Planning boundary
 
-Decision discovery for the current MVP scope is complete through Decision 222.
+Decision discovery for the current MVP scope is complete through Decision 226.
 
 Decisions 206–210 clarify the tenant navigation and Owner application structure.
 
@@ -58,7 +58,7 @@ Decision 211 defines authority precedence.
 
 Decision 212 defines Reference UI approval and locking.
 
-Decisions 213–222 lock implementation-era defaults and presentation rules that the slice 00–08 workflow left open.
+Decisions 213–226 lock implementation-era defaults, presentation rules and accepted risks that the slice 00–08 workflow left open.
 
 Future implementation work must not introduce material product, navigation, architecture, or canonical design changes without first resolving them through the applicable authority layer.
 
