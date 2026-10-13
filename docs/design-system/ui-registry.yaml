@@ -1334,6 +1334,125 @@ components:
       responsive: Beside the main card from lg, below it on smaller screens
       status: stable
 
+    - id: platform-shell
+      name: PlatformShell
+      category: component
+      path: resources/js/layouts/platform-shell.tsx
+      description: >
+          Neutral Platform Admin shell: the Rinquo mark with the Platform label, a
+          skip link to the main region, the six Platform destinations (suppressed when
+          signed out and during a support session), the signed-in administrator with
+          Sign out, the persistent SupportBanner during support, and one flash/access
+          alert area. Not a tenant shell and never a bottom navigation.
+      reference_design: "spec-08/desktop/11-platform-overview.png, spec-08/mobile/11-platform-overview.png, spec-08/desktop/15-support-overview.png"
+      accessibility:
+          - Skip link is the first tab stop and moves focus to the main region
+          - Navigation is a labelled landmark with aria-current on the current destination
+          - Mobile links and Sign out are 44 px targets
+      responsive: Navigation wraps below the header; no bottom bar
+      status: stable
+      dependencies:
+          - SupportBanner
+          - RinquoMark
+          - Button
+          - Alert
+
+    - id: platform-auth-card
+      name: AuthCard
+      category: component
+      path: resources/js/components/platform/auth-card.tsx
+      description: >
+          Centered signed-out task card for the Platform Admin identity journey: a
+          task icon tile, the page's single h1, one quiet purpose line and the form.
+          Used with SubmitButton for the one dominant action.
+      reference_design: "spec-08/desktop/01-platform-sign-in.png, spec-08/mobile/01-platform-sign-in.png"
+      accessibility:
+          - The icon is decorative and hidden from assistive technology
+          - One h1 per card
+      responsive: Single column, max width 28rem with page gutters
+      status: stable
+      dependencies:
+          - Card
+
+    - id: platform-step-up-dialog
+      name: StepUpDialog
+      category: component
+      path: resources/js/components/platform/step-up-dialog.tsx
+      description: >
+          Interruptive modal for every sensitive Platform action (start support,
+          invite, disable, re-enable, reset factor, recovery rotation, failed-job
+          retry). Shows a step-up eyebrow, the affected subject and its consequence,
+          optional action fields, and a fresh password plus six-digit authenticator
+          code verified by the server. Non-optimistic: pending, rejected and offline
+          states are shown in the dialog and the credentials are cleared after every
+          attempt. Confirm tone is destructive for irreversible actions.
+      reference_design: "spec-08/desktop/14-start-support-session.png, spec-08/desktop/19-administrator-access-change.png, spec-08/desktop/22-safe-job-retry.png"
+      accessibility:
+          - Focus is contained and returns to the invoking control on close
+          - Errors are associated with their fields
+          - Confirm is disabled until both credentials are complete and while in flight
+          - Content scrolls within the viewport
+      responsive: Full-width sheet-like dialog below sm, centered above
+      status: stable
+      dependencies:
+          - Dialog
+          - TextField
+          - Button
+          - Spinner
+          - Alert
+
+    - id: platform-support-banner
+      name: SupportBanner
+      category: component
+      path: resources/js/components/platform/support-banner.tsx
+      description: >
+          Persistent, non-dismissible banner on every support page: READ-ONLY label,
+          organization, target role and email, reference, a text countdown chip and
+          the exit control. Terminal expiry is announced politely through a status
+          region once, not on every tick.
+      reference_design: "spec-08/desktop/15-support-overview.png, spec-08/mobile/15-support-overview.png"
+      accessibility:
+          - Meaning is carried by text, not colour
+          - The timer region does not announce each second
+          - Exit is a 44 px target below sm
+      responsive: Wraps to multiple lines; stays sticky
+      status: stable
+      dependencies:
+          - Button
+
+    - id: platform-page-header
+      name: PageHeader (Platform)
+      category: component
+      path: resources/js/components/platform/page-header.tsx
+      description: >
+          Signed-in Platform page heading: an uppercase eyebrow for the area, the
+          single h1, one purpose line and an optional page action. Also sets the
+          document title.
+      reference_design: "spec-08/desktop/11-platform-overview.png, spec-08/desktop/21-failed-job-monitoring.png"
+      accessibility:
+          - Exactly one h1
+          - Long titles wrap instead of overflowing
+      responsive: Action wraps below the title on narrow viewports
+      status: stable
+
+    - id: platform-record-table
+      name: RecordTable
+      category: component
+      path: resources/js/components/platform/record-table.tsx
+      description: >
+          One semantic dataset shown as a desktop table and as labelled records below
+          md, from a single DOM so controls and keyboard order stay unique. Used for
+          organizations, administrators, invitations, support booking requests, failed
+          jobs and retry history. Cell content wraps; status is always text.
+      reference_design: "spec-08/desktop/12-organization-directory.png, spec-08/mobile/21-failed-job-monitoring.png"
+      accessibility:
+          - Exposed as an ARIA table with column headers naming each cell
+          - The visible per-cell label is mobile-only and hidden from assistive technology to avoid duplicate reading
+      responsive: Grid columns from md; labelled stacked records below
+      status: stable
+      dependencies:
+          - StatusChip
+
 compositions:
     - id: exact-start-time-selector
       name: ExactStartTimeSelector

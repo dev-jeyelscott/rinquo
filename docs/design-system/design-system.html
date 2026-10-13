@@ -1822,6 +1822,164 @@
                     </div>
                 </article>
 
+                <article id="platform-shell" data-registry-id="platform-shell" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">PlatformShell</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">platform-shell</div>
+                    <p class="registry-description">Neutral Platform Admin shell: the Rinquo mark with the Platform label, a skip link to the main region, the six Platform destinations (suppressed when signed out and during a support session), the signed-in administrator with Sign out, the persistent SupportBanner during support, and one flash/access alert area. Not a tenant shell and never a bottom navigation.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/layouts/platform-shell.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-08/desktop/11-platform-overview.png, spec-08/mobile/11-platform-overview.png, spec-08/desktop/15-support-overview.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">SupportBanner, RinquoMark, Button, Alert</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="platform-auth-card" data-registry-id="platform-auth-card" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">AuthCard</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">platform-auth-card</div>
+                    <p class="registry-description">Centered signed-out task card for the Platform Admin identity journey: a task icon tile, the page's single h1, one quiet purpose line and the form. Used with SubmitButton for the one dominant action.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/platform/auth-card.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-08/desktop/01-platform-sign-in.png, spec-08/mobile/01-platform-sign-in.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">Card</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="platform-step-up-dialog" data-registry-id="platform-step-up-dialog" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">StepUpDialog</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">platform-step-up-dialog</div>
+                    <p class="registry-description">Interruptive modal for every sensitive Platform action (start support, invite, disable, re-enable, reset factor, recovery rotation, failed-job retry). Shows a step-up eyebrow, the affected subject and its consequence, optional action fields, and a fresh password plus six-digit authenticator code verified by the server. Non-optimistic: pending, rejected and offline states are shown in the dialog and the credentials are cleared after every attempt. Confirm tone is destructive for irreversible actions.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/platform/step-up-dialog.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-08/desktop/14-start-support-session.png, spec-08/desktop/19-administrator-access-change.png, spec-08/desktop/22-safe-job-retry.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">Dialog, TextField, Button, Spinner, Alert</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="platform-support-banner" data-registry-id="platform-support-banner" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">SupportBanner</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">platform-support-banner</div>
+                    <p class="registry-description">Persistent, non-dismissible banner on every support page: READ-ONLY label, organization, target role and email, reference, a text countdown chip and the exit control. Terminal expiry is announced politely through a status region once, not on every tick.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/platform/support-banner.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-08/desktop/15-support-overview.png, spec-08/mobile/15-support-overview.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">Button</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="platform-page-header" data-registry-id="platform-page-header" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">PageHeader (Platform)</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">platform-page-header</div>
+                    <p class="registry-description">Signed-in Platform page heading: an uppercase eyebrow for the area, the single h1, one purpose line and an optional page action. Also sets the document title.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/platform/page-header.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-08/desktop/11-platform-overview.png, spec-08/desktop/21-failed-job-monitoring.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="platform-record-table" data-registry-id="platform-record-table" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">RecordTable</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">platform-record-table</div>
+                    <p class="registry-description">One semantic dataset shown as a desktop table and as labelled records below md, from a single DOM so controls and keyboard order stay unique. Used for organizations, administrators, invitations, support booking requests, failed jobs and retry history. Cell content wraps; status is always text.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/platform/record-table.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-08/desktop/12-organization-directory.png, spec-08/mobile/21-failed-job-monitoring.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">StatusChip</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
                 <article id="operation-stat-card" data-registry-id="operation-stat-card" data-status="stable" class="registry-card">
                     <div class="registry-header">
                         <h3 class="registry-title">OperationStatCard</h3>
