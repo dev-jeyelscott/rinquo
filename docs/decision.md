@@ -6,13 +6,13 @@ Web/mobile-based SaaS booking and operations platform for car and motorcycle was
 
 ## Planning Status
 
-- Decisions captured: **1–212**
+- Decisions captured: **1–222**
 - Current project mode: **Fresh project**
 - Planning approach: **Decision-driven discovery, later accelerated to up to 5 questions per round**
 - Decision discovery status: **Effectively complete**
 - Next planning phase: **Planning documents → reference UI → vertical roadmap/specs → quality gate → final ZIP**
 - Important unresolved items: **None currently identified**
-- Last resolved decision: **Decision 212, Reference UI approval and locking**
+- Last resolved decision: **Decision 222, Form-control border contrast**
 
 ---
 
@@ -2001,6 +2001,82 @@ They must go through the same review and manifest approval process as manually c
 - Do not silently overwrite or replace an approved reference.
 - Do not leave superseded references marked `Approved`.
 - Do not promote a new reusable visual pattern into the design system before its authoritative basis is established.
+
+## Implementation-Era Clarifications
+
+Decisions 213–222 were locked on 2026-10-13. They settle defaults and presentation questions left open in the slice 00–08 workflow artifacts. Where one of them differs from current code, the code is an implementation gap.
+
+### Decision 213 — Pre-arrival reminder timing
+
+**Decision:** Decision 56 stands. The single default customer reminder is sent **30 minutes before the expected start**, using the updated expected start when the ETA has shifted.
+
+There is no default 24-hour reminder in MVP. The current 24-hour reminder email is an implementation gap.
+
+### Decision 214 — Pending approval response deadline default
+
+**Decision:** Decision 59 stands for staff-approval bookings. The default staff response deadline (Decision 162) is **15 minutes** after the booking request is submitted, and never later than the scheduled start.
+
+The deadline stays configurable per organization. The current 120-minute default is an implementation gap. Bookings already pending keep the deadline they were created with.
+
+### Decision 215 — Booking policy defaults
+
+**Decision:** Each new organization starts with these defaults, all configurable per organization:
+
+- Approval mode: **auto-confirm** (Decision 58)
+- Start-time grid: **15 minutes**
+- Minimum notice: **1 hour**; maximum advance booking: **30 days** (Decision 19)
+- Customer checkout hold: **15 minutes**, a platform setting
+- The service itself must fit inside both the service availability window and open hours. The trailing buffer may run past closing.
+
+### Decision 216 — Production runtime and deployment mechanism
+
+**Decision:** This refines Decision 81.
+
+- One production image built on FrankenPHP in classic mode, running as a non-root user.
+- The same image runs the web, Horizon, scheduler and Reverb processes.
+- Images are published to GHCR and always deployed by digest.
+- GitHub Actions deploys over SSH, and the host runs Docker Compose.
+- Production only promotes an image that staging has already deployed. Production never builds.
+
+### Decision 217 — Error tracking and uptime monitoring providers
+
+**Decision:** This refines Decision 83.
+
+- Error tracking uses Sentry Cloud, with separate backend and browser projects for staging and production.
+- Uptime monitoring is vendor-agnostic: any external HTTP monitor that checks `/up` and `/ready`. The provider is chosen at go-live and is not a locked decision.
+
+### Decision 218 — Renewal request regeneration
+
+**Decision:** This refines Decision 108.
+
+- When a renewal payment request expires, the system automatically creates a fresh request and its payment intent.
+- The QR Ph code itself is generated only when the Owner opens or refreshes the request, because a QR goes stale quickly.
+- Automatic regeneration runs until grace ends for a paid subscription, or until the trial ends for an unpaid trial.
+- A restricted organization gets a new request only when the Owner explicitly asks to renew.
+
+### Decision 219 — No grace period after an unpaid trial
+
+**Decision:** Decision 100 stands. An unpaid trial goes straight to restricted mode when it ends; the grace period of Decision 105 applies only after a paid period.
+
+Any stored grace value on an unpaid trial is inert. It is never used as an access gate and is never displayed. No schema change is required.
+
+### Decision 220 — Booking outcome during a pending reschedule proposal
+
+**Decision:** While a reschedule proposal is pending, the customer booking page shows the proposal as its primary content and hides the Spec 02 confirmation outcome block, as approved Spec 03 reference 12 shows.
+
+The outcome block returns once the proposal is accepted, declined or expired.
+
+### Decision 221 — Alert tone text contrast
+
+**Decision:** Alert body text keeps a tinted tone color, as the approved references show, but each tone's text token must reach at least **4.5:1** contrast against its tinted alert surface in light and dark themes.
+
+Fix the contrast by darkening the tone text tokens in the design system. Do not swap to the neutral foreground color. The current foreground-colored alert body text is an implementation gap until the tokens are updated.
+
+### Decision 222 — Form-control border contrast
+
+**Decision:** Form-control boundaries must reach at least **3:1** contrast against adjacent colors (WCAG 1.4.11). This overrides the lighter control border shown in approved references, including the Spec 02 set.
+
+The references are not re-rendered for this change alone, and their other visual contract stays authoritative. Non-interactive outlines, such as choice-card frames, are not covered by this rule.
 
 # Current Core Architecture Summary
 

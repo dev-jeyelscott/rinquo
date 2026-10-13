@@ -13,6 +13,8 @@ The completed outcome covers:
 
 The redesign must correct the existing UI-authority drift without redesigning domain behavior that is already correct.
 
+> **Status (2026-10-13):** Steps 1 and 2 are complete. The Owner shell, the Settings index and all seven Settings pages have desktop and mobile references, approved 2026-10-08 and registered in `docs/reference-ui/README.md` under `docs/reference-ui/owner-settings/`. The approval and locking procedure below is kept as history. Mobile Settings navigation follows the Decision 207 mobile amendment (a Settings index plus a `‹ Settings` back link), not the horizontally scrollable tabs this spec first assumed.
+
 ## Users
 
 Primary:
@@ -147,13 +149,13 @@ Desktop:
 - `aria-current="page"`
 - Readiness warning indicators may appear alongside labels
 
-Mobile:
+Mobile (Decision 207 mobile amendment, approved references `owner-settings/mobile/`):
 
-- Horizontally scrollable where required
-- Active underline remains visible
-- No uncontrolled multi-row wrapping
+- Entering Settings from `More` shows the Settings index: a vertical list of the seven destinations, each with a label, a short description and a chevron, plus status where reported
+- Each section page shows a `‹ Settings` back link above the page heading
+- The horizontally scrollable underline navigation is not the mobile composition
 - Minimum 44px touch target
-- Must not replace application-level bottom navigation
+- Must not replace application-level bottom navigation; `More` stays active
 
 ### Page heading ownership
 
@@ -174,6 +176,8 @@ Each page may include one short supporting description.
 The shared Owner shell must not render `Scheduling configuration` as the universal Settings H1.
 
 # Reference UI approval
+
+> **Completed 2026-10-08.** All required pairs are Approved and locked. This section records the procedure that was followed. New or replacement references follow Decision 212.
 
 ## Required reference set
 
@@ -526,7 +530,7 @@ Canonical behavior:
 - Route-based links
 - Active underline
 - Horizontal desktop layout
-- Horizontally scrollable mobile layout
+- Mobile: Settings index plus `‹ Settings` back link (Decision 207 mobile amendment)
 - Readiness indicator support
 - `aria-current="page"`
 
@@ -751,7 +755,7 @@ Approximately 1280–1600px
 Requirements:
 
 - No horizontal page overflow.
-- Settings secondary navigation may scroll horizontally.
+- On mobile, Settings navigation uses the Settings index and a `‹ Settings` back link, not horizontal scrolling.
 - Forms collapse deliberately rather than mechanically.
 - Dense service/resource configuration remains usable without desktop-only tables.
 - Fixed or sticky mobile bottom navigation must not cover actions or form content.
@@ -815,8 +819,8 @@ Verify:
 - `More` exposes Settings and Billing.
 - Enter Settings.
 - Bottom navigation remains available.
-- Settings secondary navigation scrolls horizontally.
-- Navigate between all seven Settings sections.
+- The Settings index lists all seven destinations.
+- Navigate to each of the seven Settings sections and back through the `‹ Settings` link.
 - Page content remains usable.
 - Primary actions are not obscured by bottom navigation.
 - No horizontal document overflow.
