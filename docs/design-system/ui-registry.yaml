@@ -225,6 +225,7 @@ primitives:
           - Backdrop prevents interaction with page
           - Proper heading structure
           - The Close control is a 44 px target below sm
+          - Content is capped to the viewport height and scrolls, so title and actions stay reachable on short screens and at 200% zoom
       status: stable
       dependencies:
           - "@radix-ui/react-dialog"
@@ -696,6 +697,9 @@ components:
           - name: badge
             type: ReactNode
             required: false
+          - name: titleId
+            type: string
+            required: false
           - name: headingLevel
             type: "'h2' | 'h3'"
             required: false
@@ -1053,14 +1057,17 @@ components:
       category: component
       path: resources/js/components/owner/entitlement-banner.tsx
       description: >
-          Persistent notice at the top of every Owner and Staff page when the
-          organization is in its grace period, restricted, or explicitly closed.
+          Persistent notice at the top of every Owner and Staff page (and, on
+          Billing, inside the page itself) when the organization is in its paid
+          grace period, restricted, or explicitly closed.
           It names what still works (existing bookings, check-in, completion and
           customer cancellations) and what is paused (new bookings and
           configuration), shows the exact date that applies, and offers renewal or
           closure review as the one action. Silent for trial and paid
-          organizations. Restriction is explained as a state, not an outage, and
-          nothing is described as deleted.
+          organizations. An unpaid trial that ended is restricted at once and is
+          never described as grace. Restriction is explained as a state, not an
+          outage, and nothing is described as deleted.
+      reference_design: "spec-07/desktop/11-paid-grace.png, spec-07/desktop/12-restricted-billing.png, spec-07/desktop/13-restricted-operations.png"
       props:
           - name: entitlement
             type: Entitlement
@@ -1072,7 +1079,7 @@ components:
           - name: onBilling
             type: boolean
             required: true
-            description: Hides the action on the billing page, where recovery is already in view
+            description: True on the billing page, where the page renders the banner itself (the Owner shell renders none there), the recovery action is already in view and the copy names Billing
           - name: timezone
             type: string
             required: true
@@ -1085,6 +1092,95 @@ components:
       dependencies:
           - Alert
           - Button
+
+    - id: billing-banner
+      name: BillingBanner
+      category: component
+      path: resources/js/components/billing/billing-banner.tsx
+      description: >
+          The page-level state banner on Owner Billing for the non-access
+          scenes: trial, paid, renewal coming up, QR ready, QR expired, request
+          ready or expired, payment status unavailable and payment confirmed.
+          Grace, restricted and closed use EntitlementBanner. Title, one
+          sentence and an icon; the tone only reinforces the text.
+      reference_design: "spec-07/desktop/01-trial-overview.png, spec-07/desktop/05-qr-active.png, spec-07/desktop/09-payment-confirmed.png"
+      props:
+          - name: banner
+            type: "{ tone: 'info' | 'success' | 'warning' | 'error'; title: string; body: string }"
+            required: true
+      tokens: [info, success, warning, destructive]
+      accessibility:
+          - Alert with role=status, an icon and text; meaning is never colour alone
+          - Body copy bounded to 65ch
+      responsive: Full width of the main column
+      status: stable
+      dependencies:
+          - Alert
+
+    - id: plan-status-card
+      name: PlanStatusCard
+      category: component
+      path: resources/js/components/billing/plan-status-card.tsx
+      description: >
+          Owner Billing "Current plan and access": a state eyebrow, a hero value
+          (the plan price, a day count or a state word) with a text status pill,
+          organization and plan, the one date that matters next, and at most one
+          primary action (move to the renewal section, or return to
+          operations). It derives only from server props through describeBilling.
+      reference_design: "spec-07/desktop/01-trial-overview.png, spec-07/desktop/02-paid-subscription.png, spec-07/desktop/11-paid-grace.png, spec-07/desktop/12-restricted-billing.png"
+      props:
+          - name: view
+            type: BillingView
+            required: true
+          - name: organizationName
+            type: string
+            required: true
+          - name: operationsUrl
+            type: string
+            required: true
+          - name: timezone
+            type: string
+            required: true
+      accessibility:
+          - Status is the pill text; amounts and dates use tabular figures
+          - The primary action is a link to the renewal section, which receives focus; no second set of request controls
+          - 44 px action height on small screens
+      responsive: Facts form two columns from the sm breakpoint and one column below
+      status: stable
+      dependencies:
+          - SectionCard
+          - StatusChip
+
+    - id: billing-panels
+      name: WhatRemainsTrue / SafeNextStep / ImportantInformation
+      category: composition
+      path: resources/js/components/billing/billing-panels.tsx
+      description: >
+          The three supporting Billing cards. What remains true is a checked
+          list of standing guarantees for the scene; Safe next step is one calm
+          sentence and never a second call to action; Important information
+          leads with the scene's policy sentence and lists the server-owned
+          terms (billing cycle, pay via, paid-only grace days, timezone).
+      reference_design: "spec-07/desktop/01-trial-overview.png, spec-07/desktop/15-closure-separation.png, spec-07/mobile/01-trial-overview.png"
+      props:
+          - name: view
+            type: BillingView
+            required: true
+          - name: graceDays
+            type: number
+            required: true
+            description: ImportantInformation only; server-owned plan term
+          - name: timezone
+            type: string
+            required: true
+            description: ImportantInformation only
+      accessibility:
+          - The guarantees column is an aside placed after the main column in the DOM, so keyboard and reading order follow the visual order on mobile
+          - Check icons are decorative; the list text carries the meaning
+      responsive: A right column from the lg breakpoint; stacked after the main column below it
+      status: stable
+      dependencies:
+          - SectionCard
 
     - id: operation-stat-card
       name: OperationStatCard

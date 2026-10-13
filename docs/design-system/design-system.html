@@ -1724,7 +1724,7 @@
                         <span class="registry-status status-stable">Stable</span>
                     </div>
                     <div class="registry-id">entitlement-banner</div>
-                    <p class="registry-description">Persistent notice for the grace period, restriction and explicit closure. Names what still works (existing bookings, check-in, completion, customer cancellations) and what is paused (new bookings, configuration), shows the exact date, and offers renewal or closure review as the one action. Silent for trial and paid organizations; restriction is never described as an outage or as deletion.</p>
+                    <p class="registry-description">Persistent notice for the grace period, restriction and explicit closure. Names what still works (existing bookings, check-in, completion, customer cancellations) and what is paused (new bookings, configuration), shows the exact date, and offers renewal or closure review as the one action. Silent for trial and paid organizations; an unpaid trial that ended is restricted at once and never called grace; restriction is never described as an outage or as deletion.</p>
                     <div class="registry-meta">
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Path:</span>
@@ -1737,6 +1737,87 @@
                         <div class="registry-meta-row">
                             <span class="registry-meta-label">Category:</span>
                             <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="billing-banner" data-registry-id="billing-banner" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">BillingBanner</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">billing-banner</div>
+                    <p class="registry-description">Page-level state banner on Owner Billing for the non-access scenes (trial, paid, renewal coming up, QR ready or expired, request ready or expired, payment status unavailable, payment confirmed). A title, one sentence and an icon; tone only reinforces the text. Grace, restricted and closed use EntitlementBanner.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/billing/billing-banner.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-07/desktop/01-trial-overview.png, spec-07/desktop/05-qr-active.png, spec-07/desktop/09-payment-confirmed.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">Alert</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="plan-status-card" data-registry-id="plan-status-card" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">PlanStatusCard</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">plan-status-card</div>
+                    <p class="registry-description">Owner Billing current plan and access: a state eyebrow, a hero value (price, day count or state word) with a text status pill, organization and plan, the one date that matters next, and at most one primary action that moves to the renewal section or returns to operations. Derived only from server props.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/billing/plan-status-card.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-07/desktop/01-trial-overview.png, spec-07/desktop/12-restricted-billing.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">SectionCard, StatusChip</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Component</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article id="billing-panels" data-registry-id="billing-panels" data-status="stable" class="registry-card">
+                    <div class="registry-header">
+                        <h3 class="registry-title">WhatRemainsTrue / SafeNextStep / ImportantInformation</h3>
+                        <span class="registry-status status-stable">Stable</span>
+                    </div>
+                    <div class="registry-id">billing-panels</div>
+                    <p class="registry-description">The three supporting Billing cards: a checked list of standing guarantees for the scene, one calm sentence about the safe next step (never a second call to action) and the policy sentence with server-owned terms (billing cycle, pay via, paid-only grace days, timezone). A right-hand aside from the lg breakpoint, stacked after the main column below it.</p>
+                    <div class="registry-meta">
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Path:</span>
+                            <span class="registry-meta-value">resources/js/components/billing/billing-panels.tsx</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Reference:</span>
+                            <span class="registry-meta-value">spec-07/desktop/01-trial-overview.png, spec-07/desktop/15-closure-separation.png</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Uses:</span>
+                            <span class="registry-meta-value">SectionCard</span>
+                        </div>
+                        <div class="registry-meta-row">
+                            <span class="registry-meta-label">Category:</span>
+                            <span class="registry-meta-value">Composition</span>
                         </div>
                     </div>
                 </article>
