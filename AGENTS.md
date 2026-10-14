@@ -60,7 +60,7 @@ File presence alone does not constitute approval.
 
 An approved reference is authoritative only for the pages, patterns, states, and viewports it actually represents.
 
-The Owner shell, Settings index, and the seven Owner Settings pages have Approved desktop and mobile references (approved 2026-10-08) under `docs/reference-ui/owner-settings/`. They supersede the Owner Settings portions of reference `05`. Locked Decisions remain higher authority, and the manifest lists rendering artifacts that are not locked. Approval sets the target contract; verify the current implementation separately.
+The Owner shell, Settings index, and the seven Owner Settings pages have Approved desktop and mobile references (approved 2026-10-08) under `docs/reference-ui/owner-settings/`. They supersede the Owner Settings portions of reference `05`. Approved desktop and mobile references also exist for Specs 02–08 under `docs/reference-ui/spec-02/` through `spec-08/` (booking journey, booking management, staff operations, scheduling conflicts, customer account, subscription billing and restriction, and platform admin); references `02`–`04` are superseded by Specs 02, 04, and 05 as recorded in the manifest. Locked Decisions remain higher authority, and the manifest lists rendering artifacts that are not locked. Approval sets the target contract; verify the current implementation separately.
 
 Do not infer unsupported mobile, desktop, responsive, or interaction behavior and describe it as locked.
 
@@ -115,10 +115,10 @@ Read `README.md` for supported local setup and the command overview.
 
 ## Layout
 
-- `app/Modules/<Domain>/` owns domain models, actions, policies, requests, jobs, events, and supporting services. Existing committed domains are `Identity`, `Tenancy`, `Scheduling`, `Booking`, and `Customer`.
+- `app/Modules/<Domain>/` owns domain models, actions, policies, requests, jobs, events, and supporting services. Existing committed domains are `Identity`, `Tenancy`, `Scheduling`, `Booking`, `Customer`, `Subscription`, and `Platform`.
 - `app/Support/` contains domain-free cross-cutting concerns. It must not depend on `App\Modules`; `tests/Unit/ArchTest.php` enforces this.
 - `resources/js/pages/` contains Inertia pages; `layouts/` contains platform, tenant, owner, and customer shells; `components/ui/` contains shared primitives; domain components sit under named component folders; shared serialized contracts sit under `resources/js/types/`.
-- `routes/web.php` owns browser routes, `routes/channels.php` owns private broadcast authorization, and `routes/console.php` owns schedules.
+- `routes/web.php` owns browser routes, `routes/platform.php` owns the `/platform` admin routes under their own `platform` middleware group and session namespace, `routes/channels.php` owns private broadcast authorization, and `routes/console.php` owns schedules.
 - `database/migrations/` contains forward-only schema changes. `tests/Feature`, `tests/Unit`, `resources/js/**/*.test.ts(x)`, and `tests/Browser` contain backend, frontend, and browser coverage.
 - `docker/`, `compose*.yaml`, and `Dockerfile` define local/CI runtime; `deploy/` and `.github/workflows/` define staged deployment and manual production promotion.
 - `public/build/`, `vendor/`, and `node_modules/` are generated or installed outputs; do not edit them.
