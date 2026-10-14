@@ -56,7 +56,14 @@ promotes only a digest that a successful staging run recorded.
 ## Staging deploys (`.github/workflows/deploy-staging.yml`)
 
 Triggered only when the `CI` workflow completes successfully for a push to
-`main`. It:
+`main`, and only when the repository variable `STAGING_ENABLED` is `true`
+(Settings > Secrets and variables > Actions > Variables). While it is unset the
+job is skipped, not failed, and nothing is built, pushed or deployed. Before
+enabling it, create the `staging` GitHub environment with its secrets and
+variables (SSH access, `SENTRY_AUTH_TOKEN` and the rest of
+[environments.md](environments.md#github-configuration)) and prepare the
+server. Production promotion is unavailable until a staging deploy has
+recorded a digest. The workflow:
 
 1. checks out the commit CI validated;
 2. builds the production image and pushes `ghcr.io/<owner>/<repo>:<sha>`. The
