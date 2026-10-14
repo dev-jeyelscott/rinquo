@@ -56,13 +56,17 @@ jobs:
           tools: composer:v2
           coverage: none
 
+      # .env must exist before install: package:discover boots the app, and
+      # without it APP_ENV defaults to production and the required-environment
+      # guard rightly refuses to boot.
+      - name: Prepare environment file
+        run: cp .env.example .env
+
       - name: Install Composer dependencies
         run: composer install --no-interaction --no-progress --prefer-dist
 
-      - name: Prepare environment
-        run: |
-          cp .env.example .env
-          php artisan key:generate --ansi
+      - name: Generate application key
+        run: php artisan key:generate --ansi
 
       - name: Lint (Pint)
         run: composer lint

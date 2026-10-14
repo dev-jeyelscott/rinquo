@@ -1,5 +1,6 @@
 <?php
 
+use App\Providers\AppServiceProvider;
 use App\Support\Environment\RequiredEnvironment;
 use Illuminate\Config\Repository;
 
@@ -55,3 +56,28 @@ test('the Resend key is required only when Resend is the default mailer', functi
 
     expect((new RequiredEnvironment($config))->missing())->toBe([]);
 });
+
+test('the provider asserts the required environment only in staging and production', function (string $environment, bool $throws) {
+    $app = app();
+    $original = $app['env'];
+    $app['env'] = $environment;
+    $app['config']->set('app.key', '');
+
+    try {
+        $boot = fn () => (new AppServiceProvider($app))->boot();
+
+        if ($throws) {
+            expect($boot)->toThrow(RuntimeException::class, 'Missing required configuration');
+        } else {
+            $boot();
+            expect(true)->toBeTrue();
+        }
+    } finally {
+        $app['env'] = $original;
+    }
+})->with([
+    'testing' => ['testing', false],
+    'local' => ['local', false],
+    'staging' => ['staging', true],
+    'production' => ['production', true],
+]);
