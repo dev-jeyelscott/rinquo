@@ -175,9 +175,11 @@ test('a signed-out customer books the next available time and a second visitor c
     await expect(
         page.getByRole('heading', { level: 2, name: 'Booking confirmed' }),
     ).toBeVisible();
-    await expect(page.getByText('Full wash + Wax')).toBeVisible();
+    // The service and vehicle also appear in the appointment details, so assert them in the summary region.
+    const summary = page.getByRole('region', { name: 'Your booking' });
+    await expect(summary.getByText('Full wash + Wax')).toBeVisible();
     // The make and model is a booking snapshot shown with the vehicle type.
-    await expect(page.getByText(`Sedan · ${MAKE_MODEL}`)).toBeVisible();
+    await expect(summary.getByText(`Sedan · ${MAKE_MODEL}`)).toBeVisible();
     await expect(
         page.getByText(`We'll send the details by email to ${email}.`),
     ).toBeVisible();
@@ -199,7 +201,11 @@ test('a signed-out customer books the next available time and a second visitor c
     await expect(
         page.getByRole('heading', { level: 2, name: 'Booking confirmed' }),
     ).toBeVisible();
-    await expect(page.getByText(`Sedan · ${MAKE_MODEL}`)).toBeVisible();
+    await expect(
+        page
+            .getByRole('region', { name: 'Your booking' })
+            .getByText(`Sedan · ${MAKE_MODEL}`),
+    ).toBeVisible();
     expect((await other.request.get(resultUrl)).status()).toBe(404);
 
     // With the capacity gone, that time stays disabled for everyone.
