@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import laravel from 'laravel-vite-plugin';
 import { bunny } from 'laravel-vite-plugin/fonts';
+import { fileURLToPath } from 'node:url';
 import { defineConfig, lazyPlugins } from 'vite-plus';
 
 // The dev server runs inside the `vite` Compose service. It listens on all
@@ -12,17 +13,26 @@ import { defineConfig, lazyPlugins } from 'vite-plus';
 const devServerPort = Number(process.env.VITE_PORT ?? 5173);
 const devServerPublicHost = process.env.VITE_DEV_SERVER_HOST ?? 'localhost';
 
+const underVitest = Boolean(process.env.VITEST);
+
 export default defineConfig({
     plugins: lazyPlugins(() => [
-        laravel({
-            input: ['resources/css/app.css', 'resources/js/app.tsx'],
-            refresh: true,
-            fonts: [
-                bunny('Instrument Sans', {
-                    weights: [400, 500, 600],
-                }),
-            ],
-        }),
+        // The Laravel plugin manages the dev server and build manifest; under
+        // Vitest it only trips its own HMR-in-CI guard, so tests omit it and
+        // declare the `@` alias it would otherwise provide (see `resolve`).
+        ...(underVitest
+            ? []
+            : [
+                  laravel({
+                      input: ['resources/css/app.css', 'resources/js/app.tsx'],
+                      refresh: true,
+                      fonts: [
+                          bunny('Instrument Sans', {
+                              weights: [400, 500, 600],
+                          }),
+                      ],
+                  }),
+              ]),
         inertia(),
         react(),
         babel({
@@ -30,6 +40,15 @@ export default defineConfig({
         }),
         tailwindcss(),
     ]),
+    resolve: underVitest
+        ? {
+              alias: {
+                  '@': fileURLToPath(
+                      new URL('./resources/js', import.meta.url),
+                  ),
+              },
+          }
+        : {},
     build: {
         // Hidden maps exist only during the release image build (see Dockerfile "assets"):
         // they are uploaded to Sentry and deleted before the bundle ships. Default builds have none.
