@@ -49,6 +49,13 @@ services:
     scheduler:
         <<: *app
         command: ['php', 'artisan', 'schedule:work']
+        # PID 1 is the schedule:work process; this proves it is alive without running schedules.
+        healthcheck:
+            test: ['CMD-SHELL', 'grep -qa "schedule:work" /proc/1/cmdline']
+            interval: 30s
+            timeout: 5s
+            retries: 3
+            start_period: 20s
 
     reverb:
         <<: *app
