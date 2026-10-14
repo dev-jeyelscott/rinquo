@@ -43,5 +43,11 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <!-- Plan and webhook terms are pinned so a customised .env cannot change test outcomes. -->
+        <env name="RINQUO_PLAN_AMOUNT_CENTAVOS" value="99900" force="true"/>
+        <env name="RINQUO_TRIAL_DAYS" value="14" force="true"/>
+        <env name="RINQUO_GRACE_DAYS" value="3" force="true"/>
+        <env name="RINQUO_QR_LIFETIME_SECONDS" value="1800" force="true"/>
+        <env name="RINQUO_WEBHOOK_TOLERANCE_SECONDS" value="300" force="true"/>
     </php>
 </phpunit>
