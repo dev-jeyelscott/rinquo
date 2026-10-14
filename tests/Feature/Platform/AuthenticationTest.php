@@ -159,15 +159,45 @@ test('recovery codes are stored hashed, work once, and trigger a security notice
     $this->assertGuest('platform');
 });
 
-test('recovery code attempts are throttled', function () {
+test('recovery code attempts are throttled with the lockout message on the recovery field', function () {
+    $admin = Platform::admin();
+    $codes = app(RecoveryCodes::class)->regenerate($admin);
+    signInPassword();
+
+    foreach (range(1, 5) as $_) {
+        $this->post(route('platform.mfa.verify'), ['recovery_code' => 'aaaaa-aaaaa'])->assertSessionHasErrors(['recovery_code' => 'That code was not accepted.']);
+    }
+
+    $this->post(route('platform.mfa.verify'), ['recovery_code' => 'aaaaa-aaaaa'])
+        ->assertSessionHasErrors(['recovery_code' => 'Too many attempts. Wait a few minutes and sign in again.'])
+        ->assertSessionDoesntHaveErrors('code');
+
+    // A valid recovery code is neither accepted nor consumed while throttled.
+    $this->post(route('platform.mfa.verify'), ['recovery_code' => $codes[0]])
+        ->assertSessionHasErrors(['recovery_code' => 'Too many attempts. Wait a few minutes and sign in again.']);
+    $this->assertGuest('platform');
+    expect($admin->recoveryCodes()->whereNotNull('consumed_at')->count())->toBe(0)
+        ->and(AuditEvent::query()->where('event', 'login.factor')->where('result', 'throttled')->count())->toBe(2);
+
+    // Once the window has passed, the same code signs in.
+    RateLimiter::clear('platform-factor:'.$admin->id);
+    $this->post(route('platform.mfa.verify'), ['recovery_code' => $codes[0]])->assertRedirect(route('platform.overview'));
+    $this->assertAuthenticatedAs($admin->fresh(), 'platform');
+});
+
+test('authenticator code attempts are throttled with the lockout message on the code field', function () {
     $admin = Platform::admin();
     signInPassword();
 
     foreach (range(1, 5) as $_) {
-        $this->post(route('platform.mfa.verify'), ['recovery_code' => 'aaaaa-aaaaa'])->assertSessionHasErrors();
+        $this->post(route('platform.mfa.verify'), ['code' => '000000'])->assertSessionHasErrors(['code' => 'That code was not accepted.']);
     }
-    $this->post(route('platform.mfa.verify'), ['code' => Platform::code($admin)])->assertSessionHasErrors('code');
+
+    $this->post(route('platform.mfa.verify'), ['code' => Platform::code($admin)])
+        ->assertSessionHasErrors(['code' => 'Too many attempts. Wait a few minutes and sign in again.'])
+        ->assertSessionDoesntHaveErrors('recovery_code');
     $this->assertGuest('platform');
+    expect(AuditEvent::query()->where('event', 'login.factor')->where('result', 'throttled')->count())->toBe(1);
 });
 
 test('a session ends after 30 minutes of inactivity and after 12 hours absolute', function () {

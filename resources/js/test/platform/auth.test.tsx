@@ -132,6 +132,29 @@ describe('Second factor', () => {
         expect(screen.getByLabelText(/authenticator code/i)).toHaveValue('');
         expect(screen.getByLabelText(/authenticator code/i)).toHaveFocus();
     });
+
+    it('announces the lockout message on the recovery code field', () => {
+        const message =
+            'Too many attempts. Wait a few minutes and sign in again.';
+        render(<Factor email="admin@example.test" />);
+        fireEvent.click(
+            screen.getByRole('button', { name: /use a recovery code/i }),
+        );
+        inertia.nextErrors = { recovery_code: message };
+
+        fireEvent.change(screen.getByLabelText(/recovery code/i), {
+            target: { value: 'abcde-fghjk' },
+        });
+        fireEvent.click(
+            screen.getByRole('button', { name: 'Verify and sign in' }),
+        );
+
+        const input = screen.getByLabelText(/recovery code/i);
+        expect(screen.getByText(message)).toBeInTheDocument();
+        expect(input).toHaveAttribute('aria-invalid', 'true');
+        expect(input).toHaveAccessibleDescription(message);
+        expect(input).toHaveFocus();
+    });
 });
 
 describe('Authenticator enrollment', () => {

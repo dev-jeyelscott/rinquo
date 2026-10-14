@@ -96,9 +96,10 @@ class AuthController extends Controller
         }
 
         $key = 'platform-factor:'.$admin->id;
+        $field = $request->filled('code') ? 'code' : 'recovery_code';
         if (RateLimiter::tooManyAttempts($key, 5)) {
             PlatformAudit::record('login.factor', 'throttled', $admin);
-            throw ValidationException::withMessages(['code' => 'Too many attempts. Wait a few minutes and sign in again.']);
+            throw ValidationException::withMessages([$field => 'Too many attempts. Wait a few minutes and sign in again.']);
         }
 
         $usedRecovery = false;
@@ -111,7 +112,7 @@ class AuthController extends Controller
         if (! $ok) {
             RateLimiter::hit($key, 300);
             PlatformAudit::record('login.factor', 'failed', $admin, null, null, ['factor' => $usedRecovery || $request->filled('recovery_code') ? 'recovery' : 'totp']);
-            throw ValidationException::withMessages([$request->filled('code') ? 'code' : 'recovery_code' => 'That code was not accepted.']);
+            throw ValidationException::withMessages([$field => 'That code was not accepted.']);
         }
 
         RateLimiter::clear($key);
