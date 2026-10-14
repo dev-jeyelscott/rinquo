@@ -113,7 +113,7 @@ class BookingController extends Controller
         ]);
     }
 
-    public function cancel(Request $request, string $slug, string $booking, ManageBooking $lifecycle)
+    public function cancel(Request $request, string $slug, string $booking, ManageBooking $lifecycle): RedirectResponse
     {
         $organization = $this->bookingShop($slug);
         $record = $this->ownBooking($request, $organization, $booking);
@@ -128,7 +128,7 @@ class BookingController extends Controller
         return to_route('bookings.show', [$slug, $record->public_id]);
     }
 
-    public function reschedule(Request $request, string $slug, string $booking, ManageBooking $lifecycle)
+    public function reschedule(Request $request, string $slug, string $booking, ManageBooking $lifecycle): RedirectResponse
     {
         // The organization-locked action enforces publication, readiness and entitlement; the
         // customer keeps a specific explanation instead of a generic 404 for an existing booking.

@@ -45,11 +45,13 @@ class User extends Model implements AuthenticatableContract
         return $this->hasMany(Membership::class);
     }
 
+    /** @return HasOne<CustomerProfile, $this> */
     public function customerProfile(): HasOne
     {
         return $this->hasOne(CustomerProfile::class);
     }
 
+    /** @return HasMany<CustomerVehicle, $this> */
     public function customerVehicles(): HasMany
     {
         return $this->hasMany(CustomerVehicle::class);
